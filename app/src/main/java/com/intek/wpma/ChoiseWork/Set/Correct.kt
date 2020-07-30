@@ -1,10 +1,9 @@
-package com.intek.wpma
+package com.intek.wpma.ChoiseWork.Set
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
@@ -12,15 +11,15 @@ import android.view.View
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.view.isVisible
-import com.intek.wpma.ChoiseWork.Set.SetInitialization
+import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.Model.Model
-import com.intek.wpma.SQL.SQL1S
+import com.intek.wpma.R
+import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_correct.*
 import kotlinx.android.synthetic.main.activity_correct.PreviousAction
 import kotlinx.android.synthetic.main.activity_correct.terminalView
-import kotlinx.android.synthetic.main.activity_menu.*
+import kotlinx.android.synthetic.main.activity_menu_shipping.*
 import kotlinx.android.synthetic.main.activity_set.*
 
 class Correct : BarcodeDataReceiver() {
@@ -45,8 +44,6 @@ class Correct : BarcodeDataReceiver() {
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     var flagBtn = 0
     var flagMark = 0                    //флаг маркировки
-    var isMobile = false    //флаг мобильного устройства
-
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -83,10 +80,9 @@ class Correct : BarcodeDataReceiver() {
         iddoc = intent.extras!!.getString("iddoc")!!
         AddressID = intent.extras!!.getString("AddressID")!!
         title = Employer
-        terminalView.text = intent.extras!!.getString("terminalView")!!
+        terminalView.text = SS.terminal
         CountFact = intent.extras!!.getString("CountFact")!!.toInt()
         PrinterPath = intent.extras!!.getString("PrinterPath")!!
-        isMobile = intent.extras!!.getString("isMobile")!!.toBoolean()
         //заполним заново товар и док
         GetItemAndDocSet()
         val label: TextView = findViewById(R.id.label)
@@ -123,12 +119,12 @@ class Correct : BarcodeDataReceiver() {
             ChoiseCorrect = 3
             enterCountCorrect()
         }
-        if (isMobile){
+        if (SS.isMobile){
             btnScanCorrect.visibility = View.VISIBLE
             btnScanCorrect!!.setOnClickListener {
-                val ScanAct = Intent(this@Correct, ScanActivity::class.java)
-                ScanAct.putExtra("ParentForm","SetCorrect")
-                startActivity(ScanAct)
+                val scanAct = Intent(this@Correct, ScanActivity::class.java)
+                scanAct.putExtra("ParentForm","SetCorrect")
+                startActivity(scanAct)
             }
         }
 
@@ -143,27 +139,29 @@ class Correct : BarcodeDataReceiver() {
         if (countCorrect < EnterCount) {
             if (codeId == BarcodeId) {//проверим DataMatrix ли пришедший код
                 //проверим, был ли уже принят этот товар с маркировкой
-                var TextQuery =
+                var testBatcode = Barcode.replace("'","''")
+
+                var textQuery =
                     "SELECT SP7271, SP7274, SP7275 " +
                             "FROM SC7277 " +
-                            "WHERE SC7277.SP7270 = '${Barcode.trim()}' " +
+                            "WHERE SC7277.SP7270 like ('%' + SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
                             "and SC7277.SP7271 = '${CCItem!!.ID}' "
-                val DT = SS.ExecuteWithRead(TextQuery) ?: return
-                if (DT.isEmpty()){
+                val dt = SS.ExecuteWithRead(textQuery) ?: return
+                if (dt.isEmpty()){
                     PreviousAction.text = "Маркировка не найдена, либо товар уже набран/скорректирован! Отсканируйте QR - код"
                     return
                 }
-                if (DT[1][2].toInt() == 1 && DT[1][1] == SS.ExtendID(iddoc,"КонтрольНабора")) {
+                if (dt[1][2].toInt() == 1 && dt[1][1] == SS.ExtendID(iddoc,"КонтрольНабора")) {
                     //корректируют позицию, которую только что набрали
                     CountFact -= 1
                 }
                 //найдем маркировку в справочнике МаркировкаТовара, занулим флаг
-                TextQuery =
+                textQuery =
                     "UPDATE SC7277 " +
                             "SET SP7274 = '${SS.ExtendID(iddoc,"КонтрольНабора")}', SP7275 = 0 " +
-                            "where SC7277.SP7270 = '${Barcode.trim()}' " +
+                            "where SC7277.SP7270 like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
                             "and SC7277.SP7271 = '${CCItem!!.ID}' "
-                if (!SS.ExecuteWithoutRead(TextQuery)) {
+                if (!SS.ExecuteWithoutRead(textQuery)) {
                     FExcStr.text = "Не удалось освободить маркировку!"
                     return
                 }
@@ -179,7 +177,7 @@ class Correct : BarcodeDataReceiver() {
     }
 
     private fun GetItemAndDocSet(): Boolean {
-        var Query =
+        var textQuery =
             "DECLARE @curdate DateTime; " +
                     "SELECT @curdate = DATEADD(DAY, 1 - DAY(curdate), curdate) FROM _1ssystem (nolock); " +
                     "select top 1 " +
@@ -249,41 +247,41 @@ class Correct : BarcodeDataReceiver() {
                     "and DocCC.SP5508 = :AddressID " +
                     "order by " +
                     "DocCCHead.SP2764 , Sections.SP5103 , LINENO_"
-        Query = SS.QuerySetParam(Query, "EmptyID", SS.GetVoidID())
-        Query = SS.QuerySetParam(Query, "Warehouse", MainWarehouse)
-        Query = SS.QuerySetParam(Query, "EmptyDate", SS.GetVoidDate())
-        Query = SS.QuerySetParam(Query, "iddoc", iddoc)
-        Query = SS.QuerySetParam(Query, "AddressID", AddressID)
-        val DataTable = SS.ExecuteWithRead(Query) ?: return false
+        textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID())
+        textQuery = SS.QuerySetParam(textQuery, "Warehouse", MainWarehouse)
+        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
+        textQuery = SS.QuerySetParam(textQuery, "iddoc", iddoc)
+        textQuery = SS.QuerySetParam(textQuery, "AddressID", AddressID)
+        val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
 
         CCItem = Model.StructItemSet(
-            DataTable[1][0],                            //ID
-            DataTable[1][3],                            //InvCode
-            DataTable[1][2].trim(),                     //Name
-            DataTable[1][7].toBigDecimal(),             //Price
-            DataTable[1][5].toBigDecimal().toInt(),     //Count
-            DataTable[1][5].toBigDecimal().toInt(),     //CountFact
-            DataTable[1][6],                            //AdressID
-            DataTable[1][8].trim(),                     //AdressName
-            DataTable[1][1].toInt(),                    //CurrLine
-            DataTable[1][9].toBigDecimal().toInt(),     //Balance
-            DataTable[1][4].toBigDecimal().toInt(),     //Details
-            DataTable[1][5].toBigDecimal().toInt(),     //OKEI2Count
+            dataTable[1][0],                            //ID
+            dataTable[1][3],                            //InvCode
+            dataTable[1][2].trim(),                     //Name
+            dataTable[1][7].toBigDecimal(),             //Price
+            dataTable[1][5].toBigDecimal().toInt(),     //Count
+            dataTable[1][5].toBigDecimal().toInt(),     //CountFact
+            dataTable[1][6],                            //AdressID
+            dataTable[1][8].trim(),                     //AdressName
+            dataTable[1][1].toInt(),                    //CurrLine
+            dataTable[1][9].toBigDecimal().toInt(),     //Balance
+            dataTable[1][4].toBigDecimal().toInt(),     //Details
+            dataTable[1][5].toBigDecimal().toInt(),     //OKEI2Count
             "шт",                                //OKEI2
             1                                 //OKEI2Coef
         )
 
         DocSet = Model.StrictDoc(
-            DataTable[1][10],                           //ID
-            DataTable[1][18].toInt(),                   //SelfRemovel
+            dataTable[1][10],                           //ID
+            dataTable[1][18].toInt(),                   //SelfRemovel
             "",                                   //View
-            DataTable[1][14].toInt(),                   //Rows
-            DataTable[1][13],                           //FromWarehouseID
-            DataTable[1][19].trim(),                    //Client
-            DataTable[1][16].toBigDecimal(),            //Sum
-            DataTable[1][20].toInt() == 2,      //Special
-            DataTable[1][22],                           //Box
-            DataTable[1][21]                            //BoxID
+            dataTable[1][14].toInt(),                   //Rows
+            dataTable[1][13],                           //FromWarehouseID
+            dataTable[1][19].trim(),                    //Client
+            dataTable[1][16].toBigDecimal(),            //Sum
+            dataTable[1][20].toInt() == 2,      //Special
+            dataTable[1][22],                           //Box
+            dataTable[1][21]                            //BoxID
         )
 
         return true
@@ -295,20 +293,19 @@ class Correct : BarcodeDataReceiver() {
         if (keyCode == 4) {
            if (ChoiseCorrect == 0) {
                PreviousAction.text = ""
-               val SetInitialization = Intent(this, SetInitialization::class.java)
-               SetInitialization.putExtra("Employer", Employer)
-               SetInitialization.putExtra("EmployerIDD", EmployerIDD)
-               SetInitialization.putExtra("EmployerFlags", EmployerFlags)
-               SetInitialization.putExtra("EmployerID", EmployerID)
-               SetInitialization.putExtra("ParentForm", "Correct")
-               SetInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
-               SetInitialization.putExtra("AddressID", CCItem!!.AdressID)
-               SetInitialization.putExtra("PrinterPath", PrinterPath)
-               SetInitialization.putExtra("PreviousAction", PreviousAction.text.toString())
-               SetInitialization.putExtra("terminalView", terminalView.text)
-               SetInitialization.putExtra("CountFact", CountFact.toString())
-               SetInitialization.putExtra("isMobile",isMobile.toString())
-               startActivity(SetInitialization)
+               val setInitialization = Intent(this, SetInitialization::class.java)
+               setInitialization.putExtra("Employer", Employer)
+               setInitialization.putExtra("EmployerIDD", EmployerIDD)
+               setInitialization.putExtra("EmployerFlags", EmployerFlags)
+               setInitialization.putExtra("EmployerID", EmployerID)
+               setInitialization.putExtra("ParentForm", "Correct")
+               setInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
+               setInitialization.putExtra("AddressID", CCItem!!.AdressID)
+               setInitialization.putExtra("PrinterPath", PrinterPath)
+               setInitialization.putExtra("PreviousAction", PreviousAction.text.toString())
+               setInitialization.putExtra("CountFact", CountFact.toString())
+               setInitialization.putExtra("isMobile",SS.isMobile.toString())
+               startActivity(setInitialization)
                finish()
            }
         }
@@ -363,7 +360,7 @@ class Correct : BarcodeDataReceiver() {
                             }
                         } else {
                             //проверим есть ли маркировка
-                            val TextQuery =
+                            val textQuery =
                                 "SELECT " +
                                         "Product.SP1036, Product.descr, Product.SP1436 " +
                                         "FROM " +
@@ -373,10 +370,10 @@ class Correct : BarcodeDataReceiver() {
                                         "WHERE " +
                                         "Product.id = '${CCItem!!.ID}' and Categories.SP7268 = 1"
 
-                            val DT = SS.ExecuteWithRead(TextQuery)
+                            val dt = SS.ExecuteWithRead(textQuery)
 
                             //есть маркировка, пусть сканируют QR-code
-                            if (DT!!.isNotEmpty()) {
+                            if (dt!!.isNotEmpty()) {
                                 flagMark = 1
                                 PreviousAction.text = "Отсканируйте QR - код! (Осталось: " + (EnterCount - countCorrect).toString() + " шт)"
                                 enterCountCorrect.visibility = View.INVISIBLE
@@ -435,33 +432,33 @@ class Correct : BarcodeDataReceiver() {
             return false
         }
 
-        var AdressCode: Int = 0
-        var CorrectReason: String
-        var What: String
+        var adressCode: Int = 0
+        var correctReason: String
+        var what: String
         when (Choise) {
             1 -> {
-                AdressCode = 7
-                CorrectReason = "   2EU   "
-                What = "брак"
+                adressCode = 7
+                correctReason = "   2EU   "
+                what = "брак"
 
             }
 
             2 -> {
-                AdressCode = 12
-                CorrectReason = "   2EV   "
-                What = "недостача"
+                adressCode = 12
+                correctReason = "   2EV   "
+                what = "недостача"
             }
 
             3 -> {
-                AdressCode = 2
-                CorrectReason = "   2EW   "
-                What = "отказ"
+                adressCode = 2
+                correctReason = "   2EW   "
+                what = "отказ"
             }
 
             4 -> {
-                AdressCode = 2
-                CorrectReason = "   4MG   "
-                What = "отказ по ШК"
+                adressCode = 2
+                correctReason = "   4MG   "
+                what = "отказ по ШК"
             }
 
             else -> {
@@ -470,7 +467,7 @@ class Correct : BarcodeDataReceiver() {
             }
         }
 
-        var TextQuery =
+        var textQuery =
             "begin tran; " +
                     "update DT2776 " +
                     "set SP3110 = :count, " +
@@ -493,46 +490,45 @@ class Correct : BarcodeDataReceiver() {
                     "if @@rowcount = 0 rollback tran else commit tran " +
                     "end " +
                     "else rollback"
-        TextQuery = SS.QuerySetParam(TextQuery, "count", CCItem!!.Count - CountCorrect)
-        TextQuery = SS.QuerySetParam(TextQuery, "CountCorrect", CountCorrect)
-        TextQuery = SS.QuerySetParam(TextQuery, "iddoc", DocSet!!.ID)
-        TextQuery = SS.QuerySetParam(TextQuery, "currline", CCItem!!.CurrLine)
-        TextQuery = SS.QuerySetParam(TextQuery, "Reason", CorrectReason)
-        TextQuery = SS.QuerySetParam(TextQuery, "AdressCode", AdressCode)
+        textQuery = SS.QuerySetParam(textQuery, "count", CCItem!!.Count - CountCorrect)
+        textQuery = SS.QuerySetParam(textQuery, "CountCorrect", CountCorrect)
+        textQuery = SS.QuerySetParam(textQuery, "iddoc", DocSet!!.ID)
+        textQuery = SS.QuerySetParam(textQuery, "currline", CCItem!!.CurrLine)
+        textQuery = SS.QuerySetParam(textQuery, "Reason", correctReason)
+        textQuery = SS.QuerySetParam(textQuery, "AdressCode", adressCode)
 
-        if (!SS.ExecuteWithoutRead(TextQuery)) {
+        if (!SS.ExecuteWithoutRead(textQuery)) {
             return false
         }
         PreviousAction.text =
-            "Корректировка принята " + CCItem!!.InvCode.trim() + " - " + CountCorrect.toString() + " шт. (" + What + ")"
+            "Корректировка принята " + CCItem!!.InvCode.trim() + " - " + CountCorrect.toString() + " шт. (" + what + ")"
 
         // переходим обратно на форму отбора и завершаем корректировку
-        val SetInitialization = Intent(this, SetInitialization::class.java)
+        val setInitialization = Intent(this, SetInitialization::class.java)
         if (CountCorrect == CCItem!!.Count) {
-            SetInitialization.putExtra("Employer", Employer)
-            SetInitialization.putExtra("EmployerIDD", EmployerIDD)
-            SetInitialization.putExtra("EmployerFlags", EmployerFlags)
-            SetInitialization.putExtra("EmployerID", EmployerID)
-            SetInitialization.putExtra("ParentForm", "Correct")
-            SetInitialization.putExtra("DocSetID", "")  //скорректировали полностью
-            SetInitialization.putExtra("AddressID", "")
+            setInitialization.putExtra("Employer", Employer)
+            setInitialization.putExtra("EmployerIDD", EmployerIDD)
+            setInitialization.putExtra("EmployerFlags", EmployerFlags)
+            setInitialization.putExtra("EmployerID", EmployerID)
+            setInitialization.putExtra("ParentForm", "Correct")
+            setInitialization.putExtra("DocSetID", "")  //скорректировали полностью
+            setInitialization.putExtra("AddressID", "")
         } else {
-            SetInitialization.putExtra("Employer", Employer)
-            SetInitialization.putExtra("EmployerIDD", EmployerIDD)
-            SetInitialization.putExtra("EmployerFlags", EmployerFlags)
-            SetInitialization.putExtra("EmployerID", EmployerID)
-            SetInitialization.putExtra("ParentForm", "Correct")
-            SetInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
+            setInitialization.putExtra("Employer", Employer)
+            setInitialization.putExtra("EmployerIDD", EmployerIDD)
+            setInitialization.putExtra("EmployerFlags", EmployerFlags)
+            setInitialization.putExtra("EmployerID", EmployerID)
+            setInitialization.putExtra("ParentForm", "Correct")
+            setInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
             if (CountCorrect == CCItem!!.Count) {
-                SetInitialization.putExtra("AddressID", "")
-            } else SetInitialization.putExtra("AddressID", CCItem!!.AdressID)
+                setInitialization.putExtra("AddressID", "")
+            } else setInitialization.putExtra("AddressID", CCItem!!.AdressID)
         }
-        SetInitialization.putExtra("PrinterPath", PrinterPath)
-        SetInitialization.putExtra("PreviousAction", PreviousAction.text.toString())
-        SetInitialization.putExtra("terminalView", terminalView.text)
-        SetInitialization.putExtra("isMobile",isMobile.toString())
-        SetInitialization.putExtra("CountFact", CountFact.toString())
-        startActivity(SetInitialization)
+        setInitialization.putExtra("PrinterPath", PrinterPath)
+        setInitialization.putExtra("PreviousAction", PreviousAction.text.toString())
+        setInitialization.putExtra("isMobile",SS.isMobile.toString())
+        setInitialization.putExtra("CountFact", CountFact.toString())
+        startActivity(setInitialization)
         finish()
 
 

@@ -59,20 +59,16 @@ class Translation {
         }
         return result;
     }
-
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="Number"></param>
-    /// <returns></returns>
+*/
 
     fun DecTo2(Number: Long): String
     {
         var result = ""
+        var num = Number
 
         //определим наибольший делитель (с чего начать)
         var div: Long = 1
-        while ((Number / div) >= 2)
+        while ((num / div) >= 2)
         {
             div *= 2
         }
@@ -80,7 +76,7 @@ class Translation {
         //преобразование
         while (div > 0)
         {
-            var d: Long = (Number / div)    //целая часть от деления
+            var d: Long = (num / div)    //целая часть от деления
             if (d < 10)
             {
                 result += d.toString()
@@ -89,55 +85,47 @@ class Translation {
             {
                 result += (d as Char).toString()
             }
-            Number %= div  //остаток от деления
+            num %= div  //остаток от деления
             div /= 2      //уменьшаем делитель
         }
         return result
     }
 
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="Number"></param>
-    /// <returns></returns>
-    static public string DecTo36(long Number)
-    {
-        string result = "";
 
+
+    fun DecTo36(Number:Long):String
+    {
+        var result = ""
+        var num = Number
         //определим наибольший делитель (с чего начать)
-        long div = 1;
-        while ((long)(Number / div) >= 36)
+        var div:Long = 1
+        while ((num / div).toLong() >= 36)
         {
-            div *= 36;
+            div *= 36
         }
 
         //преобразование
         while (div > 0)
         {
-            long d = (long)(Number / div);    //целая часть от деления
+            var d:Long = (num / div).toLong();    //целая часть от деления
             if (d < 10)
             {
-                result += d.ToString();
+                result += d.toString()
             }
             else
             {
-                result += ((char)(d + 55)).ToString();
+                result += ((d + 55).toChar()).toString()
             }
-            Number %= div;  //остаток от деления
-            div /= 36;      //уменьшаем делитель
+            num %= div  //остаток от деления
+            div /= 36      //уменьшаем делитель
         }
-        return result;
+        return result
     }
 
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="Number"></param>
-    /// <returns></returns>
-    static public string DecTo36(string Number)
+    fun DecTo36(Number:String):String
     {
-        return DecTo36(Convert.ToInt64(Number));
+        return DecTo36(Number.toLong());
     }
-    */
+
 
 }

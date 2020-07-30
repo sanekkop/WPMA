@@ -1,6 +1,5 @@
-package com.intek.wpma
+package com.intek.wpma.ChoiseWork.Set
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -17,11 +16,10 @@ import android.view.KeyEvent
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
-import com.intek.wpma.ChoiseWork.Set.SetInitialization
-import kotlinx.android.synthetic.main.activity_menu.*
+import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_watch_table_part.PreviousAction
 import kotlinx.android.synthetic.main.activity_watch_table_part.terminalView
-import java.math.BigDecimal
 
 
 class WatchTablePart : BarcodeDataReceiver() {
@@ -38,7 +36,6 @@ class WatchTablePart : BarcodeDataReceiver() {
     var CountFact: Int = 0
     var PrinterPath = ""
     var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
-    var isMobile = false    //флаг мобильного устройства
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -74,10 +71,9 @@ class WatchTablePart : BarcodeDataReceiver() {
         addressID = intent.extras!!.getString("addressID")!!
         InvCode = intent.extras!!.getString("ItemCode")!!
         PreviousAction.text = intent.extras!!.getString("DocView")!!
-        terminalView.text = intent.extras!!.getString("terminalView")!!
+        terminalView.text = SS.terminal
         CountFact = intent.extras!!.getString("CountFact")!!.toInt()
         PrinterPath = intent.extras!!.getString("PrinterPath")!!
-        isMobile = intent.extras!!.getString("isMobile")!!.toBoolean()
         title = Employer
 
         //строка с шапкой
@@ -136,20 +132,18 @@ class WatchTablePart : BarcodeDataReceiver() {
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
         if (keyCode == 21){ //нажали влево; вернемся к документу
-            val SetInitialization = Intent(this, SetInitialization::class.java)
-            SetInitialization.putExtra("Employer", Employer)
-            SetInitialization.putExtra("EmployerIDD",EmployerIDD)
-            SetInitialization.putExtra("EmployerFlags",EmployerFlags)
-            SetInitialization.putExtra("EmployerID",EmployerID)
-            SetInitialization.putExtra("DocSetID",iddoc)
-            SetInitialization.putExtra("AddressID",addressID)
-            SetInitialization.putExtra("PreviousAction",PreviousAction.text.toString())
-            SetInitialization.putExtra("PrinterPath",PrinterPath)
-            SetInitialization.putExtra("terminalView",terminalView.text)
-            SetInitialization.putExtra("CountFact",CountFact.toString())
-            SetInitialization.putExtra("isMobile",isMobile.toString())
-            SetInitialization.putExtra("ParentForm","WatchTablePart")
-            startActivity(SetInitialization)
+            val setInitialization = Intent(this, SetInitialization::class.java)
+            setInitialization.putExtra("Employer", Employer)
+            setInitialization.putExtra("EmployerIDD",EmployerIDD)
+            setInitialization.putExtra("EmployerFlags",EmployerFlags)
+            setInitialization.putExtra("EmployerID",EmployerID)
+            setInitialization.putExtra("DocSetID",iddoc)
+            setInitialization.putExtra("AddressID",addressID)
+            setInitialization.putExtra("PreviousAction",PreviousAction.text.toString())
+            setInitialization.putExtra("PrinterPath",PrinterPath)
+            setInitialization.putExtra("CountFact",CountFact.toString())
+            setInitialization.putExtra("ParentForm","WatchTablePart")
+            startActivity(setInitialization)
             finish()
         }
 //        else if (keyCode == 20){    //вниз
@@ -160,7 +154,7 @@ class WatchTablePart : BarcodeDataReceiver() {
 
 
     private fun getTablePart(iddoc: String): Boolean{
-        var TextQuery =
+        var textQuery =
             "select " +
                     "DocCC.lineno_ as Number, " +
                     "Sections.descr as Adress, " +
@@ -180,40 +174,40 @@ class WatchTablePart : BarcodeDataReceiver() {
                     "and DocCC.SP3110 > 0 "+
             "order by " +
                     "DocCCHead.SP2764 , Sections.SP5103 , Number"
-        TextQuery = SS.QuerySetParam(TextQuery, "EmptyDate", SS.GetVoidDate())
-        TextQuery = SS.QuerySetParam(TextQuery, "iddoc", iddoc)
-        TextQuery = SS.QuerySetParam(TextQuery, "addressID", addressID)
-        val DataTable = SS.ExecuteWithRead(TextQuery) ?: return false
+        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
+        textQuery = SS.QuerySetParam(textQuery, "iddoc", iddoc)
+        textQuery = SS.QuerySetParam(textQuery, "addressID", addressID)
+        val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
 
-        if(DataTable.isNotEmpty()){
-            for (i in 1 until DataTable.size){
+        if(dataTable.isNotEmpty()){
+            for (i in 1 until dataTable.size){
                 val row = TableRow(this)
                 val number = TextView(this)
                 val linearLayout = LinearLayout(this)
-                number.text = DataTable!![i][0]
+                number.text = dataTable[i][0]
                 number.layoutParams = LinearLayout.LayoutParams(45,ViewGroup.LayoutParams.WRAP_CONTENT)
                 number.gravity = Gravity.CENTER
                 number.textSize = 16F
                 number.setTextColor(-0x1000000)
                 val address = TextView(this)
-                address.text = DataTable!![i][1]
+                address.text = dataTable[i][1]
                 address.layoutParams = LinearLayout.LayoutParams(135,ViewGroup.LayoutParams.WRAP_CONTENT)
                 address.textSize = 16F
                 address.setTextColor(-0x1000000)
                 val code = TextView(this)
-                code.text = DataTable!![i][2]
+                code.text = dataTable[i][2]
                 code.layoutParams = LinearLayout.LayoutParams(135,ViewGroup.LayoutParams.WRAP_CONTENT)
                 code.gravity = Gravity.CENTER
                 code.textSize = 16F
                 code.setTextColor(-0x1000000)
                 val count = TextView(this)
-                count.text = DataTable!![i][3]
+                count.text = dataTable[i][3]
                 count.layoutParams = LinearLayout.LayoutParams(40,ViewGroup.LayoutParams.WRAP_CONTENT)
                 count.gravity = Gravity.CENTER
                 count.textSize = 16F
                 count.setTextColor(-0x1000000)
                 val sum = TextView(this)
-                sum.text = DataTable!![i][4]
+                sum.text = dataTable[i][4]
                 sum.layoutParams = LinearLayout.LayoutParams(120,ViewGroup.LayoutParams.WRAP_CONTENT)
                 sum.gravity = Gravity.CENTER
                 sum.textSize = 16F
@@ -227,12 +221,12 @@ class WatchTablePart : BarcodeDataReceiver() {
                 linearLayout.addView(sum)
 
                 row.addView(linearLayout)
-                if (DataTable!![i][2] == InvCode){
+                if (dataTable[i][2] == InvCode){
                     row.setBackgroundColor(Color.YELLOW)
                 }
                 table.addView(row)
             }
-            sum.text = DataTable[1][5]
+            sum.text = dataTable[1][5]
         }
         return true
     }

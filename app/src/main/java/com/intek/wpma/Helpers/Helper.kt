@@ -1,7 +1,11 @@
 package com.intek.wpma.Helpers
 
-import java.io.File.separator
+import android.os.Build
+import androidx.annotation.RequiresApi
 import java.math.BigInteger
+import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
 import java.util.*
 
 class Helper {
@@ -25,33 +29,35 @@ class Helper {
         }
         return result;
     }
+    */
     /// <summary>
     /// делает из полного имени формат типа: Иванов И.И.
     /// </summary>
     /// <param name="FIO"></param>
     /// <returns></returns>
-    static public string GetShortFIO(string FIO)
+    fun GetShortFIO(FIO:String):String
     {
-        string result = "";
-        FIO = FIO.Trim();
-        bool space = false;
-        bool surname = false;
-        for (int i = 0; i < FIO.Length; i++)
+        var result = ""
+        var fio = FIO.trim()
+        var space = false
+        var surname = false
+        for (i in 0..fio.length-1)
         {
-            string ch = FIO.Substring(i, 1);
+            var ch = fio.substring(i, i+1);
             if (!surname)
             {
-                result += ch;
+                result += ch
             }
             if (space)
             {
-                result += ch + ".";
+                result += ch + "."
             }
-            surname = ch == " " ? true : surname;
-            space = ch == " " ? true : false;
+            surname = if (ch == " ") true else surname
+            space = ch == " "
         }
         return result;
     }
+/*
     /// <summary>
     ///
     /// </summary>
@@ -141,20 +147,30 @@ class Helper {
         }
         return result
     }
-    /*
+
     /// <summary>
     /// Преобразует число секунд в строку вида ЧЧ:ММ
     /// </summary>
     /// <param name="Sec">Seconds since the beginning of the day</param>
     /// <returns></returns>
-    static public string SecondToString(int Sec)
-    {
-        string Hours   = "0" + ((int)(Sec/3600)).ToString();
-        Sec -= 3600*(int)(Sec/3600);
-        string Minutes = "0" + ((int)(Sec/60)).ToString();
-        Sec -= Sec - 60*(int)(Sec/60);
-        return Hours.Substring(Hours.Length - 2, 2) + ":" + Minutes.Substring(Minutes.Length - 2, 2);
+
+
+     fun timeToString(sec : Any) : String {
+         sec as Int
+         val Hours = sec / 3600
+         val Minutes = (sec -(Hours * 3600)) / 60
+         return "$Hours:$Minutes"
+     }
+
+    fun ShortDate(dat : Any) : String {
+
+        val datFormat:SimpleDateFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        val date2 = datFormat.parse(dat.toString())
+
+        return "(" + date2.date.toString() + "." + (date2.month + 1).toString() + ")"
     }
+
+    /*
     /// <summary>
     ///
     /// </summary>
@@ -191,35 +207,35 @@ class Helper {
     */
     fun  StringToList(SourceStr: String, separator: String): MutableList<String>
     {
-        var SourceStr = SourceStr.replace(" ", "")
+        var sourceStr = SourceStr.replace(" ", "")
         var result: MutableList<String>
         result = emptyList<String>() as MutableList<String>
         while (true)
         {
-            var index: Int = SourceStr.indexOf(separator)
+            var index: Int = sourceStr.indexOf(separator)
             index = if (index == -1) {
                 0
             } else {
                 index
             }
 
-            val thispart: String = SourceStr.substring(0, index)
+            val thispart: String = sourceStr.substring(0, index)
             if (thispart.isNotEmpty())
             {
                 result.add(thispart)
             }
             if (index > 0)
             {
-                SourceStr = SourceStr.substring(index + separator.length)
+                sourceStr = sourceStr.substring(index + separator.length)
             }
             else
             {
                 break
             }
         }
-        if (SourceStr.isNotEmpty())
+        if (sourceStr.isNotEmpty())
         {
-            result.add(SourceStr)
+            result.add(sourceStr)
         }
         return result
     }

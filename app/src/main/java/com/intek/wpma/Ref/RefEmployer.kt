@@ -1,11 +1,7 @@
 package com.intek.wpma.Ref
 
-import android.text.BoringLayout
-import com.intek.wpma.Helpers.Translation
 import com.intek.wpma.SQL.SQL1S
-import java.lang.ArithmeticException
 import java.math.BigInteger
-import java.util.*
 
 
 class RefEmployer(): ARef() {
@@ -28,15 +24,9 @@ class RefEmployer(): ARef() {
     val CanComplectation: Boolean get() {GetDataEmployer(); return (settings.substring(4, 1) == "1")}
     val CanSet: Boolean get() {GetDataEmployer(); return (settings.substring(1, 1) == "1")}
     val CanDown: Boolean get() {GetDataEmployer(); return (settings.substring(0, 1) == "1")}
+    val IDD:String get() {return GetAttribute("IDD").toString()}
 
     /*
-    public string IDD
-    {
-        get
-        {
-            return GetAttribute("IDD").ToString();
-        }
-    }
 
     /// <summary>
         /// "Родной склад" сотрудника
@@ -58,25 +48,24 @@ class RefEmployer(): ARef() {
         } // Warehouse
 
     */
-        fun RefEmployer(ReadySS: SQL1S)
-        {
-            HaveName    = true
-            HaveCode    = true
-        }
+    init {
+        HaveName    = true
+        HaveCode    = true
+    }
 
 
     private fun GetDataEmployer(): Boolean {
         if (settings != null)
             return true
         val result: Boolean
-        var DataMap: MutableMap<String,Any> = emptyMap<String, Any>() as MutableMap<String, Any>
+        var dataMap: MutableMap<String,Any> = emptyMap<String, Any>() as MutableMap<String, Any>
 
         settings = "000000000000000000000000000000"
         //DataMap = SS.GetSCData(ID,"Сотрудники","Натройки", DataMap,true)!!
-        if (DataMap.isEmpty())
+        if (dataMap.isEmpty())
         {
             // переведем полученное значение в двоичную сс
-            val bigInteger: BigInteger = DataMap.get("Спр.Сотрудники.Настройки") as BigInteger
+            val bigInteger: BigInteger = dataMap.get("Спр.Сотрудники.Настройки") as BigInteger
             //settings += Translation.DecTo2((long)(decimal)DataMap["Спр.Сотрудники.Настройки"])
             settings += bigInteger.toString(2)
             result = true

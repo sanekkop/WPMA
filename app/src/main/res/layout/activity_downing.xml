@@ -4,52 +4,81 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".Menu">
+    tools:context=".ChoiseWork.Shipping.Downing">
 
     <Button
-        android:id="@+id/btnTake"
-        android:layout_width="148dp"
-        android:layout_height="48dp"
+        android:id="@+id/btnLoad"
+        android:layout_width="182dp"
+        android:layout_height="50dp"
         android:background="#FFFFFF"
         android:gravity="center|left"
-        android:text="1 - Приемка ***"
-        android:textColor="#000000"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.523"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.303" />
-
-    <Button
-        android:id="@+id/btnShipping"
-        android:layout_width="148dp"
-        android:layout_height="48dp"
-        android:background="#FFFFFF"
-        android:gravity="center|left"
-        android:text="3 - Отгрузка ***"
-        android:textColor="#000000"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.527"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.393" />
-
-    <Button
-        android:id="@+id/btnSet"
-        android:layout_width="149dp"
-        android:layout_height="46dp"
-        android:background="#FFFFFF"
-        android:gravity="center|left"
-        android:text="0 - Отбор"
+        android:text="1 - Погрузка"
         android:textColor="#000000"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.526"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.17" />
+        app:layout_constraintVertical_bias="0.237" />
+
+    <Button
+        android:id="@+id/btnUnLoad"
+        android:layout_width="182dp"
+        android:layout_height="48dp"
+        android:background="#FFFFFF"
+        android:gravity="center|left"
+        android:text="2 - Разгрузка"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.526"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.331" />
+
+    <Button
+        android:id="@+id/btnDown"
+        android:layout_width="183dp"
+        android:layout_height="45dp"
+        android:background="#FFFFFF"
+        android:gravity="center|left"
+        android:text="3 - Спуск"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.528"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.41" />
+
+    <Button
+        android:id="@+id/btnFree"
+        android:layout_width="183dp"
+        android:layout_height="47dp"
+        android:background="#FFFFFF"
+        android:gravity="center|left"
+        android:text="4 - св. спуск/компл."
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.528"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnCancel"
+        android:layout_width="179dp"
+        android:layout_height="46dp"
+        android:background="#FFFFFF"
+        android:gravity="center|left"
+        android:text="0 - Отмена"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.521"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.153" />
 
     <TextView
         android:id="@+id/terminalView"

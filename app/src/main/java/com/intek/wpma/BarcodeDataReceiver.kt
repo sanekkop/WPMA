@@ -4,14 +4,16 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.MediaPlayer
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.intek.wpma.SQL.SQL1S
 import kotlinx.android.synthetic.main.activity_set.*
 import java.text.SimpleDateFormat
 import java.util.*
-
 
 open abstract class BarcodeDataReceiver: AppCompatActivity() {
 
@@ -25,17 +27,12 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
     val EXTRA_CONTROL = "com.honeywell.aidc.action.ACTION_CONTROL_SCANNER"
     val EXTRA_SCAN = "com.honeywell.aidc.extra.EXTRA_SCAN"
 
-    var sdkVersion = 0
-
-    val SS: SQL1S = SQL1S()
-    var terminal:String = ""
-    var tsdVers: String = "5.02"
+    val sdkVersion = Build.VERSION.SDK_INT
+    val SS:SQL1S = SQL1S
+    val tsdVers: String = "5.02"
     //для штрих-кода типа data matrix
     val BarcodeId = "w"
-    var ANDROID_ID: String = "androidID"
     val ResponceTime: Int = 60 //время ожидания отклика от 1С
-
-
 
     fun sendImplicitBroadcast(ctxt: Context, i: Intent) {
         val pm = ctxt.packageManager
@@ -53,7 +50,6 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
             ctxt.sendBroadcast(explicit)
         }
     }
-
     fun mysendBroadcast(intent: Intent) {
         if (sdkVersion < 26) {
             sendBroadcast(intent)
@@ -90,14 +86,17 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
     }
 
     fun GoodDone(){
+        //GoodVoise()
 
-//        val toneG = ToneGenerator(AudioManager.STREAM_ALARM, 1000)
-//        repeat(400) {
-//            toneG.startTone(ToneGenerator.TONE_CDMA_NETWORK_BUSY_ONE_SHOT)
-//            toneG.stopTone()
-//        }
     }
-
+    fun BadVoise(){
+        val bad = MediaPlayer.create(this,R.raw.bad)
+        bad.start()
+    }
+    fun GoodVoise(){
+        val good = MediaPlayer.create(this,R.raw.good)
+        good.start()
+    }
     /// <summary>
     /// формирует строку присвоений для инструкции SET в UPDATE из переданной таблицы
     /// Поддерживает типы - int, DateTime, string
@@ -137,16 +136,16 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(11, 19))
-        val Query =
+        val query =
             "UPDATE " + SS.GetSynh("Спр.СинхронизацияДанных") +
                     " SET DESCR='" + Command + "'," + ToSetString(DataMapWrite) + (if(DataMapWrite.isEmpty())  "" else ",") +
                     SS.GetSynh("Спр.СинхронизацияДанных.Дата") + " = '" + currentDate + "', " +
                     SS.GetSynh("Спр.СинхронизацияДанных.Время") + " = " + currentTime + ", " +
                     SS.GetSynh("Спр.СинхронизацияДанных.ФлагРезультата") + " = 1," +
-                    SS.GetSynh("Спр.СинхронизацияДанных.ИДТерминала") + " = '" + ANDROID_ID + "'" +
+                    SS.GetSynh("Спр.СинхронизацияДанных.ИДТерминала") + " = '" + SS.ANDROID_ID + "'" +
                     " WHERE ID = (SELECT TOP 1 ID FROM " + SS.GetSynh("Спр.СинхронизацияДанных") +
                     " WHERE " + SS.GetSynh("Спр.СинхронизацияДанных.ФлагРезультата") + "=0)"
-        if (!SS.ExecuteWithoutRead(Query))
+        if (!SS.ExecuteWithoutRead(query))
         {
             return false
         }
@@ -161,11 +160,11 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         commandID: String
     ): MutableMap<String, Any> {
         //тк в котлине нельзя переприсвоить значение переданному в фун параметру, создаю еще 1 перем
-        var CommandID: String = ""
+        var commandID: String = ""
         var beda: Int = 0
 
         if (commandID == "") {
-            CommandID = SendCommand(Command, DataMapWrite, FieldList)
+            commandID = SendCommand(Command, DataMapWrite, FieldList)
         }
         //Ждем выполнения или отказа
         val query =
@@ -173,31 +172,31 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
                 FieldList
             )) +
                     " FROM " + SS.GetSynh("Спр.СинхронизацияДанных") + " (nolock)" +
-                    " WHERE ID='" + CommandID + "'"
+                    " WHERE ID='" + commandID + "'"
 
-        var WaitRobotWork: Boolean = false
+        var waitRobotWork: Boolean = false
         val sdf = SimpleDateFormat("HH:mm:ss")
-        var TimeBegin: Int = timeStrToSeconds(sdf.format(Date()))
-        while (kotlin.math.abs(TimeBegin - timeStrToSeconds(sdf.format(Date()))) < ResponceTime) {
+        var timeBegin: Int = timeStrToSeconds(sdf.format(Date()))
+        while (kotlin.math.abs(timeBegin - timeStrToSeconds(sdf.format(Date()))) < ResponceTime) {
 
-            val DataTable = SS.ExecuteWithRead(query)
+            val dataTable = SS.ExecuteWithRead(query)
             //Ждем выполнения или отказа
-            if (DataTable == null) {
+            if (dataTable == null) {
                 FExcStr.text = "Нет доступных команд! Ошибка робота!"
             }
-            DataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] = DataTable!![1][0]
+            DataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] = dataTable!![1][0]
             if ((DataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() != 1) {
                 if ((DataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == 2) {
-                    if (!WaitRobotWork) {
+                    if (!waitRobotWork) {
                         //1C получила команду, сбросим время ожидания
-                        TimeBegin = timeStrToSeconds(sdf.format(Date()))
-                        WaitRobotWork = true
+                        timeBegin = timeStrToSeconds(sdf.format(Date()))
+                        waitRobotWork = true
                     }
                     continue
                 }
                 var i = 1
-                while (i < DataTable!!.size) {
-                    DataMapRead[FieldList[i - 1]] = DataTable!![1][i]
+                while (i < dataTable.size) {
+                    DataMapRead[FieldList[i - 1]] = dataTable[1][i]
                     i++
                 }
                 return DataMapRead
@@ -205,7 +204,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
                 beda++
                 continue   //Бред какой-то, попробуем еще раз
             }
-            if (TimeBegin + 1 < timeStrToSeconds(sdf.format(Date()))) {
+            if (timeBegin + 1 < timeStrToSeconds(sdf.format(Date()))) {
                 //Пауза в 1, после первой секунды беспрерывной долбежки!
                 val tb: Int = timeStrToSeconds(sdf.format(Date()))
                 while (kotlin.math.abs(tb - timeStrToSeconds(sdf.format(Date()))) < 1) {
@@ -223,12 +222,12 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         DataMapWrite: MutableMap<String, Any>,
         FieldList: MutableList<String>
     ): String {
-        var CommandID: String
+        var commandID: String
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(11, 19))
 
-        val TextQuery: String =
+        val textQuery: String =
             "BEGIN TRAN; " +
                     "DECLARE @CommandID as varchar(9); " +
                     "SELECT TOP 1 @CommandID = ID FROM " + SS.GetSynh("Спр.СинхронизацияДанных") + " (tablockx) " +
@@ -238,34 +237,34 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
                     SS.GetSynh("Спр.СинхронизацияДанных.Дата") + " = '" + currentDate + "', " +
                     SS.GetSynh("Спр.СинхронизацияДанных.Время") + " = " + currentTime + ", " +
                     SS.GetSynh("Спр.СинхронизацияДанных.ФлагРезультата") + " = 1," +
-                    SS.GetSynh("Спр.СинхронизацияДанных.ИДТерминала") + " = '${ANDROID_ID}'" +
+                    SS.GetSynh("Спр.СинхронизацияДанных.ИДТерминала") + " = '${SS.ANDROID_ID}'" +
                     " WHERE ID=@CommandID; " +
                     " SELECT @@rowcount as Rows, @CommandID as CommandID; " +
                     "COMMIT TRAN;"
-        val DataTable = SS.ExecuteWithRead(TextQuery)
-        if (DataTable == null) {
+        val dataTable = SS.ExecuteWithRead(textQuery)
+        if (dataTable == null) {
             FExcStr.text = "Нет доступных команд! Ошибка робота!"
         }
-        CommandID = DataTable!![1][1]
-        return CommandID
+        commandID = dataTable!![1][1]
+        return commandID
     }
 
     fun IBS_Inicialization(EmployerID: String): Boolean
     {
-        var TextQuery =
+        var textQuery =
             "set nocount on; " +
                     "declare @id bigint; " +
                     "exec IBS_Inicialize_with_DeviceID_new :Employer, :HostName, :DeviceID, @id output; " +
                     "select @id as ID;"
-        TextQuery = SS.QuerySetParam(TextQuery, "Employer", EmployerID)
-        TextQuery = SS.QuerySetParam(TextQuery, "HostName", "Android")
-        TextQuery = SS.QuerySetParam(TextQuery, "DeviceID", ANDROID_ID)
-        val DT = SS.ExecuteWithRead(TextQuery) ?: return false
-        if (DT.isEmpty())
+        textQuery = SS.QuerySetParam(textQuery, "Employer", EmployerID)
+        textQuery = SS.QuerySetParam(textQuery, "HostName", "Android")
+        textQuery = SS.QuerySetParam(textQuery, "DeviceID", SS.ANDROID_ID)
+        val dt = SS.ExecuteWithRead(textQuery) ?: return false
+        if (dt.isEmpty())
         {
             return false
         }
-        return DT!![1][0].toInt() > 0
+        return dt[1][0].toInt() > 0
 
     }
 
@@ -274,9 +273,9 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
     }
 
     fun IBS_Lockuot(BlockText: String): Boolean {
-        var TextQuery = "exec IBS_Lockout :BlockText"
-        TextQuery = SS.QuerySetParam(TextQuery, "BlockText", BlockText)
-        if (!SS.ExecuteWithoutRead(TextQuery)) {
+        var textQuery = "exec IBS_Lockout :BlockText"
+        textQuery = SS.QuerySetParam(textQuery, "BlockText", BlockText)
+        if (!SS.ExecuteWithoutRead(textQuery)) {
             return false
         }
         return true
@@ -299,20 +298,20 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
             return false
         }
 
-        var DataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        DataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(EmployerID, "Спр.Сотрудники")
-        DataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = ANDROID_ID
-        if (!ExecCommandNoFeedback("Login", DataMapWrite)) {
+        var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(EmployerID, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.ANDROID_ID
+        if (!ExecCommandNoFeedback("Login", dataMapWrite)) {
             return false
         }
         return true
     }
 
     fun Logout(EmployerID: String): Boolean{
-        var DataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        DataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(EmployerID, "Спр.Сотрудники")
-        DataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = ANDROID_ID
-        if (!ExecCommandNoFeedback("Logout", DataMapWrite)) {
+        var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(EmployerID, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.ANDROID_ID
+        if (!ExecCommandNoFeedback("Logout", dataMapWrite)) {
             return false
         }
         SS.ExecuteWithoutRead("exec IBS_Finalize")

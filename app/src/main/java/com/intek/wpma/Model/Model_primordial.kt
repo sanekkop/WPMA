@@ -1,9 +1,10 @@
 package com.intek.wpma.Model
 
 import com.intek.wpma.SQL.SQL1S
+import com.intek.wpma.SQL.SQLSynchronizer
 import java.math.BigDecimal
 
-class Model : SQL1S() {
+class Model : SQLSynchronizer() {
 
     private val FOKEIUnit: String       = "     1   "
     private val FOKEIPack: String       = "     2   "

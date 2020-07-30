@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:dist="http://schemas.android.com/apk/distribution"
-    package="com.intek.wpma">
-
+    package="com.intek.wpma"
+    android:versionCode="1"
+    android:versionName="5.01">
     <dist:module dist:instant="true" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.honeywell.decode.permission.DECODE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
+
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
 
@@ -19,11 +23,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ScanActivity"></activity>
-        <activity android:name=".WatchTablePart"></activity>
-        <activity android:name=".ChoiseWork.SetComplete" />
-        <activity android:name=".Correct" />
+        <activity android:name=".ScanActivity" />
+        <activity android:name=".ChoiseWork.Set.WatchTablePart" />
+        <activity android:name=".ChoiseWork.Set.SetComplete" />
+        <activity android:name=".ChoiseWork.Set.Correct" />
         <activity android:name=".ChoiseWork.Set.SetInitialization" />
+        <activity android:name=".ChoiseWork.Shipping.ChoiseWorkShipping" />
+        <activity android:name=".ChoiseWork.Shipping.Downing" />
+        <activity android:name=".ChoiseWork.Shipping.UnLoading" />
+        <activity android:name=".ChoiseWork.Shipping.Loading" />
+        <activity android:name=".ChoiseWork.Shipping.FreeComplectation" />
+        <activity android:name=".ChoiseWork.Shipping.ShowInfo" />
         <activity android:name=".Menu" />
         <activity android:name=".MainActivity">
             <intent-filter>

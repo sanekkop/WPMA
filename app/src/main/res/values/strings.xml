@@ -1,12 +1,11 @@
 <resources>
-    <string name="app_name">WPMA 5.02</string>
+    <string name="app_name">WPMA</string>
     <string name="actionText">Отсканируте бейджик...</string>
     <string name="resText">Ожидание авторизации</string>
     <string name="choiseWorkLbl">Выбор работы</string>
     <string name="choiseWorkLb2">Выберите режим работы</string>
-    <string name="choiseWork">0 - Отбор\n1 - Приемка ***\n2 - Разнос\n3 - Отгрузка\n4 - Инвентаризация\n5 - Сверка товара\n6 - Образцы ***\n7 - Подпитка\n8 - Контроль\n9 - Гармонь</string>
+    <string name="choiseWork">0 - Отбор\n1 - Приемка ***\n2 - Разнос\n3 - Отгрузка ***\n4 - Инвентаризация\n5 - Сверка товара\n6 - Образцы ***\n7 - Подпитка\n8 - Контроль\n9 - Гармонь</string>
     <string name="BarcodeData">Данные о штрих-коде</string>
-
 
 
     <string name="curr">ID</string>

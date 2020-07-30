@@ -1,45 +1,29 @@
-package com.intek.wpma.ChoiseWork
+package com.intek.wpma.ChoiseWork.Shipping
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.provider.Settings
 import android.util.Log
-import android.util.Printer
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.ChoiseWork.Set.SetInitialization
-import com.intek.wpma.MainActivity
 import com.intek.wpma.R
-import com.intek.wpma.SQL.SQL1S
 import com.intek.wpma.ScanActivity
-import kotlinx.android.synthetic.main.activity_correct.*
-import kotlinx.android.synthetic.main.activity_set.*
-import kotlinx.android.synthetic.main.activity_set.PreviousAction
 import kotlinx.android.synthetic.main.activity_set_complete.*
 import kotlinx.android.synthetic.main.activity_set_complete.FExcStr
 import kotlinx.android.synthetic.main.activity_set_complete.terminalView
 
-class SetComplete : BarcodeDataReceiver() {
+class Downing : BarcodeDataReceiver() {
 
-    val SetInit: SetInitialization = SetInitialization()
     var DocSet: String = ""
-    var Employer: String = ""
-    var EmployerFlags: String = ""
-    var EmployerIDD: String = ""
-    var EmployerID: String = ""
     var Barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     var Places: Int? = null
     var PrinterPath = ""
-    var isMobile = false    //флаг мобильного устройства
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -66,15 +50,9 @@ class SetComplete : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set_complete)
 
-        Employer = intent.extras!!.getString("Employer")!!
-        EmployerFlags = intent.extras!!.getString("EmployerFlags")!!
-        EmployerIDD = intent.extras!!.getString("EmployerIDD")!!
-        EmployerID = intent.extras!!.getString("EmployerID")!!
         PrinterPath = intent.extras!!.getString("PrinterPath")!!
-        terminalView.text = intent.extras!!.getString("terminalView")!!
-        isMobile = intent.extras!!.getString("isMobile")!!.toBoolean()
-        ANDROID_ID = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-        title = Employer
+        terminalView.text = SS.terminal
+        title = SS.FEmployer.Name
 
         if (PrinterPath != "") {
             printer.text = PrinterPath
@@ -82,7 +60,7 @@ class SetComplete : BarcodeDataReceiver() {
             enterCountPlace.visibility = View.VISIBLE
         }
         DocSet = intent.extras!!.getString("iddoc")!!
-        val TextQuery =
+        val textQuery =
             "SELECT " +
                     "journForBill.docno as DocNo, " +
                     "CONVERT(char(8), CAST(LEFT(journForBill.date_time_iddoc, 8) as datetime), 4) as DateDoc, " +
@@ -101,13 +79,13 @@ class SetComplete : BarcodeDataReceiver() {
                     "LEFT JOIN _1sjourn as journForBill (nolock) " +
                     "ON journForBill.iddoc = Bill.iddoc " +
                     "WHERE DocCCHead.iddoc = '$DocSet'"
-        val DataTable = SS.ExecuteWithRead(TextQuery)
-        previousAction.text = if (DataTable!![1][5].toInt() == 1) "(C) " else {
+        val dataTable = SS.ExecuteWithRead(textQuery)
+        previousAction.text = if (dataTable!![1][5].toInt() == 1) "(C) " else {
             ""
-        } + DataTable[1][3].trim() + "-" +
-                DataTable[1][4] + " Заявка " + DataTable[1][0] + " (" + DataTable[1][1] + ")"
+        } + dataTable[1][3].trim() + "-" +
+                dataTable[1][4] + " Заявка " + dataTable[1][0] + " (" + dataTable[1][1] + ")"
 
-        if (DataTable[1][5].toInt() == 1) DocView.text = "САМОВЫВОЗ" else DocView.text = "ДОСТАВКА"
+        if (dataTable[1][5].toInt() == 1) DocView.text = "САМОВЫВОЗ" else DocView.text = "ДОСТАВКА"
         //тут этот код дублирую, чтобы поймать нажатие на enter после ввода колва с уже установленным принтером
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
@@ -126,12 +104,12 @@ class SetComplete : BarcodeDataReceiver() {
             false
         }
 
-        if (isMobile){
+        if (SS.isMobile){
             btnScanSetComplete.visibility = View.VISIBLE
             btnScanSetComplete!!.setOnClickListener {
-                val ScanAct = Intent(this@SetComplete, ScanActivity::class.java)
-                ScanAct.putExtra("ParentForm","SetComplete")
-                startActivity(ScanAct)
+                val scanAct = Intent(this@Downing, ScanActivity::class.java)
+                scanAct.putExtra("ParentForm","SetComplete")
+                startActivity(scanAct)
             }
         }
     }
@@ -142,24 +120,24 @@ class SetComplete : BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
-        val IDD: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
+        val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
 
-        if (SS.IsSC(IDD, "Принтеры")) {
+        if (SS.IsSC(idd, "Принтеры")) {
             //получим путь принтера
-            val TextQuery =
+            val textQuery =
                 "select descr, SP2461 " +
                         "from SC2459 " +
-                        "where SP2465 = '$IDD'"
-            val DataTable = SS.ExecuteWithRead(TextQuery) ?: return false
+                        "where SP2465 = '$idd'"
+            val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
 
-            PrinterPath = DataTable!![1][1]
+            PrinterPath = dataTable[1][1]
             printer.text = PrinterPath
             FExcStr.text = "Введите колво мест"
             enterCountPlace.visibility = View.VISIBLE
 
             return true
-        } else if (!SS.IsSC(IDD, "Секции")) {
+        } else if (!SS.IsSC(idd, "Секции")) {
             FExcStr.text = "Нужен принтер и адрес предкомплектации, а не это!"
             return false
         }
@@ -172,62 +150,48 @@ class SetComplete : BarcodeDataReceiver() {
             return false
         }
         //подтянем адрес комплектации
-        val TextQuery =
-            "SELECT ID, SP3964, descr FROM SC1141 (nolock) WHERE SP1935= '$IDD'"
-        val DataTable = SS.ExecuteWithRead(TextQuery) ?: return false
-        val AddressType = DataTable!![1][1]
-        val AddressID = DataTable!![1][0]
-        if (AddressType == "12") {
+        val textQuery =
+            "SELECT ID, SP3964, descr FROM SC1141 (nolock) WHERE SP1935= '$idd'"
+        val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
+        val addressType = dataTable[1][1]
+        val addressID = dataTable[1][0]
+        if (addressType == "12") {
             FExcStr.text = "Отсканируйте адрес предкопмплектации!"
             return false
         }
-        var DataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        DataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = SS.ExtendID(DocSet, "КонтрольНабора")
-        DataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(EmployerID, "Спр.Сотрудники")
-        DataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = SS.ExtendID(AddressID, "Спр.Секции")
-        DataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = Places!!
-        DataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = PrinterPath
+        var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = SS.ExtendID(DocSet, "КонтрольНабора")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FEmployer.ID, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = SS.ExtendID(addressID, "Спр.Секции")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = Places!!
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = PrinterPath
 
-        var DataMapRead: MutableMap<String, Any> = mutableMapOf()
-        var FieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
+        var dataMapRead: MutableMap<String, Any> = mutableMapOf()
+        var fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
 
-        DataMapRead = ExecCommand("PicingComplete", DataMapWrite, FieldList, DataMapRead, "")
+        dataMapRead = ExecCommand("PicingComplete", dataMapWrite, fieldList, dataMapRead, "")
 
-        if ((DataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
-            FExcStr.text = DataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
+        if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
+            FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
             //сборочный уже закрыт, уйдем с формы завершения набора
-            val SetInitialization = Intent(this, SetInitialization::class.java)
-            SetInitialization.putExtra("Employer", Employer)
-            SetInitialization.putExtra("EmployerIDD", EmployerIDD)
-            SetInitialization.putExtra("EmployerFlags", EmployerFlags)
-            SetInitialization.putExtra("EmployerID", EmployerID)
-            SetInitialization.putExtra("PrinterPath", PrinterPath)
-            SetInitialization.putExtra("terminalView",terminalView.text.trim())
-            SetInitialization.putExtra("isMobile",isMobile.toString())
-            SetInitialization.putExtra("ParentForm", "SetComplete")
-            startActivity(SetInitialization)
+            val setInitialization = Intent(this, ChoiseWorkShipping::class.java)
+            setInitialization.putExtra("ParentForm", "SetComplete")
+            startActivity(setInitialization)
             finish()
             return false
         }
-        if ((DataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() != 3) {
+        if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() != 3) {
             FExcStr.text = "Не известный ответ робота... я озадачен..."
             return false
         }
-        FExcStr.text = DataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
+        FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
 
         LockoutDoc(DocSet)      //разблокируем доки
 
         //вернемся обратно в SetInitialization
-        val SetInitialization = Intent(this, SetInitialization::class.java)
-        SetInitialization.putExtra("Employer", Employer)
-        SetInitialization.putExtra("EmployerIDD", EmployerIDD)
-        SetInitialization.putExtra("EmployerFlags", EmployerFlags)
-        SetInitialization.putExtra("EmployerID", EmployerID)
-        SetInitialization.putExtra("PrinterPath", PrinterPath)
-        SetInitialization.putExtra("terminalView",terminalView.text.trim())
-        SetInitialization.putExtra("isMobile",isMobile.toString())
-        SetInitialization.putExtra("ParentForm", "SetComplete")
-        startActivity(SetInitialization)
+        val setInitialization = Intent(this, ChoiseWorkShipping::class.java)
+        setInitialization.putExtra("ParentForm", "SetComplete")
+        startActivity(setInitialization)
         finish()
 
 

@@ -1,13 +1,8 @@
 package com.intek.wpma.SQL
 
-import android.renderscript.Sampler
-import java.sql.*
-import android.R.string
-import android.app.DownloadManager
+import android.app.Application
 import android.os.StrictMode
-import android.widget.Toast
-import kotlinx.android.synthetic.main.activity_main.*
-
+import java.sql.*
 
 /// <summary>
 /// Обеспечивает коннект, чтение/запись и т.п.
@@ -16,8 +11,8 @@ import kotlinx.android.synthetic.main.activity_main.*
 open class SQLSynchronizer
 {
     protected val FServerName: Array<String> = arrayOf("192.168.8.4:57068","192.168.8.5:57068") //Наши серваки
-    //protected val FDBName: String = "int9999001ad4" //База
-    protected val FDBName: String? = "int9999001rab"
+    protected val FDBName: String = "int9999001ad1" //База
+    //protected val FDBName: String? = "int9999001rab"
     protected val Vers: String = "5.02"    //Номер версии
     protected var MyConnection: Connection? = null
     protected var MyComand: Statement? = null
@@ -25,7 +20,7 @@ open class SQLSynchronizer
     protected var FExcStr: String? = null
     public var permission: Boolean? = null
 
-   // public delegate void OpenedEventHendler(object sender, EventArgs e);
+    // public delegate void OpenedEventHendler(object sender, EventArgs e);
     //public event OpenedEventHendler Opened;
 
     /// <summary>
@@ -41,17 +36,17 @@ open class SQLSynchronizer
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
         Class.forName("net.sourceforge.jtds.jdbc.Driver")
-        var ConIsOpen: Boolean
+        var conIsOpen: Boolean
         try {
-            var Connection = DriverManager.getConnection("jdbc:jtds:sqlserver://" + ServName + "/" + FDBName,"sa","1419176")
-            MyConnection = Connection
-            MyComand = Connection.createStatement()
-            ConIsOpen = !Connection.isClosed
+            var connection = DriverManager.getConnection("jdbc:jtds:sqlserver://" + ServName + "/" + FDBName,"sa","1419176")
+            MyConnection = connection
+            MyComand = connection.createStatement()
+            conIsOpen = !connection.isClosed
         }
         catch (e: SQLException) {
-            ConIsOpen = false
+            conIsOpen = false
         }
-       return ConIsOpen
+       return conIsOpen
     }
 
     /// <summary>
@@ -69,12 +64,12 @@ open class SQLSynchronizer
     {
         //FExcStr = null;
 
-        var ConIsClosed = true
+        var conIsClosed = true
         if (MyConnection != null)
         {
-            ConIsClosed = MyConnection!!.isClosed
+            conIsClosed = MyConnection!!.isClosed
         }
-        if (ConIsClosed)
+        if (conIsClosed)
         {
             //попытаемся подключиться к серверу
             if (!SQLConnect(FServerName[0])) {
@@ -97,7 +92,7 @@ open class SQLSynchronizer
     {
         FExcStr = null
         //Сохраним первоначальое состояние соединения
-        val CS: Boolean = MyConnection!!.isClosed
+        val cs: Boolean = MyConnection!!.isClosed
         if (!OpenConnection())
         {
             return false
@@ -115,7 +110,7 @@ open class SQLSynchronizer
         }
         catch (e: SQLException)
         {
-            if (CS == true && MyConnection!!.isClosed != false)
+            if (cs == true && MyConnection!!.isClosed != false)
             {
                 //Таким образом, если соединение до выполнения запроса было открыто,
                 //а после выполнения обвалилось (см. выше). Это наверняка эффект "уснувшего" терминала!

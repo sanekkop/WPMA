@@ -10,10 +10,9 @@ import android.util.Log
 import android.view.KeyEvent
 import android.widget.Toast
 import com.intek.wpma.ChoiseWork.Set.SetInitialization
-import kotlinx.android.synthetic.main.activity_main.*
+import com.intek.wpma.ChoiseWork.Shipping.ChoiseWorkShipping
 import kotlinx.android.synthetic.main.activity_menu.*
 import kotlinx.android.synthetic.main.activity_menu.terminalView
-import java.math.BigInteger
 
 
 class Menu : BarcodeDataReceiver() {
@@ -25,7 +24,6 @@ class Menu : BarcodeDataReceiver() {
     var EmployerIDD: String = ""
     var EmployerID: String = ""
     var ParentForm: String = ""
-    var isMobile = false    //флаг мобильного устройства
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -57,22 +55,27 @@ class Menu : BarcodeDataReceiver() {
         EmployerIDD = intent.extras!!.getString("EmployerIDD")!!
         EmployerID = intent.extras!!.getString("EmployerID")!!
         ParentForm = intent.extras!!.getString("ParentForm")!!
-        terminalView.text = intent.extras!!.getString("terminalView")!!
-        isMobile = intent.extras!!.getString("isMobile")!!.toBoolean()
-        ANDROID_ID =  Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+        terminalView.text = SS.terminal
 
         title = Employer
 
         btnSet.setOnClickListener {
-            val SetInit = Intent(this, SetInitialization::class.java)
-            SetInit.putExtra("Employer", Employer)
-            SetInit.putExtra("EmployerIDD",EmployerIDD)
-            SetInit.putExtra("EmployerFlags",EmployerFlags)
-            SetInit.putExtra("EmployerID",EmployerID)
-            SetInit.putExtra("terminalView",terminalView.text.trim())
-            SetInit.putExtra("isMobile",isMobile.toString())
-            SetInit.putExtra("ParentForm","Menu")
-            startActivity(SetInit)
+            val setInit = Intent(this, SetInitialization::class.java)
+            setInit.putExtra("Employer", Employer)
+            setInit.putExtra("EmployerIDD",EmployerIDD)
+            setInit.putExtra("EmployerFlags",EmployerFlags)
+            setInit.putExtra("EmployerID",EmployerID)
+            setInit.putExtra("ParentForm","Menu")
+            startActivity(setInit)
+        }
+        btnShipping.setOnClickListener {
+            val choiseWorkShipingInit = Intent(this, ChoiseWorkShipping::class.java)
+            choiseWorkShipingInit.putExtra("Employer", Employer)
+            choiseWorkShipingInit.putExtra("EmployerIDD",EmployerIDD)
+            choiseWorkShipingInit.putExtra("EmployerFlags",EmployerFlags)
+            choiseWorkShipingInit.putExtra("EmployerID",EmployerID)
+            choiseWorkShipingInit.putExtra("ParentForm","Menu")
+            startActivity(choiseWorkShipingInit)
         }
     }
 
@@ -83,8 +86,8 @@ class Menu : BarcodeDataReceiver() {
                 Lbl.text = "Ошибка выхода из системы!"
                 return
             }
-            val Main = Intent(this, MainActivity::class.java)
-            startActivity(Main)
+            val main = Intent(this, MainActivity::class.java)
+            startActivity(main)
             finish()
             return
         }
@@ -104,18 +107,15 @@ class Menu : BarcodeDataReceiver() {
     }
 
     private fun startActivity(num: Int) {
-        var intent: Intent
 
         if (num == 7) {     // режим отбора
-            val SetInit = Intent(this, SetInitialization::class.java)
-            SetInit.putExtra("Employer", Employer)
-            SetInit.putExtra("EmployerIDD",EmployerIDD)
-            SetInit.putExtra("EmployerFlags",EmployerFlags)
-            SetInit.putExtra("EmployerID",EmployerID)
-            SetInit.putExtra("terminalView",terminalView.text.trim())
-            SetInit.putExtra("isMobile",isMobile.toString())
-            SetInit.putExtra("ParentForm","Menu")
-            startActivity(SetInit)
+            val setInit = Intent(this, SetInitialization::class.java)
+            setInit.putExtra("Employer", Employer)
+            setInit.putExtra("EmployerIDD",EmployerIDD)
+            setInit.putExtra("EmployerFlags",EmployerFlags)
+            setInit.putExtra("EmployerID",EmployerID)
+            setInit.putExtra("ParentForm","Menu")
+            startActivity(setInit)
         }
     }
 

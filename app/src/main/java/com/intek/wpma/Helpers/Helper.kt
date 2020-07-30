@@ -155,19 +155,6 @@ class Helper {
     }
     /*
     /// <summary>
-    /// Преобразует число секунд в строку вида ЧЧ:ММ
-    /// </summary>
-    /// <param name="Sec">Seconds since the beginning of the day</param>
-    /// <returns></returns>
-    static public string SecondToString(int Sec)
-    {
-        string Hours   = "0" + ((int)(Sec/3600)).ToString();
-        Sec -= 3600*(int)(Sec/3600);
-        string Minutes = "0" + ((int)(Sec/60)).ToString();
-        Sec -= Sec - 60*(int)(Sec/60);
-        return Hours.Substring(Hours.Length - 2, 2) + ":" + Minutes.Substring(Minutes.Length - 2, 2);
-    }
-    /// <summary>
     ///
     /// </summary>
     /// <param name="Barcode"></param>

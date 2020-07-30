@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.os.Bundle
 import android.widget.TableRow
 import android.widget.TextView
@@ -130,68 +131,114 @@ class ShowInfo : BarcodeDataReceiver() {
         textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
         val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
 
+        var cvet = Color.rgb(192,192,192)
+
         if(dataTable.isNotEmpty()){
 
             for (DR in dataTable){
-                val row = TableRow(this)
+                val row1 = TableRow(this)
                 val number = TextView(this)
-                val linearLayout = LinearLayout(this)
+                val linearLayout1 = LinearLayout(this)
 
                 val sector = RefSection()
                 sector.FoundID(DR["Сектор"].toString())
-                number.text = sector.Name + "-" + DR["НомерЛиста"]
+                number.text = sector.Name
                 number.layoutParams = LinearLayout.LayoutParams(80,ViewGroup.LayoutParams.WRAP_CONTENT)
                 number.gravity = Gravity.CENTER_HORIZONTAL
                 number.textSize = 16F
                 number.setTextColor(-0x1000000)
 
+                val nmest = TextView(this)
+                nmest.text = DR["Мест"]
+                nmest.layoutParams = LinearLayout.LayoutParams(25, ViewGroup.LayoutParams.WRAP_CONTENT)
+                nmest.gravity = Gravity.CENTER_HORIZONTAL
+                nmest.textSize = 16F
+                nmest.setTextColor(Color.RED)
+                nmest.setBackgroundColor(Color.GREEN)
+
                 val address = TextView(this)
                 var employ = RefEmployer()
                 employ.FoundID(DR["Наборщик"].toString())
-                address.text = SS.helper.GetShortFIO(employ.Name) + " " + DR["КолМест"]
-                address.layoutParams = LinearLayout.LayoutParams(120,ViewGroup.LayoutParams.WRAP_CONTENT)
-                address.gravity = Gravity.CENTER_HORIZONTAL
+                address.text = " " + SS.helper.GetShortFIO(employ.Name)
+                address.layoutParams = LinearLayout.LayoutParams(165,ViewGroup.LayoutParams.WRAP_CONTENT)
+                address.gravity = Gravity.LEFT
                 address.textSize = 16F
                 address.setTextColor(-0x1000000)
 
                 val count = TextView(this)
-                count.text = SS.helper.ShortDate(DR["Дата1"].toString()) + " " +
+                count.text = " " + SS.helper.ShortDate(DR["Дата1"].toString()) + " " +
                         SS.helper.timeToString(DR["Время1"].toString().toInt()) + " - " +
                         SS.helper.timeToString(DR["Время2"].toString().toInt())
-                count.layoutParams = LinearLayout.LayoutParams(90,ViewGroup.LayoutParams.WRAP_CONTENT)
-                count.gravity = Gravity.CENTER
+                count.layoutParams = LinearLayout.LayoutParams(180,ViewGroup.LayoutParams.WRAP_CONTENT)
+                count.gravity = Gravity.LEFT
                 count.textSize = 16F
                 count.setTextColor(-0x1000000)
 
+                linearLayout1.setPadding(3,3,3,3)
+                linearLayout1.addView(number)
+                linearLayout1.addView(nmest)
+                linearLayout1.addView(address)
+                linearLayout1.addView(count)
+
+                row1.setBackgroundColor(cvet)
+                row1.addView(linearLayout1)
 
 
-                linearLayout.addView(number)
-                linearLayout.addView(address)
-                linearLayout.addView(count)
 
-                row.addView(linearLayout)
-                table.addView(row)
+                val row2 = TableRow(this)
+                val linearLayout2 = LinearLayout(this)
+
+                val mest = TextView(this)
+                mest.text = " -" + DR["НомерЛиста"]
+                mest.layoutParams = LinearLayout.LayoutParams(80,ViewGroup.LayoutParams.WRAP_CONTENT)
+                mest.gravity = Gravity.CENTER
+                mest.textSize = 16F
+                mest.setTextColor(-0x1000000)
+
+                val kmest = TextView(this)
+                kmest.text = DR["КолМест"]
+                kmest.layoutParams = LinearLayout.LayoutParams(25, ViewGroup.LayoutParams.WRAP_CONTENT)
+                kmest.gravity = Gravity.CENTER_HORIZONTAL
+                kmest.textSize = 16F
+                kmest.setTextColor(Color.BLACK)
+                kmest.setBackgroundColor(Color.GREEN)
 
                 val code = TextView(this)
                 employ.FoundID(DR["Комплектовщик"].toString())
-                code.text = SS.helper.GetShortFIO(employ.Name) + " " + DR["Мест"]
-                code.layoutParams = LinearLayout.LayoutParams(120,ViewGroup.LayoutParams.WRAP_CONTENT)
-                code.gravity = Gravity.CENTER
+                code.text = " " + SS.helper.GetShortFIO(employ.Name)
+                code.layoutParams = LinearLayout.LayoutParams(165,ViewGroup.LayoutParams.WRAP_CONTENT)
+                code.gravity = Gravity.LEFT
                 code.textSize = 16F
                 code.setTextColor(-0x1000000)
 
                 val sum = TextView(this)
-                sum.text = SS.helper.ShortDate(DR["Дата2"].toString()) + " " + SS.helper.timeToString(DR["Время3"].toString().toInt())
-                sum.layoutParams = LinearLayout.LayoutParams(90,ViewGroup.LayoutParams.WRAP_CONTENT)
-                sum.gravity = Gravity.CENTER
+                sum.text = " " + SS.helper.ShortDate(DR["Дата2"].toString()) + " " + SS.helper.timeToString(DR["Время3"].toString().toInt())
+                sum.layoutParams = LinearLayout.LayoutParams(150,ViewGroup.LayoutParams.WRAP_CONTENT)
+                sum.gravity = Gravity.LEFT
                 sum.textSize = 16F
                 sum.setTextColor(-0x1000000)
 
-                linearLayout.addView(code)
-                linearLayout.addView(sum)
+                val nstrok = TextView(this)
+                nstrok.text = DR["КолСтрок"] + " "
+                nstrok.layoutParams = LinearLayout.LayoutParams(30,ViewGroup.LayoutParams.WRAP_CONTENT)
+                nstrok.gravity = Gravity.RIGHT
+                nstrok.textSize = 16F
+                nstrok.setTextColor(Color.BLUE)
 
-                row.addView(linearLayout)
-                table.addView(row)
+                linearLayout2.setPadding(3,3,3,3)
+                linearLayout2.addView(mest)
+                linearLayout2.addView(kmest)
+                linearLayout2.addView(code)
+                linearLayout2.addView(sum)
+                linearLayout2.addView(nstrok)
+
+                row2.setBackgroundColor(cvet)
+                row2.addView(linearLayout2)
+
+                table.addView(row1)
+                table.addView(row2)
+
+                if (cvet == Color.rgb(192,192,192)) cvet = Color.WHITE else cvet = Color.rgb(192,192,192)
             }
         }
         return

@@ -2,6 +2,7 @@ package com.intek.wpma.Helpers
 
 import java.io.File.separator
 import java.math.BigInteger
+import java.text.SimpleDateFormat
 import java.util.*
 
 class Helper {
@@ -25,33 +26,44 @@ class Helper {
         }
         return result;
     }
-    /// <summary>
-    /// делает из полного имени формат типа: Иванов И.И.
-    /// </summary>
-    /// <param name="FIO"></param>
-    /// <returns></returns>
-    static public string GetShortFIO(string FIO)
+    */
+    fun GetShortFIO(FIO:String):String
     {
-        string result = "";
-        FIO = FIO.Trim();
-        bool space = false;
-        bool surname = false;
-        for (int i = 0; i < FIO.Length; i++)
+        var result = ""
+        var fio = FIO.trim()
+        var space = false
+        var surname = false
+        for (i in 0..fio.length-1)
         {
-            string ch = FIO.Substring(i, 1);
+            var ch = fio.substring(i, i+1);
             if (!surname)
             {
-                result += ch;
+                result += ch
             }
             if (space)
             {
-                result += ch + ".";
+                result += ch + "."
             }
-            surname = ch == " " ? true : surname;
-            space = ch == " " ? true : false;
+            surname = if (ch == " ") true else surname
+            space = ch == " "
         }
         return result;
     }
+    fun timeToString(sec : Any) : String {
+        sec as Int
+        val Hours = sec / 3600
+        val Minutes = (sec -(Hours * 3600)) / 60
+        return "$Hours:$Minutes"
+    }
+
+    fun ShortDate(dat : Any) : String {
+
+        val datFormat:SimpleDateFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        val date2 = datFormat.parse(dat.toString())
+
+        return "(" + date2.date.toString() + "." + (date2.month + 1).toString() + ")"
+    }
+    /*
     /// <summary>
     ///
     /// </summary>

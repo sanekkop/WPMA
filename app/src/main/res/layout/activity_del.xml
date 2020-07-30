@@ -4,10 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-<<<<<<< HEAD
-    tools:context=".Upodate.DelActivity">
-=======
     tools:context=".MainActivity">
->>>>>>> 8d4568a727d41cabbc0d1cf5d2d3723820b23446
 
 </androidx.constraintlayout.widget.ConstraintLayout>

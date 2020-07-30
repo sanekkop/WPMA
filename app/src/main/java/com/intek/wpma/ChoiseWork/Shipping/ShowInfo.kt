@@ -14,13 +14,18 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.ParentForm
 import com.intek.wpma.R
+import com.intek.wpma.Ref.RefEmployer
+import com.intek.wpma.Ref.RefSection
+import com.intek.wpma.SQL.SQL1S
 import kotlinx.android.synthetic.main.activity_show_info.*
 
 
 class ShowInfo : BarcodeDataReceiver() {
 
     var iddoc: String = ""
+    var iddocControl : String = ""
     var number: String = ""
     var Barcode: String = ""
     var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
@@ -51,11 +56,11 @@ class ShowInfo : BarcodeDataReceiver() {
         setContentView(R.layout.activity_show_info)
         iddoc = intent.extras!!.getString("Doc")!!
         number = intent.extras!!.getString("Number")!!
-        //ParentForm = intent.extras!!.getString("ParentForm")!!
+        ParentForm = intent.extras!!.getString("ParentForm")!!
         terminalView.text = SS.terminal
-        title = SS.helper.GetShortFIO(SS.FEmployer.Name)
-
-        //getShowInfo()
+        title = SS.FEmployer.Name
+        getControl()
+        getShowInfo()
 
         //scroll.setOnTouchListener(@this)
     }
@@ -70,18 +75,59 @@ class ShowInfo : BarcodeDataReceiver() {
             startActivity(loadingAct)
             finish()
         }
+
 //        else if (keyCode == 20){    //вниз
 //
 //        }
         return super.onKeyDown(keyCode, event)
     }
 
+    private fun getControl() {
+        var textQuery ="SELECT _1SJOURN.IDDOC, _1SJOURN.IDDOCDEF FROM _1SJOURN (NOLOCK INDEX=ACDATETIME), _1SCRDOC (NOLOCK INDEX=PARENT)" +
+                " WHERE _1SJOURN.DATE_TIME_IDDOC=_1SCRDOC.CHILD_DATE_TIME_IDDOC and _1SCRDOC.MDID=0 and _1SCRDOC.PARENTVAL='O1" +
+                SS.ExtendID(iddoc, "Счет") +
+                "' ORDER BY IDDOC"
+
+       val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
+
+        if(dataTable.isNotEmpty()){
+
+            for (DR in dataTable){
+                if (SS.To1CName(DR["IDDOCDEF"].toString()) == "КонтрольРасходной") {
+                        iddocControl = DR["IDDOC"].toString()
+                    }
+            }
+        }
+    }
 
     private fun getShowInfo(){
-        var textQuery =""
+        var textQuery ="SELECT IDDOC," +
+                "\$КонтрольНабора.Сектор as Сектор , " +
+                "\$КонтрольНабора.Дата1 as Дата1 , " +
+                "\$КонтрольНабора.Дата2 as Дата2 , " +
+                "\$КонтрольНабора.Дата3 as Дата3 , " +
+                "\$КонтрольНабора.Время1 as Время1 , " +
+                "\$КонтрольНабора.Время2 as Время2 , " +
+                "\$КонтрольНабора.Время3 as Время3 ," +
+                "\$КонтрольНабора.НомерЛиста as НомерЛиста , " +
+                "\$КонтрольНабора.КолМест as КолМест , " +
+                "\$КонтрольНабора.Наборщик as Наборщик ," +
+                "\$КонтрольНабора.Комплектовщик as Комплектовщик ," +
+                "\$КонтрольНабора.КолСтрок as КолСтрок ,  " +
+                "ISNULL(Places.Count,0) as Мест  FROM DH\$КонтрольНабора  (nolock) " +
+                "LEFT JOIN ( SELECT Count(*) as Count, \$Спр.МестаПогрузки.КонтрольНабора as DocCC " +
+                "FROM \$Спр.МестаПогрузки  (nolock) " +
+                "WHERE ismark = 0 and not  \$Спр.МестаПогрузки.Дата6 = :EmptyDate " +
+                "GROUP BY  \$Спр.МестаПогрузки.КонтрольНабора " +
+                ") as Places ON Places.DocCC = IDDOC " +
+                "WHERE IDDOC in (SELECT _1SJOURN.IDDOC FROM _1SJOURN (NOLOCK INDEX=ACDATETIME), _1SCRDOC (NOLOCK INDEX=PARENT)" +
+                "WHERE _1SJOURN.ISMARK = 0 and _1SJOURN.DATE_TIME_IDDOC=_1SCRDOC.CHILD_DATE_TIME_IDDOC and _1SCRDOC.MDID=0 and _1SCRDOC.PARENTVAL='O1" +
+                SS.ExtendID(iddocControl, "КонтрольРасходной") +
+                "') ORDER BY IDDOC "
 
         textQuery = SS.QuerySetParam(textQuery, "Number", number)
         textQuery = SS.QuerySetParam(textQuery, "iddoc", iddoc)
+        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
         val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
 
         if(dataTable.isNotEmpty()){
@@ -90,31 +136,39 @@ class ShowInfo : BarcodeDataReceiver() {
                 val row = TableRow(this)
                 val number = TextView(this)
                 val linearLayout = LinearLayout(this)
-                number.text = DR[""]
-                number.layoutParams = LinearLayout.LayoutParams(45,ViewGroup.LayoutParams.WRAP_CONTENT)
-                number.gravity = Gravity.CENTER
+                val sector = RefSection()
+                sector.FoundID(DR["Сектор"].toString())
+                number.text = sector.Name + "-" + DR["НомерЛиста"]
+                number.layoutParams = LinearLayout.LayoutParams(80,ViewGroup.LayoutParams.WRAP_CONTENT)
+                number.gravity = Gravity.CENTER_HORIZONTAL
                 number.textSize = 16F
                 number.setTextColor(-0x1000000)
                 val address = TextView(this)
-                address.text = DR[""]
-                address.layoutParams = LinearLayout.LayoutParams(135,ViewGroup.LayoutParams.WRAP_CONTENT)
+                var employ = RefEmployer()
+                employ.FoundID(DR["Наборщик"].toString())
+                address.text = SS.helper.GetShortFIO(employ.Name) + " " + DR["КолМест"]
+                address.layoutParams = LinearLayout.LayoutParams(120,ViewGroup.LayoutParams.WRAP_CONTENT)
+                address.gravity = Gravity.CENTER_HORIZONTAL
                 address.textSize = 16F
                 address.setTextColor(-0x1000000)
                 val code = TextView(this)
-                code.text = DR[""]
-                code.layoutParams = LinearLayout.LayoutParams(135,ViewGroup.LayoutParams.WRAP_CONTENT)
+                employ.FoundID(DR["Комплектовщик"].toString())
+                code.text = SS.helper.GetShortFIO(employ.Name) + " " + DR["Мест"]
+                code.layoutParams = LinearLayout.LayoutParams(120,ViewGroup.LayoutParams.WRAP_CONTENT)
                 code.gravity = Gravity.CENTER
                 code.textSize = 16F
                 code.setTextColor(-0x1000000)
                 val count = TextView(this)
-                count.text = DR[""]
-                count.layoutParams = LinearLayout.LayoutParams(40,ViewGroup.LayoutParams.WRAP_CONTENT)
+                count.text = SS.helper.ShortDate(DR["Дата1"].toString()) + " " +
+                        SS.helper.timeToString(DR["Время1"].toString().toInt()) + " - " +
+                        SS.helper.timeToString(DR["Время2"].toString().toInt())
+                count.layoutParams = LinearLayout.LayoutParams(90,ViewGroup.LayoutParams.WRAP_CONTENT)
                 count.gravity = Gravity.CENTER
                 count.textSize = 16F
                 count.setTextColor(-0x1000000)
                 val sum = TextView(this)
-                sum.text = DR[""]
-                sum.layoutParams = LinearLayout.LayoutParams(120,ViewGroup.LayoutParams.WRAP_CONTENT)
+                sum.text = SS.helper.ShortDate(DR["Дата2"].toString()) + " " + SS.helper.timeToString(DR["Время3"].toString().toInt())
+                sum.layoutParams = LinearLayout.LayoutParams(90,ViewGroup.LayoutParams.WRAP_CONTENT)
                 sum.gravity = Gravity.CENTER
                 sum.textSize = 16F
                 sum.setTextColor(-0x1000000)
@@ -132,8 +186,6 @@ class ShowInfo : BarcodeDataReceiver() {
         }
         return
     }
-
-
 
     override fun onResume() {
         super.onResume()

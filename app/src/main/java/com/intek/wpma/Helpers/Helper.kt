@@ -1,6 +1,9 @@
 package com.intek.wpma.Helpers
 
+import java.io.File.separator
 import java.math.BigInteger
+import java.text.SimpleDateFormat
+import java.util.*
 
 class Helper {
     /*
@@ -24,7 +27,6 @@ class Helper {
         return result;
     }
     */
-    /// делает из полного имени формат типа: Иванов И.И.
     fun GetShortFIO(FIO:String):String
     {
         var result = ""
@@ -47,8 +49,26 @@ class Helper {
         }
         return result;
     }
+    fun timeToString(sec : Any) : String {
+        sec as Int
+        val Hours = sec / 3600
+        val Minutes = (sec -(Hours * 3600)) / 60
+        return "$Hours:$Minutes"
+    }
 
+    fun ShortDate(dat : Any) : String {
+
+        val datFormat:SimpleDateFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+        val date2 = datFormat.parse(dat.toString())
+
+        return "(" + date2.date.toString() + "." + (date2.month + 1).toString() + ")"
+    }
     /*
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="Barcode"></param>
+    /// <returns></returns>
     static public string GetIDD(string Barcode)
     {
         string IDD = "";
@@ -183,34 +203,35 @@ class Helper {
     */
     fun  StringToList(SourceStr: String, separator: String): MutableList<String>
     {
-        var sourceStr = SourceStr.replace(" ", "")
-        var result: MutableList<String> = mutableListOf()
+        var SourceStr = SourceStr.replace(" ", "")
+        var result: MutableList<String>
+        result = emptyList<String>() as MutableList<String>
         while (true)
         {
-            var index: Int = sourceStr.indexOf(separator)
+            var index: Int = SourceStr.indexOf(separator)
             index = if (index == -1) {
                 0
             } else {
                 index
             }
 
-            val thispart: String = sourceStr.substring(0, index)
+            val thispart: String = SourceStr.substring(0, index)
             if (thispart.isNotEmpty())
             {
                 result.add(thispart)
             }
             if (index > 0)
             {
-                sourceStr = sourceStr.substring(index + separator.length)
+                SourceStr = SourceStr.substring(index + separator.length)
             }
             else
             {
                 break
             }
         }
-        if (sourceStr.isNotEmpty())
+        if (SourceStr.isNotEmpty())
         {
-            result.add(sourceStr)
+            result.add(SourceStr)
         }
         return result
     }

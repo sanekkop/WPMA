@@ -1,16 +1,18 @@
-package com.intek.wpma
+package com.intek.wpma.ChoiseWork
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.KeyEvent
 import android.widget.Toast
+import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.ChoiseWork.Set.SetInitialization
 import com.intek.wpma.ChoiseWork.Shipping.ChoiseWorkShipping
+import com.intek.wpma.MainActivity
+import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_menu.*
 import kotlinx.android.synthetic.main.activity_menu.terminalView
 
@@ -57,7 +59,7 @@ class Menu : BarcodeDataReceiver() {
         ParentForm = intent.extras!!.getString("ParentForm")!!
         terminalView.text = SS.terminal
 
-        title = Employer
+        title = SS.helper.GetShortFIO(SS.FEmployer.Name)
 
         btnSet.setOnClickListener {
             val setInit = Intent(this, SetInitialization::class.java)

@@ -5,7 +5,7 @@ import com.intek.wpma.SQL.SQL1S
 
 
 class RefSection(): ARef() {
-    override val TypeObj: String get() = ("Секции")
+    override val TypeObj: String get() = "Секции"
 
     init {
         HaveName    = true

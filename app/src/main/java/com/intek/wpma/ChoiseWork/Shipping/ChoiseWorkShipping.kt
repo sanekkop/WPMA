@@ -6,12 +6,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.*
 import android.widget.Toast
 import com.intek.wpma.*
-import com.intek.wpma.Menu
+import com.intek.wpma.ChoiseWork.Menu
 import kotlinx.android.synthetic.main.activity_menu_shipping.*
 import kotlinx.android.synthetic.main.activity_menu_shipping.terminalView
 import kotlinx.android.synthetic.main.activity_unloading.*
@@ -52,7 +51,7 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
         ParentForm = intent.extras!!.getString("ParentForm")!!
         //terminalView.text = intent.extras!!.getString("terminalView")!!
         terminalView.text = SS.terminal
-        title = SS.FEmployer.Name
+        title = SS.helper.GetShortFIO(SS.FEmployer.Name)
 
         btnCancel.setOnClickListener {
             val shoiseWorkInit = Intent(this, Menu::class.java)
@@ -75,20 +74,10 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
 
         }
         btnDown.setOnClickListener {
-            BadVoise()
-            FExcStr.text = "Режим в разработке!"
-
-            /*
-                 val downingInit = Intent(this, Downing::class.java)
-                 downingInit.putExtra("Employer", Employer)
-                 downingInit.putExtra("EmployerIDD",EmployerIDD)
-                 downingInit.putExtra("EmployerFlags",EmployerFlags)
-                 downingInit.putExtra("EmployerID",EmployerID)
-                 downingInit.putExtra("terminalView",terminalView.text.trim())
-                 downingInit.putExtra("ParentForm","ChoiseWorkShipping")
-                 startActivity(downingInit)
-                 finish()
-                 */
+            val downingInit = Intent(this, ChoiseDown::class.java)
+            downingInit.putExtra("ParentForm","ChoiseWorkShipping")
+            startActivity(downingInit)
+            finish()
         }
         btnFree.setOnClickListener {
             BadVoise()
@@ -96,11 +85,6 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
 
             /*
                 val freeComplectationInit = Intent(this, FreeComplectation::class.java)
-                freeComplectationInit.putExtra("Employer", Employer)
-                freeComplectationInit.putExtra("EmployerIDD",EmployerIDD)
-                freeComplectationInit.putExtra("EmployerFlags",EmployerFlags)
-                freeComplectationInit.putExtra("EmployerID",EmployerID)
-                freeComplectationInit.putExtra("terminalView",terminalView.text.trim())
                 freeComplectationInit.putExtra("ParentForm","ChoiseWorkShipping")
                 startActivity(freeComplectationInit)
                 finish()
@@ -126,10 +110,11 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        if (keyCode == 7) {
+        if (keyCode == 7 || keyCode == 6) {
             //нажали 0
-            startActivity(7)
+            startActivity(keyCode)
         }
+
         return super.onKeyDown(keyCode, event)
     }
 

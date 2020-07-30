@@ -23,7 +23,7 @@ abstract class ARef() {
     val ID:String get() = FID
     val Name:String get() = FName
     val Code:String get() = FCode
-    val Selected:Boolean get() = FID != null
+    val Selected:Boolean get() = FID != ""
     val IsMark:Boolean get() = FIsMark
 
 
@@ -60,6 +60,7 @@ abstract class ARef() {
         while (i < FieldList.count())
         {
             Attributes.put(FieldList[i].toString().substring(prefix.length),DataMap[FieldList[i]]!!)
+            i++
         }
         return true
     }
@@ -91,7 +92,7 @@ abstract class ARef() {
         return result;
     }
 
-    fun Refresh()
+    open fun Refresh()
     {
         if (Selected)
         {

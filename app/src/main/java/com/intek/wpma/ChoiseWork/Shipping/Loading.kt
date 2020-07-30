@@ -17,17 +17,11 @@ import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.Helpers.Translation
-import com.intek.wpma.Menu
 import com.intek.wpma.R
-import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_loading.*
 import kotlinx.android.synthetic.main.activity_loading.FExcStr
-//import kotlinx.android.synthetic.main.activity_loading.table
 import kotlinx.android.synthetic.main.activity_loading.terminalView
-import kotlinx.android.synthetic.main.activity_set.view.*
-import kotlinx.android.synthetic.main.activity_unloading.*
-import java.text.ChoiceFormat
 
 
 class Loading : BarcodeDataReceiver() {
@@ -70,7 +64,7 @@ class Loading : BarcodeDataReceiver() {
         setContentView(R.layout.activity_loading)
 
         terminalView.text = SS.terminal
-        title = SS.FEmployer.Name
+        title = SS.helper.GetShortFIO(SS.FEmployer.Name)
 
         if (SS.isMobile){
             btnScanLoadingMode.visibility = View.VISIBLE
@@ -700,17 +694,22 @@ class Loading : BarcodeDataReceiver() {
         table.removeAllViewsInLayout()
 
         //строка с шапкой
-        val linearLayout = LinearLayout(this)
+        val linearLayoutDoc = LinearLayout(this)
+        val rowTitleDoc = TableRow(this)
 
         val DocumName = TextView(this)
         DocumName.text = WayBill["НомерДок"] + " (" + WayBill["ДатаДок"] + ")"
         DocumName.gravity = Gravity.LEFT
         DocumName.textSize = 20F
         DocumName.setTextColor(-0x1000000)
-        DocumName.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-        linearLayout.addView(DocumName)
+        DocumName.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        linearLayoutDoc.addView(DocumName)
+        rowTitleDoc.addView(linearLayoutDoc)
+        table.addView(rowTitleDoc)
 
+        val linearLayout = LinearLayout(this)
         val rowTitle = TableRow(this)
+
         //добавим столбцы
         val number = TextView(this)
         number.text = "№"
@@ -793,8 +792,8 @@ class Loading : BarcodeDataReceiver() {
                     if (event.x > oldx) {
                         val showInfo = Intent(this, ShowInfo::class.java)
                         showInfo.putExtra("ParentForm", "Loading")
-                        showInfo.putExtra("Number",CurrentLineWayBillDT["ProposalNumber"])
-                        showInfo.putExtra("Doc",CurrentLineWayBillDT["Doc"])
+                        showInfo.putExtra("Number",CurrentLineWayBillDT["ProposalNumber"].toString())
+                        showInfo.putExtra("Doc",CurrentLineWayBillDT["Doc"].toString())
                         startActivity(showInfo)
                         finish()
                     }

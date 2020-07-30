@@ -98,8 +98,8 @@
 
     <TextView
         android:id="@+id/FExcStr"
-        android:layout_width="297dp"
-        android:layout_height="154dp"
+        android:layout_width="332dp"
+        android:layout_height="100dp"
         android:gravity="center"
         android:text="Ожидание команды"
         android:textColor="#070AA0"

@@ -53,7 +53,7 @@ class UnLoading : BarcodeDataReceiver() {
         setContentView(R.layout.activity_unloading)
 
        terminalView.text = SS.terminal
-        title = SS.FEmployer.Name
+        title = SS.helper.GetShortFIO(SS.FEmployer.Name)
         header.text  = "Свободная разргузка"
         CurrentAction = "ScanBox"
 

@@ -131,8 +131,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
     /// <param name="Command"></param>
     /// <param name="DataMapWrite"></param>
     /// <returns></returns>
-    fun ExecCommandNoFeedback(Command: String, DataMapWrite: MutableMap<String, Any>): Boolean
-    {
+    fun ExecCommandNoFeedback(Command: String, DataMapWrite: MutableMap<String, Any>): Boolean    {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(11, 19))
@@ -249,8 +248,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         return commandID
     }
 
-    fun IBS_Inicialization(EmployerID: String): Boolean
-    {
+    fun IBS_Inicialization(EmployerID: String): Boolean    {
         var textQuery =
             "set nocount on; " +
                     "declare @id bigint; " +

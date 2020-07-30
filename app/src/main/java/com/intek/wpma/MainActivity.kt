@@ -2,7 +2,6 @@ package com.intek.wpma
 
 import android.Manifest
 import android.content.*
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
@@ -11,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.intek.wpma.ChoiseWork.Menu
 import kotlinx.android.synthetic.main.activity_main.*
 import java.math.BigInteger
 

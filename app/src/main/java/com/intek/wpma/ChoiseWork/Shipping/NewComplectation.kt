@@ -17,7 +17,7 @@ import kotlinx.android.synthetic.main.activity_set_complete.*
 import kotlinx.android.synthetic.main.activity_set_complete.FExcStr
 import kotlinx.android.synthetic.main.activity_set_complete.terminalView
 
-class FreeComplectation : BarcodeDataReceiver() {
+class NewComplectation : BarcodeDataReceiver() {
 
     var DocSet: String = ""
     var Barcode: String = ""
@@ -107,7 +107,7 @@ class FreeComplectation : BarcodeDataReceiver() {
         if (SS.isMobile){
             btnScanSetComplete.visibility = View.VISIBLE
             btnScanSetComplete!!.setOnClickListener {
-                val scanAct = Intent(this@FreeComplectation, ScanActivity::class.java)
+                val scanAct = Intent(this@NewComplectation, ScanActivity::class.java)
                 scanAct.putExtra("ParentForm","SetComplete")
                 startActivity(scanAct)
             }

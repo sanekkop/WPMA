@@ -5,25 +5,33 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
-import android.view.KeyEvent
-import android.view.View
+import android.view.*
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.MainActivity
 import com.intek.wpma.R
+import com.intek.wpma.Ref.RefEmployer
+import com.intek.wpma.Ref.RefPrinter
+import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.ScanActivity
-import kotlinx.android.synthetic.main.activity_set_complete.*
-import kotlinx.android.synthetic.main.activity_set_complete.FExcStr
-import kotlinx.android.synthetic.main.activity_set_complete.terminalView
+import kotlinx.android.synthetic.main.activity_choise_down.*
+import kotlinx.android.synthetic.main.activity_downing.*
+import kotlinx.android.synthetic.main.activity_downing.FExcStr
+import kotlinx.android.synthetic.main.activity_downing.lblState
+import kotlinx.android.synthetic.main.activity_downing.terminalView
+
 
 class Downing : BarcodeDataReceiver() {
 
-    var DocSet: String = ""
     var Barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
-    var Places: Int? = null
-    var PrinterPath = ""
+    var DocDown:MutableMap<String,String> = mutableMapOf()
+    var remain = 0
+    enum class Action {Down,DownComplete}
+    var CurentAction:Action = Action.Down
+    var DownSituation:MutableList<MutableMap<String,String>> = mutableListOf()
+    var FlagPrintPallete:Boolean = false
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -48,71 +56,230 @@ class Downing : BarcodeDataReceiver() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_set_complete)
+        setContentView(R.layout.activity_downing)
 
-        PrinterPath = intent.extras!!.getString("PrinterPath")!!
         terminalView.text = SS.terminal
-        title = SS.FEmployer.Name
-
-        if (PrinterPath != "") {
-            printer.text = PrinterPath
-            FExcStr.text = "Введите колво мест"
-            enterCountPlace.visibility = View.VISIBLE
-        }
-        DocSet = intent.extras!!.getString("iddoc")!!
-        val textQuery =
-            "SELECT " +
-                    "journForBill.docno as DocNo, " +
-                    "CONVERT(char(8), CAST(LEFT(journForBill.date_time_iddoc, 8) as datetime), 4) as DateDoc, " +
-                    "journForBill.iddoc as Bill, " +
-                    "Sector.descr as Sector, " +
-                    "DocCCHead.SP3595 as Number, " +
-                    "DocCCHead.SP2841 as SelfRemovel " +
-                    "FROM " +
-                    "DH2776 as DocCCHead (nolock) " +
-                    "LEFT JOIN SC1141 as Sector (nolock) " +
-                    "ON Sector.id = DocCCHead.SP2764 " +
-                    "LEFT JOIN DH2763 as DocCB (nolock) " +
-                    "ON DocCB.iddoc = DocCCHead.SP2771 " +
-                    "LEFT JOIN DH196 as Bill (nolock) " +
-                    "ON Bill.iddoc = DocCB.SP2759 " +
-                    "LEFT JOIN _1sjourn as journForBill (nolock) " +
-                    "ON journForBill.iddoc = Bill.iddoc " +
-                    "WHERE DocCCHead.iddoc = '$DocSet'"
-        val dataTable = SS.ExecuteWithRead(textQuery)
-        previousAction.text = if (dataTable!![1][5].toInt() == 1) "(C) " else {
-            ""
-        } + dataTable[1][3].trim() + "-" +
-                dataTable[1][4] + " Заявка " + dataTable[1][0] + " (" + dataTable[1][1] + ")"
-
-        if (dataTable[1][5].toInt() == 1) DocView.text = "САМОВЫВОЗ" else DocView.text = "ДОСТАВКА"
-        //тут этот код дублирую, чтобы поймать нажатие на enter после ввода колва с уже установленным принтером
-        enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
-            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                // сохраняем текст, введенный до нажатия Enter в переменную
-                try {
-                    val count = enterCountPlace.text.toString().toInt()
-                    Places = count
-                    enterCountPlace.visibility = View.INVISIBLE
-                    countPlace.text = "Колво мест: $Places"
-                    countPlace.visibility = View.VISIBLE
-                    FExcStr.text = "Ожидание команды"
-                } catch (e: Exception) {
-
-                }
-            }
-            false
-        }
+        title = SS.helper.GetShortFIO(SS.FEmployer.Name)
 
         if (SS.isMobile){
-            btnScanSetComplete.visibility = View.VISIBLE
-            btnScanSetComplete!!.setOnClickListener {
+            btnScanDowningMode.visibility = View.VISIBLE
+            btnScanDowningMode!!.setOnClickListener {
                 val scanAct = Intent(this@Downing, ScanActivity::class.java)
-                scanAct.putExtra("ParentForm","SetComplete")
+                scanAct.putExtra("ParentForm","Downing")
                 startActivity(scanAct)
             }
         }
+        btnCansel.setOnClickListener {
+            RepealDown()
+        }
+        btnKey1.setOnClickListener {
+            if (CurentAction == Action.DownComplete) {
+                if (!FlagPrintPallete) {
+                    PrintPallete();
+                    RefreshActivity()
+                }
+            }
+            else
+            {
+                remain = DocDown["AllBoxes"].toString().toInt() - DocDown["Boxes"].toString().toInt()
+                if (DocDown["MaxStub"].toString().toInt() <= remain) {
+                    //Можно завершить
+                    FExcStr.text = "Закрываю остальные " + remain.toString().toString() + " места..."
+                    EndCC()
+                }
+            }
+        }
+
+        ToModeDown()
     }
+    fun ToModeDown() {
+
+        CurentAction = Action.Down
+        DocDown = mutableMapOf()
+        var textQuery = "select * from dbo.WPM_fn_ToModeDown(:Employer)"
+        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
+        val DT = SS.ExecuteWithReadNew(textQuery) ?: return
+        if (DT.isEmpty()) {
+            //Собирать - нечего,
+            ToModeDownComplete()
+            return
+        }
+        //проверим полученный сектор
+        SS.FEmployer.Refresh()
+        val SectorPriory = RefSection()
+        if (SectorPriory.FoundID(SS.FEmployer.GetAttribute("ПосланныйСектор").toString())) {
+            if (DT[0]["ParentSector"].toString().trim() != SectorPriory.Name.trim()) {
+                FExcStr.text = "Нельзя! Можно только " + SectorPriory.Name.trim() + " сектор!"
+                ToModeDownComplete()
+                return
+            }
+        }
+        DocDown.put("ID", DT[0]["iddoc"].toString())
+        DocDown.put("Boxes", DT[0]["CountBox"].toString())
+        DocDown.put("View", DT[0]["Sector"].toString().trim() + "-" + DT[0]["Number"].toString() + " Заявка " + DT[0]["docno"].toString() + " (" + DT[0]["DateDoc"].toString() + ")")
+        DocDown.put("AdressCollect", DT[0]["AdressCollect"].toString())
+        DocDown.put("Sector", DT[0]["ParentSector"].toString())
+        DocDown.put("MaxStub", DT[0]["MaxStub"].toString())
+        DocDown.put("AllBoxes", DT[0]["CountAllBox"].toString())
+        DocDown.put("NumberBill", DT[0]["docno"].toString().trim())
+        DocDown.put("NumberCC", DT[0]["Number"].toString())
+        DocDown.put("MainSectorName", DT[0]["Sector"].toString())
+        DocDown.put("SetterName", DT[0]["SetterName"].toString())
+        FExcStr.text = "Сканируйте места"
+        RefreshActivity()
+    }
+
+    fun ToModeDownComplete() {
+
+        //В этот режим попадает только если нечего собирать по Дате4, так что если и тут нет ничего - то уходит на режим ChoiseDown
+        var textQuery =
+        "select " +
+                "min(Ref.\$Спр.МестаПогрузки.НомерЗадания5 ) as NumberOfOrder, " +
+                "Count(*) as AllBox " +
+                "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                "where " +
+                "Ref.ismark = 0 " +
+                "and Ref.\$Спр.МестаПогрузки.Сотрудник4 = :Employer " +
+                "and not Ref.\$Спр.МестаПогрузки.Дата4 = :EmptyDate " +
+                "and Ref.\$Спр.МестаПогрузки.Дата5 = :EmptyDate ";
+        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
+        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
+        DownSituation = SS.ExecuteWithReadNew(textQuery) ?:return
+
+        if (DownSituation[0]["AllBox"] == "0")
+        {
+            //Нету ничего!
+            val shoiseDown = Intent(this, ChoiseDown::class.java)
+            shoiseDown.putExtra("ParentForm", "ChoiseDown")
+            startActivity(shoiseDown)
+            finish()
+            return
+        }
+        FExcStr.text = "Напечатать этикетку, отсканировать адрес паллеты";
+        //тут надо переходить в режим downComplete
+        CurentAction = Action.DownComplete
+        RefreshActivity()
+    }
+
+    fun RefreshActivity(){
+
+        lblPrinter.text = SS.FPrinter.Description
+        if (CurentAction == Action.Down){
+            lblState.text = DocDown["View"].toString()
+            lblInfo1.text =
+                "Отобрано " + remain.toString() + " из " + DocDown["AllBoxes"].toString()
+            lblNumber.text = DocDown["NumberBill"].toString().substring(
+                DocDown["NumberBill"].toString().length - 5,
+                DocDown["NumberBill"].toString().length - 3
+            ) + " " +
+                    DocDown["NumberBill"].toString()
+                        .substring(DocDown["NumberBill"].toString().length - 3) +
+                    " сектор: " + DocDown["MainSectorName"].toString()
+                .trim() + "-" + DocDown["NumberCC"].toString()
+            lblAdress.text = DocDown["AdressCollect"].toString()
+            lblSetter.text = "отборщик: " + SS.helper.GetShortFIO(DocDown["SetterName"].toString())
+            lblAdress.visibility = View.VISIBLE
+            lblSetter.visibility = View.VISIBLE
+            btnKey1.visibility = if (DocDown["MaxStub"].toString()
+                    .toInt() <= remain
+            ) View.VISIBLE else View.INVISIBLE
+            btnKey1.text = "Все"
+        }
+        else if (CurentAction == Action.DownComplete) {
+            btnKey1.visibility = if (FlagPrintPallete) View.INVISIBLE else View.VISIBLE
+            btnKey1.text = "Печать"
+            if (DownSituation[0]["NumberOfOrder"].toString() != "0") {
+                val Number: String = DownSituation[0]["NumberOfOrder"].toString()
+                lblNumber.text = Number.substring(if (Number.length > 4) Number.length - 4 else 0)
+            }
+            lblInfo1.text = "Всего " + DownSituation[0]["AllBox"].toString() + " мест"
+            lblAdress.visibility = View.INVISIBLE
+            lblSetter.visibility = View.INVISIBLE
+
+        }
+    }
+
+    fun RepealDown() {
+        var textQuery =
+        "declare @res int; exec WPM_RepealSetDown :iddoc, @res output; " +
+                "select @res as result" +
+                "";
+        textQuery = SS.QuerySetParam(textQuery, "iddoc",    DocDown["ID"].toString())
+        if (!SS.ExecuteWithoutRead(textQuery)) return
+        ToModeDown()
+    }
+
+    fun PrintPallete():Boolean    {
+        if (!SS.FPrinter.Selected)
+        {
+            FExcStr.text = "Принтер не выбран!"
+            return false
+        }
+        if (DownSituation[0]["NumberOfOrder"].toString() == "0")
+        {
+            var textQuery =
+            "declare @res int; exec WPM_GetNumberOfOrder :employer, @res output; " +
+                    "select @res as result" +
+                    "";
+            textQuery = SS.QuerySetParam(textQuery, "employer",    SS.FEmployer.ID)
+            if (!SS.ExecuteWithoutRead(textQuery))
+            {
+                return false
+            }
+            ToModeDownComplete()
+            //Повторно проверим, должно было присвоится!
+            if (DownSituation[0]["NumberOfOrder"].toString() == "0")
+            {
+                FExcStr.text = "Не удается присвоить номер задания!";
+                return false
+            }
+        }
+        FExcStr.text = "Отсканируйте адрес палетты!";
+        if (!FlagPrintPallete)
+        {
+            val no = DownSituation[0]["NumberOfOrder"].toString()
+            var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FPrinter.ID, "Спр.Принтеры")
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = "LabelRT.ert"
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = no.substring(if(no.length < 4) 0 else no.length - 4)
+            if (!ExecCommandNoFeedback("Print", dataMapWrite))
+            {
+                return false
+            }
+            FlagPrintPallete = true
+        }
+        return true
+    }
+
+    fun EndCC():Boolean{
+        var textQuery =
+        "begin tran; " +
+                "UPDATE \$Спр.МестаПогрузки " +
+                "SET " +
+                "\$Спр.МестаПогрузки.Дата4 = :NowDate , " +
+                "\$Спр.МестаПогрузки.Время4 = :NowTime " +
+                "WHERE " +
+                "ismark = 0 and \$Спр.МестаПогрузки.КонтрольНабора = :iddoc ; " +
+                "if @@rowcount = 0 rollback tran " +
+                "else begin " +
+                "declare @res int; " +
+                "exec WPM_GetOrderDown :Employer, :NameParent, @res OUTPUT; " +
+                "if @res = 0 rollback tran " +
+                "else commit tran " +
+                "end ";
+
+        textQuery = SS.QuerySetParam(textQuery, "Employer",    SS.FEmployer.ID)
+        textQuery = SS.QuerySetParam(textQuery, "iddoc",       DocDown["ID"].toString())
+        textQuery = SS.QuerySetParam(textQuery, "EmptyDate",   SS.GetVoidDate())
+        textQuery = SS.QuerySetParam(textQuery, "NameParent",  DocDown["Sector"].toString().trim())
+        if (!SS.ExecuteWithoutRead(textQuery))
+        {
+            return false;
+        }
+        ToModeDown()
+        return true
+    }
+
 
     companion object {
         var scanRes: String? = null
@@ -120,81 +287,120 @@ class Downing : BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
-        val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
+        val barcoderes = SS.helper.DisassembleBarcode(Barcode)
+        val typeBarcode = barcoderes["Type"].toString()
+        if (typeBarcode == "6" && CurentAction == Action.Down) {
+            val id = barcoderes["ID"].toString()
+            if (SS.IsSC(id, "МестаПогрузки")) {
 
-        if (SS.IsSC(idd, "Принтеры")) {
-            //получим путь принтера
-            val textQuery =
-                "select descr, SP2461 " +
-                        "from SC2459 " +
-                        "where SP2465 = '$idd'"
-            val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
+                var textQuery =
+                    "Select " +
+                            "\$Спр.МестаПогрузки.Дата4 as Date, " +
+                            "\$Спр.МестаПогрузки.КонтрольНабора as Doc " +
+                            "from \$Спр.МестаПогрузки (nolock) where id = :id";
+                textQuery = SS.QuerySetParam(textQuery, "id", id)
+                val DT = SS.ExecuteWithReadNew(textQuery) ?: return false
+                if (DT.isEmpty()) {
+                    FExcStr.text = "Нет действий с данным штрихкодом!"
+                    BadVoise()
+                    return false
+                }
+                if (DT[0]["Doc"].toString() != DocDown["ID"]) {
+                    FExcStr.text = "Место от другого сборочного!"
+                    BadVoise()
+                    return false
+                }
+                if (!SS.IsVoidDate(DT[0]["Date"].toString())) {
+                    FExcStr.text = "Место уже отобрано!"
+                    BadVoise()
+                    return false
+                }
 
-            PrinterPath = dataTable[1][1]
-            printer.text = PrinterPath
-            FExcStr.text = "Введите колво мест"
-            enterCountPlace.visibility = View.VISIBLE
+                //начнем
+                textQuery =
+                    "begin tran; " +
+                            "UPDATE \$Спр.МестаПогрузки " +
+                            "SET " +
+                            "\$Спр.МестаПогрузки.Дата4 = :NowDate , " +
+                            "\$Спр.МестаПогрузки.Время4 = :NowTime " +
+                            "WHERE " +
+                            "id = :itemid; " +
+                            "if @@rowcount = 0 rollback tran " +
+                            "else begin " +
+                            "if exists ( select top 1 id from \$Спр.МестаПогрузки as Ref " +
+                            "where " +
+                            "Ref.ismark = 0 " +
+                            "and Ref.\$Спр.МестаПогрузки.КонтрольНабора = :iddoc " +
+                            "and Ref.\$Спр.МестаПогрузки.Дата4 = :EmptyDate ) " +
+                            "commit tran " +
+                            "else begin " +
+                            "declare @res int; " +
+                            "exec WPM_GetOrderDown :Employer, :NameParent, @res OUTPUT; " +
+                            "if @res = 0 rollback tran else commit tran " +
+                            "end " +
+                            "end ";
 
-            return true
-        } else if (!SS.IsSC(idd, "Секции")) {
-            FExcStr.text = "Нужен принтер и адрес предкомплектации, а не это!"
+                textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
+                textQuery = SS.QuerySetParam(textQuery, "itemid", id);
+                textQuery = SS.QuerySetParam(textQuery, "iddoc", DocDown["ID"].toString())
+                textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
+                textQuery =
+                    SS.QuerySetParam(textQuery, "NameParent", DocDown["Sector"].toString().trim())
+
+                if (!SS.ExecuteWithoutRead(textQuery)) {
+                    BadVoise()
+                    return false
+                }
+                ToModeDown()
+                return true
+            } else {
+                FExcStr.text = "Нет действий с данным ШК в данном режиме!"
+                BadVoise()
+                return false
+            }
+
+        }
+        else if (typeBarcode == "113") {
+            //справочники типовые
+            val idd = barcoderes["IDD"].toString()
+            if (SS.IsSC(idd, "Сотрудники")) {
+                SS.FEmployer = RefEmployer()
+                val mainInit = Intent(this, MainActivity::class.java)
+                mainInit.putExtra("ParentForm", "ChoiseDown")
+                startActivity(mainInit)
+                finish()
+            }
+            else if (SS.IsSC(idd, "Принтеры")) {
+                if (SS.FPrinter.Selected) {
+                    SS.FPrinter = RefPrinter()
+                }
+                else SS.FPrinter.FoundIDD(idd)
+                RefreshActivity()
+            }
+            else if (CurentAction == Action.DownComplete && SS.IsSC(idd, "Секции")) {
+                val id = barcoderes["ID"].toString()
+                if (DownSituation[0]["NumberOfOrder"].toString() == "0") {
+                    FExcStr.text = "Не присвоен номер задания! Напечатайте этикетку!"
+                    return false
+                }
+                var textQuery =
+                    "declare @res int; exec WPM_CompletePallete :employer, :adress, @res output; ";
+                textQuery = SS.QuerySetParam(textQuery, "employer", SS.FEmployer.ID);
+                textQuery = SS.QuerySetParam(textQuery, "adress", id);
+                if (!SS.ExecuteWithoutRead(textQuery)) {
+                    return false;
+                }
+                FlagPrintPallete = false;
+                ToModeDown()
+                return true
+            }
+        }
+        else {
+            FExcStr.text = "Нет действий с данным ШК в данном режиме!"
+            BadVoise()
             return false
         }
-        if (PrinterPath.isEmpty()) {
-            FExcStr.text = "Не выбран принтер!"
-            return false
-        }
-        if (Places == null){
-            FExcStr.text = "Количество мест не указано!"
-            return false
-        }
-        //подтянем адрес комплектации
-        val textQuery =
-            "SELECT ID, SP3964, descr FROM SC1141 (nolock) WHERE SP1935= '$idd'"
-        val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
-        val addressType = dataTable[1][1]
-        val addressID = dataTable[1][0]
-        if (addressType == "12") {
-            FExcStr.text = "Отсканируйте адрес предкопмплектации!"
-            return false
-        }
-        var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = SS.ExtendID(DocSet, "КонтрольНабора")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FEmployer.ID, "Спр.Сотрудники")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = SS.ExtendID(addressID, "Спр.Секции")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = Places!!
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = PrinterPath
-
-        var dataMapRead: MutableMap<String, Any> = mutableMapOf()
-        var fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
-
-        dataMapRead = ExecCommand("PicingComplete", dataMapWrite, fieldList, dataMapRead, "")
-
-        if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
-            FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
-            //сборочный уже закрыт, уйдем с формы завершения набора
-            val setInitialization = Intent(this, ChoiseWorkShipping::class.java)
-            setInitialization.putExtra("ParentForm", "SetComplete")
-            startActivity(setInitialization)
-            finish()
-            return false
-        }
-        if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() != 3) {
-            FExcStr.text = "Не известный ответ робота... я озадачен..."
-            return false
-        }
-        FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
-
-        LockoutDoc(DocSet)      //разблокируем доки
-
-        //вернемся обратно в SetInitialization
-        val setInitialization = Intent(this, ChoiseWorkShipping::class.java)
-        setInitialization.putExtra("ParentForm", "SetComplete")
-        startActivity(setInitialization)
-        finish()
-
-
         return true
     }
 
@@ -208,23 +414,6 @@ class Downing : BarcodeDataReceiver() {
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
 
-        }
-
-        enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
-            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                // сохраняем текст, введенный до нажатия Enter в переменную
-                try {
-                    val count = enterCountPlace.text.toString().toInt()
-                    Places = count
-                    enterCountPlace.visibility = View.INVISIBLE
-                    countPlace.text = "Колво мест: $Places"
-                    countPlace.visibility = View.VISIBLE
-                    FExcStr.text = "Ожидание команды"
-                } catch (e: Exception) {
-
-                }
-            }
-            false
         }
 
     }

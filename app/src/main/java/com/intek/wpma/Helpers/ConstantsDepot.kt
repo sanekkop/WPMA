@@ -17,7 +17,7 @@ object ConstantsDepot {
     val ImageOn:Boolean get() { CondRefresh(); return (FSettingsMOD.substring(24, 25) == "0") }
     //отключена
     val StopCorrect:Boolean get() { /*CondRefresh(); return (SS.SettingsMOD.substring(30, 31) == "0")  */ return false }
-    val CarsCount:Int get() { CondRefresh(); return FSettingsMOD.substring(24, 25).toInt() }
+    val CarsCount:String get() { CondRefresh(); return FSettingsMOD.substring(26, 27) }
 
     var MainWarehouse:String = FMainWarehouse
     /// Товар для единиц из подчинения которого будет подсасывать новые единицы

@@ -14,18 +14,25 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+<<<<<<< HEAD
 import com.intek.wpma.ParentForm
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.SQL.SQL1S
+=======
+import com.intek.wpma.R
+>>>>>>> 8d4568a727d41cabbc0d1cf5d2d3723820b23446
 import kotlinx.android.synthetic.main.activity_show_info.*
 
 
 class ShowInfo : BarcodeDataReceiver() {
 
     var iddoc: String = ""
+<<<<<<< HEAD
     var iddocControl : String = ""
+=======
+>>>>>>> 8d4568a727d41cabbc0d1cf5d2d3723820b23446
     var number: String = ""
     var Barcode: String = ""
     var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
@@ -56,11 +63,19 @@ class ShowInfo : BarcodeDataReceiver() {
         setContentView(R.layout.activity_show_info)
         iddoc = intent.extras!!.getString("Doc")!!
         number = intent.extras!!.getString("Number")!!
+<<<<<<< HEAD
         ParentForm = intent.extras!!.getString("ParentForm")!!
         terminalView.text = SS.terminal
         title = SS.FEmployer.Name
         getControl()
         getShowInfo()
+=======
+        //ParentForm = intent.extras!!.getString("ParentForm")!!
+        terminalView.text = SS.terminal
+        title = SS.helper.GetShortFIO(SS.FEmployer.Name)
+
+        //getShowInfo()
+>>>>>>> 8d4568a727d41cabbc0d1cf5d2d3723820b23446
 
         //scroll.setOnTouchListener(@this)
     }
@@ -75,13 +90,17 @@ class ShowInfo : BarcodeDataReceiver() {
             startActivity(loadingAct)
             finish()
         }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8d4568a727d41cabbc0d1cf5d2d3723820b23446
 //        else if (keyCode == 20){    //вниз
 //
 //        }
         return super.onKeyDown(keyCode, event)
     }
 
+<<<<<<< HEAD
     private fun getControl() {
         var textQuery ="SELECT _1SJOURN.IDDOC, _1SJOURN.IDDOCDEF FROM _1SJOURN (NOLOCK INDEX=ACDATETIME), _1SCRDOC (NOLOCK INDEX=PARENT)" +
                 " WHERE _1SJOURN.DATE_TIME_IDDOC=_1SCRDOC.CHILD_DATE_TIME_IDDOC and _1SCRDOC.MDID=0 and _1SCRDOC.PARENTVAL='O1" +
@@ -128,6 +147,14 @@ class ShowInfo : BarcodeDataReceiver() {
         textQuery = SS.QuerySetParam(textQuery, "Number", number)
         textQuery = SS.QuerySetParam(textQuery, "iddoc", iddoc)
         textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
+=======
+
+    private fun getShowInfo(){
+        var textQuery =""
+
+        textQuery = SS.QuerySetParam(textQuery, "Number", number)
+        textQuery = SS.QuerySetParam(textQuery, "iddoc", iddoc)
+>>>>>>> 8d4568a727d41cabbc0d1cf5d2d3723820b23446
         val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
 
         if(dataTable.isNotEmpty()){
@@ -136,6 +163,7 @@ class ShowInfo : BarcodeDataReceiver() {
                 val row = TableRow(this)
                 val number = TextView(this)
                 val linearLayout = LinearLayout(this)
+<<<<<<< HEAD
                 val sector = RefSection()
                 sector.FoundID(DR["Сектор"].toString())
                 number.text = sector.Name + "-" + DR["НомерЛиста"]
@@ -155,20 +183,45 @@ class ShowInfo : BarcodeDataReceiver() {
                 employ.FoundID(DR["Комплектовщик"].toString())
                 code.text = SS.helper.GetShortFIO(employ.Name) + " " + DR["Мест"]
                 code.layoutParams = LinearLayout.LayoutParams(120,ViewGroup.LayoutParams.WRAP_CONTENT)
+=======
+                number.text = DR[""]
+                number.layoutParams = LinearLayout.LayoutParams(45,ViewGroup.LayoutParams.WRAP_CONTENT)
+                number.gravity = Gravity.CENTER
+                number.textSize = 16F
+                number.setTextColor(-0x1000000)
+                val address = TextView(this)
+                address.text = DR[""]
+                address.layoutParams = LinearLayout.LayoutParams(135,ViewGroup.LayoutParams.WRAP_CONTENT)
+                address.textSize = 16F
+                address.setTextColor(-0x1000000)
+                val code = TextView(this)
+                code.text = DR[""]
+                code.layoutParams = LinearLayout.LayoutParams(135,ViewGroup.LayoutParams.WRAP_CONTENT)
+>>>>>>> 8d4568a727d41cabbc0d1cf5d2d3723820b23446
                 code.gravity = Gravity.CENTER
                 code.textSize = 16F
                 code.setTextColor(-0x1000000)
                 val count = TextView(this)
+<<<<<<< HEAD
                 count.text = SS.helper.ShortDate(DR["Дата1"].toString()) + " " +
                         SS.helper.timeToString(DR["Время1"].toString().toInt()) + " - " +
                         SS.helper.timeToString(DR["Время2"].toString().toInt())
                 count.layoutParams = LinearLayout.LayoutParams(90,ViewGroup.LayoutParams.WRAP_CONTENT)
+=======
+                count.text = DR[""]
+                count.layoutParams = LinearLayout.LayoutParams(40,ViewGroup.LayoutParams.WRAP_CONTENT)
+>>>>>>> 8d4568a727d41cabbc0d1cf5d2d3723820b23446
                 count.gravity = Gravity.CENTER
                 count.textSize = 16F
                 count.setTextColor(-0x1000000)
                 val sum = TextView(this)
+<<<<<<< HEAD
                 sum.text = SS.helper.ShortDate(DR["Дата2"].toString()) + " " + SS.helper.timeToString(DR["Время3"].toString().toInt())
                 sum.layoutParams = LinearLayout.LayoutParams(90,ViewGroup.LayoutParams.WRAP_CONTENT)
+=======
+                sum.text = DR[""]
+                sum.layoutParams = LinearLayout.LayoutParams(120,ViewGroup.LayoutParams.WRAP_CONTENT)
+>>>>>>> 8d4568a727d41cabbc0d1cf5d2d3723820b23446
                 sum.gravity = Gravity.CENTER
                 sum.textSize = 16F
                 sum.setTextColor(-0x1000000)
@@ -187,6 +240,11 @@ class ShowInfo : BarcodeDataReceiver() {
         return
     }
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 8d4568a727d41cabbc0d1cf5d2d3723820b23446
     override fun onResume() {
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))

@@ -89,14 +89,16 @@ class ShowInfo : BarcodeDataReceiver() {
                 SS.ExtendID(iddoc, "Счет") +
                 "' ORDER BY IDDOC"
 
-        val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
+val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
 
         if(dataTable.isNotEmpty()){
 
             for (DR in dataTable){
                 if (SS.To1CName(DR["IDDOCDEF"].toString()) == "КонтрольРасходной") {
+
                     iddocControl = DR["IDDOC"].toString()
                 }
+
             }
         }
     }
@@ -138,11 +140,11 @@ class ShowInfo : BarcodeDataReceiver() {
             for (DR in dataTable){
                 val row1 = TableRow(this)
                 val number = TextView(this)
-                val linearLayout1 = LinearLayout(this)
 
+                val linearLayout = LinearLayout(this)
                 val sector = RefSection()
                 sector.FoundID(DR["Сектор"].toString())
-                number.text = sector.Name
+                number.text = sector.Name + "-" + DR["НомерЛиста"]
                 number.layoutParams = LinearLayout.LayoutParams(80,ViewGroup.LayoutParams.WRAP_CONTENT)
                 number.gravity = Gravity.CENTER_HORIZONTAL
                 number.textSize = 16F
@@ -171,6 +173,7 @@ class ShowInfo : BarcodeDataReceiver() {
                         SS.helper.timeToString(DR["Время2"].toString().toInt())
                 count.layoutParams = LinearLayout.LayoutParams(180,ViewGroup.LayoutParams.WRAP_CONTENT)
                 count.gravity = Gravity.LEFT
+
                 count.textSize = 16F
                 count.setTextColor(-0x1000000)
 

@@ -6,29 +6,22 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class Helper {
-    /*
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="str"></param>
-    /// <returns></returns>
-    static public string SuckDigits(string str)
-    {
-        string Numbers  = "01234567890";
-        string result   = "";
-        while (str.Length > 0)
+
+    fun SuckDigits(Str:String):String    {
+        val Numbers  = "01234567890"
+        var result   = "";
+        var str = Str
+        while (str.length > 0)
         {
-            if (Numbers.IndexOf(str.Substring(0, 1)) != -1)
+            if (Numbers.indexOf(str.substring(0, 1)) != -1)
             {
-                result += str.Substring(0, 1);
+                result += str.substring(0, 1);
             }
-            str = str.Substring(1);
+            str = str.substring(1);
         }
-        return result;
+        return result
     }
-    */
-    fun GetShortFIO(FIO:String):String
-    {
+fun GetShortFIO(FIO:String):String    {
         var result = ""
         var fio = FIO.trim()
         var space = false
@@ -56,45 +49,38 @@ class Helper {
         return "$Hours:$Minutes"
     }
 
-    fun ShortDate(dat : Any) : String {
+   fun timeToString(sec : Any) : String {
+        sec as Int
+        val Hours = sec / 3600
+        val Minutes = (sec -(Hours * 3600)) / 60
+        return "$Hours:$Minutes"
+    }
 
+    fun ShortDate(dat : Any) : String {
         val datFormat:SimpleDateFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
         val date2 = datFormat.parse(dat.toString())
 
         return "(" + date2.date.toString() + "." + (date2.month + 1).toString() + ")"
     }
-    /*
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="Barcode"></param>
-    /// <returns></returns>
-    static public string GetIDD(string Barcode)
-    {
-        string IDD = "";
 
-        if (Barcode.Length == 18)
-            IDD = "9999" + Barcode.Substring(5, 13);
+    fun GetIDD(Barcode:String):String    {
+        var IDD = ""
+        if (Barcode.length == 18)
+            IDD = "9999" + Barcode.substring(5, 18)
         else //13 symbols
-            IDD = "99990" + Barcode.Substring(2, 2) + "00" + Barcode.Substring(4, 8);
+            IDD = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
         return IDD;
     }
-    */
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="Barcode"></param>
-    /// <returns></returns>
-    fun DisassembleBarcode (Barcode: String): MutableMap<String,String>
-    {
+
+    fun DisassembleBarcode (Barcode: String): MutableMap<String,String>    {
         var bigInteger: BigInteger // для перевода в др сс
         var result: MutableMap<String,String>  = mutableMapOf()
         result["Type"]  = "999"    //Код ошибки
         if (Barcode.length == 18)
         {
             result["Type"]  = "118"
-            result["IDD"]   = "9999" + Barcode.substring(5, 18)
+            result["IDD"]   = GetIDD(Barcode)
         }
         else if (Barcode.length == 13)
         {
@@ -121,7 +107,7 @@ class Helper {
             else
             {
                 result["Type"] = "113"
-                result["IDD"] = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
+                result["IDD"] = GetIDD(Barcode)
             }
         }
         else
@@ -153,46 +139,31 @@ class Helper {
         }
         return result
     }
-    /*
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="Barcode"></param>
-    /// <returns></returns>
-    static public int ControlSymbolEAN(string strBarcode)
-    {
-        int even = 0;
-        int odd = 0;
-        for (int i = 0; i < 6; i++)
+
+
+    fun ControlSymbolEAN(strBarcode:String):String    {
+        var even = 0;
+        var odd = 0;
+        for (i in 0..5)
         {
-            even += Convert.ToInt32(strBarcode.Substring(2 * i + 1, 1));
-            odd += Convert.ToInt32(strBarcode.Substring(2 * i, 1));
+            even += strBarcode.substring(2 * i + 1, 2 * i + 2).toInt()
+            odd += strBarcode.substring(2 * i, 2 * i +1).toInt()
         }
-        return (10 - (even * 3 + odd) % 10) % 10;
+        return ((10 - (even * 3 + odd) % 10) % 10).toString()
     }
-    /// <summary>
-    /// Pause. Empty cycle
-    /// </summary>
-    /// <param name="millisecond">how long</param>
-    static public void Pause(int millisecond)
-    {
-        int Start = Environment.TickCount;
-        while (Environment.TickCount - Start < millisecond)
-        {
+
+    fun Pause(millisecond:Long)    {
+        try {
+            Thread.sleep(millisecond) //Приостанавливает поток
+        }
+        catch (e: java.lang.Exception) {
         }
     }
-    /// <summary>
-    ///
-    /// </summary>
-    /// <param name="SourceStr"></param>
-    /// <param name="separator"></param>
-    /// <returns></returns>
-    */
-    fun  StringToList(SourceStr: String, separator: String): MutableList<String>
-    {
+
+    fun  StringToList(SourceStr: String, separator: String): MutableList<String>    {
         var SourceStr = SourceStr.replace(" ", "")
         var result: MutableList<String>
-        result = emptyList<String>() as MutableList<String>
+        result = mutableListOf()
         while (true)
         {
             var index: Int = SourceStr.indexOf(separator)
@@ -223,13 +194,11 @@ class Helper {
         return result
     }
 
-    fun StringToList(SourceStr: String): MutableList<String>
-    {
+    fun StringToList(SourceStr: String): MutableList<String>    {
         return StringToList(SourceStr, ",")
     }
 
-    fun ListToStringWithQuotes(SourceList: MutableList<String>): String
-    {
+    fun ListToStringWithQuotes(SourceList: MutableList<String>): String    {
         var result = ""
         for (element in SourceList)
         {
@@ -238,155 +207,103 @@ class Helper {
         result = result.substring(2)  //Убираем спедери запятые
         return result
     }
-    /*
-    static public int WhatInt(Keys Key)
-    {
-        int result = -1;
-        switch (Key)
+
+    fun WhatInt(keyCode:Int):Int    {
+        when (keyCode)
         {
-            case Keys.D0:
-            result = 0;
-            break;
-            case Keys.D1:
-            result = 1;
-            break;
-            case Keys.D2:
-            result = 2;
-            break;
-            case Keys.D3:
-            result = 3;
-            break;
-            case Keys.D4:
-            result = 4;
-            break;
-            case Keys.D5:
-            result = 5;
-            break;
-            case Keys.D6:
-            result = 6;
-            break;
-            case Keys.D7:
-            result = 7;
-            break;
-            case Keys.D8:
-            result = 8;
-            break;
-            case Keys.D9:
-            result = 9;
-            break;
+            //если нажата просто цифра
+            7 -> return 0
+            8 -> return 1
+            9 -> return 2
+            10 -> return 3
+            11 -> return 4
+            12 -> return 5
+            13 -> return 6
+            14 -> return 7
+            15 -> return 8
+            16 -> return 9
+            //если нажата цифра с шифтом
+
+
         }
-        return result;
+        return -1;
     }
-    static public string ReverseString(string s)
-    {
-        char[] arr = s.ToCharArray();
-        Array.Reverse(arr);
-        return new string(arr);
-    }
-    static public string GetPictureFileName(string InvCode)
-    {
-        InvCode = InvCode.ToLower();
-        string result = "";
-        for (int i = 0; i < InvCode.Length; i++)
+
+    fun WhatDirection(keyCode:Int):String    {
+        when (keyCode)
         {
-            string symbol = InvCode.Substring(i, 1);
-            switch (symbol)
+            //если нажата просто цифра
+            21 -> return "Left"
+            19 -> return "Up"
+            20 -> return "Down"
+            22 -> return "Right"
+        }
+        return "null"
+    }
+
+    fun ReverseString(s:String):String    {
+        return s.reversed();
+    }
+
+    fun GetPictureFileName(InvCode:String):String    {
+        var invcode = InvCode.toLowerCase()
+        var result = ""
+        for ( i in 0.. invcode.length)
+        {
+            val symbol = invcode.substring(i, i+1)
+            when (symbol)
             {
-                case "й"
-                :result += "iy";break;
-                case "ц"
-                :result += "cc";break;
-                case "у"
-                :result += "u";break;
-                case "к"
-                :result += "k";break;
-                case "е"
-                :result += "e";break;
-                case "н"
-                :result += "n";break;
-                case "г"
-                :result += "g";break;
-                case "ш"
-                :result += "h";break;
-                case "щ"
-                :result += "dg";break;
-                case "з"
-                :result += "z";break;
-                case "х"
-                :result += "x";break;
-                case "ъ"
-                :result += "dl";break;
-                case "ф"
-                :result += "f";break;
-                case "ы"
-                :result += "y";break;
-                case "в"
-                :result += "v";break;
-                case "а"
-                :result += "a";break;
-                case "п"
-                :result += "p";break;
-                case "р"
-                :result += "r";break;
-                case "о"
-                :result += "o";break;
-                case "л"
-                :result += "l";break;
-                case "д"
-                :result += "d";break;
-                case "ж"
-                :result += "j";break;
-                case "э"
-                :result += "w";break;
-                case "я"
-                :result += "ya";break;
-                case "ч"
-                :result += "ch";break;
-                case "с"
-                :result += "s";break;
-                case "м"
-                :result += "m";break;
-                case "и"
-                :result += "i";break;
-                case "т"
-                :result += "t";break;
-                case "ь"
-                :result += "zz";break;
-                case "б"
-                :result += "b";break;
-                case "ю"
-                :result += "q";break;
-                case @"\"
-                :result += "ls";break;
-                case @"/"
-                :result += "ps";break;
-                case "1"
-                :result += "1";break;
-                case "2"
-                :result += "2";break;
-                case "3"
-                :result += "3";break;
-                case "4"
-                :result += "4";break;
-                case "5"
-                :result += "5";break;
-                case "6"
-                :result += "6";break;
-                case "7"
-                :result += "7";break;
-                case "8"
-                :result += "8";break;
-                case "9"
-                :result += "9";break;
-                case "0"
-                :result += "0";break;
+                "й" -> result += "iy"
+                "ц" -> result += "cc"
+                "у" -> result += "u"
+                "к" -> result += "k"
+                "е" -> result += "e"
+                "н" -> result += "n"
+                "г" -> result += "g"
+                "ш" -> result += "h"
+                "щ" -> result += "dg"
+                "з" -> result += "z"
+                "х" -> result += "x"
+                "ъ" -> result += "dl"
+                "ф" -> result += "f"
+                "ы" -> result += "y"
+                "в" -> result += "v"
+                "а" -> result += "a"
+                "п" -> result += "p"
+                "р" -> result += "r"
+                "о" -> result += "o"
+                "л" -> result += "l"
+                "д" -> result += "d"
+                "ж" -> result += "j"
+                "э" -> result += "w"
+                "я" -> result += "ya"
+                "ч" -> result += "ch"
+                "с" -> result += "s"
+                "м" -> result += "m"
+                "и" -> result += "i"
+                "т" -> result += "t"
+                "ь" -> result += "zz"
+                "б" -> result += "b"
+                "ю" -> result += "q"
+                "\\" -> result += "ls"
+                "/" -> result += "ps"
+                "1" -> result += "1"
+                "2" -> result += "2"
+                "3" -> result += "3"
+                "4" -> result += "4"
+                "5" -> result += "5"
+                "6" -> result += "6"
+                "7" -> result += "7"
+                "8" -> result += "8"
+                "9" -> result += "9"
+                "0" -> result += "0"
             }
         }
-        return result + ".gif";
+        return result + ".gif"
     }
-    static public bool IsGreenKey(Keys Key)
-    {
-        return (Key == Keys.F14 || Key == Keys.F2 || Key == Keys.F1 || Key.GetHashCode() == 189) ? true : false;
+
+    fun IsGreenKey(Key:Int):Boolean    {
+        return (Key == 1 || Key == 2 || Key == 3 || Key == 0)
     }
-     */
+
 }

@@ -88,6 +88,10 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
                 FreeComplectation.scanRes = rawResult.text
                 FreeComplectation.scanCodeId = codeId
             }
+            "NewComplectation" -> {
+                NewComplectation.scanRes = rawResult.text
+                NewComplectation.scanCodeId = codeId
+            }
         }
 
 

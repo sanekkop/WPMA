@@ -74,7 +74,7 @@ class WatchTablePart : BarcodeDataReceiver() {
         terminalView.text = SS.terminal
         CountFact = intent.extras!!.getString("CountFact")!!.toInt()
         PrinterPath = intent.extras!!.getString("PrinterPath")!!
-        title = Employer
+        title = SS.title
 
         //строка с шапкой
         val rowTitle = TableRow(this)

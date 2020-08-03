@@ -75,7 +75,9 @@
                 android:foregroundGravity="bottom"
                 android:orientation="horizontal"></LinearLayout>
 
+
         </TableLayout>
+
 
 </ScrollView>
 
@@ -92,5 +94,6 @@
         android:layout_marginTop="32dp"
         android:layout_marginLeft="4dp"
         android:layout_marginStart="4dp"> </TableRow>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

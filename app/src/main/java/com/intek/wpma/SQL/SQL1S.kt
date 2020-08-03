@@ -5,10 +5,10 @@ import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefPrinter
 import net.sourceforge.jtds.jdbc.DateTime
-import java.lang.Exception
 import java.math.BigInteger
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 /// <summary>
 /// Класс организующий доступ и синхронизацию с базой данных компании
@@ -25,7 +25,9 @@ object SQL1S : SQLSynchronizer() {
     var FEmployer: RefEmployer = RefEmployer()
     var FPrinter: RefPrinter = RefPrinter()
     val Const: ConstantsDepot = ConstantsDepot
-
+    var widthDisplay:Int = 400
+    var heightDisplay:Int = 800
+    var title:String = Vers
     /*Конструктор класса
 
      */

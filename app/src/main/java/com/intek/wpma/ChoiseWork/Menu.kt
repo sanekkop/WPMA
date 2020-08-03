@@ -57,10 +57,7 @@ class Menu : BarcodeDataReceiver() {
         EmployerIDD = intent.extras!!.getString("EmployerIDD")!!
         EmployerID = intent.extras!!.getString("EmployerID")!!
         ParentForm = intent.extras!!.getString("ParentForm")!!
-        terminalView.text = SS.terminal
-
-        title = SS.helper.GetShortFIO(SS.FEmployer.Name)
-
+        title = SS.title
         btnSet.setOnClickListener {
             val setInit = Intent(this, SetInitialization::class.java)
             setInit.putExtra("Employer", Employer)
@@ -72,10 +69,6 @@ class Menu : BarcodeDataReceiver() {
         }
         btnShipping.setOnClickListener {
             val choiseWorkShipingInit = Intent(this, ChoiseWorkShipping::class.java)
-            choiseWorkShipingInit.putExtra("Employer", Employer)
-            choiseWorkShipingInit.putExtra("EmployerIDD",EmployerIDD)
-            choiseWorkShipingInit.putExtra("EmployerFlags",EmployerFlags)
-            choiseWorkShipingInit.putExtra("EmployerID",EmployerID)
             choiseWorkShipingInit.putExtra("ParentForm","Menu")
             startActivity(choiseWorkShipingInit)
         }
@@ -100,17 +93,17 @@ class Menu : BarcodeDataReceiver() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        if (keyCode == 7)
-        {
-            //нажали 0
-            startActivity(7 )
+        val key = SS.helper.WhatInt(keyCode)
+        if (key in 0..9) {
+            //нажали цифру
+            startActivity(key)
         }
         return super.onKeyDown(keyCode, event)
     }
 
     private fun startActivity(num: Int) {
 
-        if (num == 7) {     // режим отбора
+        if (num == 0) {     // режим отбора
             val setInit = Intent(this, SetInitialization::class.java)
             setInit.putExtra("Employer", Employer)
             setInit.putExtra("EmployerIDD",EmployerIDD)
@@ -119,11 +112,25 @@ class Menu : BarcodeDataReceiver() {
             setInit.putExtra("ParentForm","Menu")
             startActivity(setInit)
         }
+        else if (num == 1)
+        {
+            //приемка
+            /*val choiseWorkShipingInit = Intent(this, ChoiseWorkShipping::class.java)
+            choiseWorkShipingInit.putExtra("ParentForm","Menu")
+            startActivity(choiseWorkShipingInit)
+
+             */
+        }
+        else if (num == 3)
+        {
+            val choiseWorkShipingInit = Intent(this, ChoiseWorkShipping::class.java)
+            choiseWorkShipingInit.putExtra("ParentForm","Menu")
+            startActivity(choiseWorkShipingInit)
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        //        IntentFilter intentFilter = new IntentFilter("hsm.RECVRBI");
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
         Log.d("IntentApiSample: ", "onResume")

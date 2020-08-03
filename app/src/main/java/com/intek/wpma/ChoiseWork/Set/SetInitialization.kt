@@ -88,7 +88,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         ParentForm = intent.extras!!.getString("ParentForm")!!
         SS.ANDROID_ID = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         terminalView.text = SS.terminal
-        title = Employer
+        title = SS.title
         scanRes = null //занулим повторно для перехода между формами
         if (ParentForm == "Menu") {
             ToModeSetInicialization()

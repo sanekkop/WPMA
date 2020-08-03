@@ -29,11 +29,9 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
 
     val sdkVersion = Build.VERSION.SDK_INT
     val SS:SQL1S = SQL1S
-    val tsdVers: String = "5.02"
     //для штрих-кода типа data matrix
     val BarcodeId = "w"
     val ResponceTime: Int = 60 //время ожидания отклика от 1С
-
     fun sendImplicitBroadcast(ctxt: Context, i: Intent) {
         val pm = ctxt.packageManager
         val matches = pm.queryBroadcastReceivers(i, 0)

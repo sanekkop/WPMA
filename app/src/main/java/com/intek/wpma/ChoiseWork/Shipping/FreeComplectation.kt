@@ -20,11 +20,12 @@ import kotlinx.android.synthetic.main.activity_set_complete.terminalView
 class FreeComplectation : BarcodeDataReceiver() {
 
     var DocSet: String = ""
-    var Barcode: String = ""
-    var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     var Places: Int? = null
     var PrinterPath = ""
 
+    //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
+    var Barcode: String = ""
+    var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("IntentApiSample: ", "onReceive")
@@ -45,14 +46,45 @@ class FreeComplectation : BarcodeDataReceiver() {
             }
         }
     }
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
+        claimScanner()
+        Log.d("IntentApiSample: ", "onResume")
+        if(scanRes != null){
+            try {
+                Barcode = scanRes.toString()
+                codeId = scanCodeId.toString()
+                reactionBarcode(Barcode)
+            }
+            catch (e: Exception){
+                val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
+                toast.show()
+            }
+        }
+    }
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(barcodeDataReceiver)
+        releaseScanner()
+        Log.d("IntentApiSample: ", "onPause")
+    }
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
+        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+    }
+    companion object {
+        var scanRes: String? = null
+        var scanCodeId: String? = null
+    }
+    //endregion
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set_complete)
 
         PrinterPath = intent.extras!!.getString("PrinterPath")!!
         terminalView.text = SS.terminal
-        title = SS.helper.GetShortFIO(SS.FEmployer.Name)
+        title = SS.title
 
         if (PrinterPath != "") {
             printer.text = PrinterPath
@@ -114,10 +146,6 @@ class FreeComplectation : BarcodeDataReceiver() {
         }
     }
 
-    companion object {
-        var scanRes: String? = null
-        var scanCodeId: String? = null
-    }
 
     private fun reactionBarcode(Barcode: String): Boolean {
         val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
@@ -200,16 +228,11 @@ class FreeComplectation : BarcodeDataReceiver() {
         return true
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        ReactionKey(keyCode, event)
-        return super.onKeyDown(keyCode, event)
-    }
-
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?) {
+    private fun ReactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
-
+            return true
         }
 
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
@@ -228,31 +251,7 @@ class FreeComplectation : BarcodeDataReceiver() {
             }
             false
         }
-
+        return false
     }
 
-    override fun onResume() {
-        super.onResume()
-        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
-        claimScanner()
-        Log.d("IntentApiSample: ", "onResume")
-        if(scanRes != null){
-            try {
-                Barcode = scanRes.toString()
-                codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
-            }
-            catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
-                toast.show()
-            }
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(barcodeDataReceiver)
-        releaseScanner()
-        Log.d("IntentApiSample: ", "onPause")
-    }
 }

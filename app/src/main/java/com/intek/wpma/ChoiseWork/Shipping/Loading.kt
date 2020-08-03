@@ -31,12 +31,13 @@ class Loading : BarcodeDataReceiver() {
     enum class Action {Inicialization,Loading}
     var CurentAction:Action = Action.Inicialization
     var Placer:String = ""
-    var Barcode: String = ""
-    var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val Trans = Translation()
-    var CurrentLine:Int = 0
+    var CurrentLine:Int = 2 //информация начинается с 3 строки в таблице
     var CurrentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
     var oldx:Float = 0F
+    //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
+    var Barcode: String = ""
+    var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("IntentApiSample: ", "onReceive")
@@ -57,14 +58,44 @@ class Loading : BarcodeDataReceiver() {
             }
         }
     }
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
+        claimScanner()
+        Log.d("IntentApiSample: ", "onResume")
+        if(scanRes != null){
+            try {
+                Barcode = scanRes.toString()
+                codeId = scanCodeId.toString()
+                reactionBarcode(Barcode)
+            }
+            catch (e: Exception){
+                val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
+                toast.show()
+            }
+        }
+    }
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(barcodeDataReceiver)
+        releaseScanner()
+        Log.d("IntentApiSample: ", "onPause")
+    }
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+
+        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+    }
+    companion object {
+        var scanRes: String? = null
+        var scanCodeId: String? = null
+    }
+    //endregion
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_loading)
-
-        terminalView.text = SS.terminal
-        title = SS.helper.GetShortFIO(SS.FEmployer.Name)
+        title = SS.title
 
         if (SS.isMobile){
             btnScanLoadingMode.visibility = View.VISIBLE
@@ -476,15 +507,13 @@ class Loading : BarcodeDataReceiver() {
         textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID());
         textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
         WayBillDT = SS.ExecuteWithReadNew(textQuery)!!
-        CurrentLine = 0
+        CurrentLine = 2
+        CurrentLineWayBillDT.put("ProposalNumber",WayBillDT[0]["ProposalNumber"].toString())
+        CurrentLineWayBillDT.put("Doc", WayBillDT[0]["Doc"].toString())
+        CurrentLineWayBillDT.put("AdressCounter",WayBillDT[0]["AdressCounter"].toString())
         CurentAction = Action.Loading
         RefreshActivity()
         return
-    }
-
-    companion object {
-        var scanRes: String? = null
-        var scanCodeId: String? = null
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
@@ -649,17 +678,53 @@ class Loading : BarcodeDataReceiver() {
         GoodVoise()
         return true
     }
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        ReactionKey(keyCode, event)
-        return super.onKeyDown(keyCode, event)
-    }
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?) {
 
-        // нажали назад, выйдем и разблокируем доки
+    private fun ReactionKey(keyCode: Int, event: KeyEvent?):Boolean {
+
+        // нажали назад, выйдем
         if (keyCode == 4){
-
+            val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
+            shoiseWorkInit.putExtra("ParentForm", "Loading")
+            startActivity(shoiseWorkInit)
+            finish()
+            return true
         }
-
+        if (SS.helper.WhatDirection(keyCode) == "Right")
+        {
+            //переход в просмотр состояния
+            val showInfo = Intent(this, ShowInfo::class.java)
+            showInfo.putExtra("ParentForm", "Loading")
+            showInfo.putExtra("Number",CurrentLineWayBillDT["ProposalNumber"].toString())
+            showInfo.putExtra("Doc",CurrentLineWayBillDT["Doc"].toString())
+            startActivity(showInfo)
+            finish()
+            return true
+        }
+        else if(SS.helper.WhatDirection(keyCode) in listOf<String>("Down","Up")){
+            table.getChildAt(CurrentLine).isFocusable = false
+            table.getChildAt(CurrentLine).setBackgroundColor(Color.WHITE)
+            if (SS.helper.WhatDirection(keyCode) == "Down")
+            {
+                if (CurrentLine -1 < WayBillDT.count()) CurrentLine++ else CurrentLine = 2
+            }
+            else {
+                if (CurrentLine > 2) CurrentLine-- else CurrentLine = WayBillDT.count()+1
+            }
+            CurrentLineWayBillDT.put(
+                    "ProposalNumber",
+                    WayBillDT[CurrentLine-2]["ProposalNumber"].toString()
+                )
+                CurrentLineWayBillDT.put("Doc", WayBillDT[CurrentLine-2]["Doc"].toString())
+                CurrentLineWayBillDT.put(
+                    "AdressCounter",
+                    WayBillDT[CurrentLine-2]["AdressCounter"].toString()
+                )
+            //теперь подкрасим строку серым
+            table.getChildAt(CurrentLine).setBackgroundColor(Color.GRAY)
+            table.getChildAt(CurrentLine).isFocusable = true
+            return true
+        }
+        return false
     }
 
 
@@ -714,7 +779,7 @@ class Loading : BarcodeDataReceiver() {
         val number = TextView(this)
         number.text = "№"
         number.typeface = Typeface.SERIF
-        number.layoutParams = LinearLayout.LayoutParams(45, ViewGroup.LayoutParams.WRAP_CONTENT)
+        number.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.09).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         number.gravity = Gravity.CENTER
         number.textSize = 12F
         number.setTextColor(-0x1000000)
@@ -722,27 +787,27 @@ class Loading : BarcodeDataReceiver() {
         docum.text = "Документ"
         docum.typeface = Typeface.SERIF
         docum.gravity = Gravity.CENTER
-        docum.layoutParams = LinearLayout.LayoutParams(145, ViewGroup.LayoutParams.WRAP_CONTENT)
+        docum.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.28).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         docum.textSize = 12F
         docum.setTextColor(-0x1000000)
         val address = TextView(this)
         address.text = "Адрес"
         address.typeface = Typeface.SERIF
-        address.layoutParams = LinearLayout.LayoutParams(185, ViewGroup.LayoutParams.WRAP_CONTENT)
+        address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.35).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         address.gravity = Gravity.CENTER
         address.textSize = 12F
         address.setTextColor(-0x1000000)
         val boxes = TextView(this)
         boxes.text = "Мест"
         boxes.typeface = Typeface.SERIF
-        boxes.layoutParams = LinearLayout.LayoutParams(75, ViewGroup.LayoutParams.WRAP_CONTENT)
+        boxes.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         boxes.gravity = Gravity.CENTER
         boxes.textSize = 12F
         boxes.setTextColor(-0x1000000)
         val boxesfact = TextView(this)
         boxesfact.text = "Факт"
         boxesfact.typeface = Typeface.SERIF
-        boxesfact.layoutParams = LinearLayout.LayoutParams(75, ViewGroup.LayoutParams.WRAP_CONTENT)
+        boxesfact.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         boxesfact.gravity = Gravity.CENTER
         boxesfact.textSize = 12F
         boxesfact.setTextColor(-0x1000000)
@@ -755,7 +820,7 @@ class Loading : BarcodeDataReceiver() {
 
         rowTitle.addView(linearLayout)
         table.addView(rowTitle)
-        var linenom = 0
+        var linenom = 2 //2 строки шапки не считаем
 
         for (rowDT in WayBillDT)
         {
@@ -811,35 +876,35 @@ class Loading : BarcodeDataReceiver() {
             val number = TextView(this)
             number.text = rowDT["AdressCounter"]
             number.typeface = Typeface.SERIF
-            number.layoutParams = LinearLayout.LayoutParams(45, ViewGroup.LayoutParams.WRAP_CONTENT)
+            number.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.09).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             number.gravity = Gravity.CENTER
             number.textSize = 12F
             number.setTextColor(-0x1000000)
             val docum = TextView(this)
             docum.text = rowDT["ProposalNumber"]
             docum.typeface = Typeface.SERIF
-            docum.layoutParams = LinearLayout.LayoutParams(145, ViewGroup.LayoutParams.WRAP_CONTENT)
+            docum.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.28).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             docum.gravity = Gravity.CENTER
             docum.textSize = 12F
             docum.setTextColor(-0x1000000)
             val address = TextView(this)
             address.text = rowDT["AdressCompl"]?.trim()
             address.typeface = Typeface.SERIF
-            address.layoutParams = LinearLayout.LayoutParams(185, ViewGroup.LayoutParams.WRAP_CONTENT)
+            address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.35).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             address.gravity = Gravity.CENTER
             address.textSize = 12F
             address.setTextColor(-0x1000000)
             val boxes = TextView(this)
             boxes.text = rowDT["Boxes"]
             boxes.typeface = Typeface.SERIF
-            boxes.layoutParams = LinearLayout.LayoutParams(75, ViewGroup.LayoutParams.WRAP_CONTENT)
+            boxes.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             boxes.gravity = Gravity.CENTER
             boxes.textSize = 12F
             boxes.setTextColor(-0x1000000)
             val boxesfact = TextView(this)
             boxesfact.text = rowDT["BoxesFact"]
             boxesfact.typeface = Typeface.SERIF
-            boxesfact.layoutParams = LinearLayout.LayoutParams(75, ViewGroup.LayoutParams.WRAP_CONTENT)
+            boxesfact.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             boxesfact.gravity = Gravity.CENTER
             boxesfact.textSize = 12F
             boxesfact.setTextColor(-0x1000000)
@@ -857,27 +922,4 @@ class Loading : BarcodeDataReceiver() {
 
     }
 
-    override fun onResume() {
-        super.onResume()
-        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
-        claimScanner()
-        Log.d("IntentApiSample: ", "onResume")
-        if(scanRes != null){
-            try {
-                Barcode = scanRes.toString()
-                codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
-            }
-            catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
-                toast.show()
-            }
-        }
-    }
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(barcodeDataReceiver)
-        releaseScanner()
-        Log.d("IntentApiSample: ", "onPause")
-    }
 }

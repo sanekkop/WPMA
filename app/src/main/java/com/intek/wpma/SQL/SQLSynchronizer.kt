@@ -13,12 +13,12 @@ open class SQLSynchronizer
     protected val FServerName: Array<String> = arrayOf("192.168.8.4:57068","192.168.8.5:57068") //Наши серваки
     protected val FDBName: String = "int9999001ad1" //База
     //protected val FDBName: String? = "int9999001rab"
-    protected val Vers: String = "5.02"    //Номер версии
+    protected val FVers: String = "5.02"    //Номер версии
     protected var MyConnection: Connection? = null
     protected var MyComand: Statement? = null
     protected var MyReader: ResultSet? = null
     protected var FExcStr: String? = null
-    public var permission: Boolean? = null
+    var permission: Boolean? = null
 
     // public delegate void OpenedEventHendler(object sender, EventArgs e);
     //public event OpenedEventHendler Opened;
@@ -30,7 +30,7 @@ open class SQLSynchronizer
        get() = FExcStr.toString()
        set(value) {FExcStr  = value }
 
-
+    val Vers:String get() = FVers
     fun SQLConnect(ServName: String): Boolean
     {
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()

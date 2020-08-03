@@ -79,7 +79,7 @@ class Correct : BarcodeDataReceiver() {
         EmployerID = intent.extras!!.getString("EmployerID")!!
         iddoc = intent.extras!!.getString("iddoc")!!
         AddressID = intent.extras!!.getString("AddressID")!!
-        title = Employer
+        title = SS.title
         terminalView.text = SS.terminal
         CountFact = intent.extras!!.getString("CountFact")!!.toInt()
         PrinterPath = intent.extras!!.getString("PrinterPath")!!

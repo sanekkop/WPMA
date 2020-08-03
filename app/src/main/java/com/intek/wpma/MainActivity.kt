@@ -11,8 +11,10 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.intek.wpma.ChoiseWork.Menu
+import com.intek.wpma.Ref.RefEmployer
 import kotlinx.android.synthetic.main.activity_main.*
 import java.math.BigInteger
+
 
 class MainActivity :  BarcodeDataReceiver() {
 
@@ -55,9 +57,9 @@ class MainActivity :  BarcodeDataReceiver() {
         {
             ActivityCompat.requestPermissions(this,arrayOf(Manifest.permission.CAMERA,Manifest.permission.INTERNET,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE),0)
         }
-        tsdNumVers.text = tsdVers
+        tsdNumVers.text = SS.Vers
         SS.isMobile = checkCameraHardware(this)
-
+        SS.FEmployer = RefEmployer()
         if(SS.isMobile) {
             btnScanMainAct.visibility = View.VISIBLE
             btnScanMainAct!!.setOnClickListener {
@@ -67,10 +69,13 @@ class MainActivity :  BarcodeDataReceiver() {
             }
         }
         SS.ANDROID_ID = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+        SS.widthDisplay = windowManager.defaultDisplay.width
+        SS.heightDisplay = windowManager.defaultDisplay.height
+
         UpdateProgram()
         //для начала запустим GetDataTime для обратной совместимости, ведь там он прописывает версию ТСД
         var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = tsdVers
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.Vers
         if (!ExecCommandNoFeedback("GetDateTime", dataMapWrite)) {
             val toast = Toast.makeText(applicationContext, "Не удалось подключиться к базе!", Toast.LENGTH_SHORT)
             toast.show()
@@ -103,6 +108,7 @@ class MainActivity :  BarcodeDataReceiver() {
         terminalView.text = SS.terminal
         //Подтянем настройку обмена МОД
         SS.Const.Refresh()
+        SS.title = SS.Vers + " " + SS.terminal.trim()
 
     }
 
@@ -157,6 +163,7 @@ class MainActivity :  BarcodeDataReceiver() {
             EmployerFlags = dataTable[1][1]
             EmployerID = dataTable[1][2]
             SS.FEmployer.FoundID(EmployerID)
+            SS.title = SS.Vers + " " + SS.terminal.trim() + " " + SS.helper.GetShortFIO(SS.FEmployer.Name)
             //инициализация входа
             if (!Login(EmployerID)) {
                 actionLbl.text = "Ошибка входа в систему!"
@@ -198,7 +205,7 @@ class MainActivity :  BarcodeDataReceiver() {
             return
         }
         val newVers = dataTable!![1][0]
-        if (tsdVers == newVers)
+        if (SS.Vers == newVers)
        {
             //Все ок, не нуждается в обновлении
             return

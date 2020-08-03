@@ -61,7 +61,7 @@ class SetComplete : BarcodeDataReceiver() {
         EmployerID = intent.extras!!.getString("EmployerID")!!
         PrinterPath = intent.extras!!.getString("PrinterPath")!!
         terminalView.text = SS.terminal
-        title = Employer
+        title = SS.title
 
         if (PrinterPath != "") {
             printer.text = PrinterPath

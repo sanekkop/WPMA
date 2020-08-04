@@ -1,5 +1,6 @@
 package com.intek.wpma.Helpers
 
+import java.io.File.separator
 import java.math.BigInteger
 import java.text.SimpleDateFormat
 import java.util.*
@@ -20,8 +21,7 @@ class Helper {
         }
         return result
     }
-
-    fun GetShortFIO(FIO:String):String    {
+fun GetShortFIO(FIO:String):String    {
         var result = ""
         var fio = FIO.trim()
         var space = false
@@ -42,7 +42,6 @@ class Helper {
         }
         return result;
     }
-
     fun timeToString(sec : Any) : String {
         sec as Int
         val Hours = sec / 3600
@@ -50,8 +49,14 @@ class Helper {
         return "$Hours:$Minutes"
     }
 
-    fun ShortDate(dat : Any) : String {
+   fun timeToString(sec : Any) : String {
+        sec as Int
+        val Hours = sec / 3600
+        val Minutes = (sec -(Hours * 3600)) / 60
+        return "$Hours:$Minutes"
+    }
 
+    fun ShortDate(dat : Any) : String {
         val datFormat:SimpleDateFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
         val date2 = datFormat.parse(dat.toString())
 
@@ -134,6 +139,7 @@ class Helper {
         }
         return result
     }
+
 
     fun ControlSymbolEAN(strBarcode:String):String    {
         var even = 0;

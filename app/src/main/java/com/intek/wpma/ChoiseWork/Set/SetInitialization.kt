@@ -78,7 +78,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         setContentView(com.intek.wpma.R.layout.activity_set)
         ParentForm = intent.extras!!.getString("ParentForm")!!
         SS.ANDROID_ID = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-        terminalView.text = SS.terminal
         title = SS.title
         scanRes = null //занулим повторно для перехода между формами
         if (ParentForm == "Menu") {
@@ -136,7 +135,28 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             }
         }
         mainView.setOnTouchListener(this)           //для запроса задания с телефона,чтобы кликали по этому полю
-        //FExcStr.setOnTouchListener(this)            //для свайпа, чтобы посмотреть накладную
+        var oldx : Float = 0F                      //для свайпа, чтобы посмотреть накладную
+        FExcStr.setOnTouchListener{ v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                oldx = event.x
+                true
+            } else if (event.action == MotionEvent.ACTION_MOVE) {
+                if (event.x < oldx) {
+                    FExcStr.text = "Подгружаю список..."
+                    //перейдем на форму просмотра
+                    val watchForm = Intent(this, WatchTablePart::class.java)
+                    watchForm.putExtra("iddoc", DocSet!!.ID)
+                    watchForm.putExtra("ItemCode", CCItem!!.InvCode)
+                    watchForm.putExtra("addressID", CCItem!!.AdressID)
+                    watchForm.putExtra("DocView", DocSet!!.View)
+                    watchForm.putExtra("CountFact", CountFact.toString())
+                    watchForm.putExtra("PrinterPath", PrinterPath)
+                    startActivity(watchForm)
+                    finish()
+                }
+            }
+            true
+        }
         PreviousAction.setOnTouchListener(this)     //для завершения набора маркировок при неполно набранной строке
     }
 
@@ -438,6 +458,30 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         val item: TextView = findViewById(R.id.item)
         item.text = CCItem!!.Name
         item.visibility = VISIBLE
+
+        var oldx : Float = 0F
+        item.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                oldx = event.x
+                true
+            } else if (event.action == MotionEvent.ACTION_MOVE) {
+                if (event.x < oldx) {
+                    FExcStr.text = "Подгружаю список..."
+                    //перейдем на форму просмотра
+                    val watchForm = Intent(this, WatchTablePart::class.java)
+                    watchForm.putExtra("iddoc", DocSet!!.ID)
+                    watchForm.putExtra("ItemCode", CCItem!!.InvCode)
+                    watchForm.putExtra("addressID", CCItem!!.AdressID)
+                    watchForm.putExtra("DocView", DocSet!!.View)
+                    watchForm.putExtra("CountFact", CountFact.toString())
+                    watchForm.putExtra("PrinterPath", PrinterPath)
+                    startActivity(watchForm)
+                    finish()
+                }
+            }
+            true
+        }
+
         val details: TextView = findViewById(R.id.details)
         details.text = "Деталей: " + CCItem!!.Details
         details.visibility = VISIBLE

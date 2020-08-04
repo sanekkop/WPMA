@@ -13,12 +13,17 @@ import kotlinx.android.synthetic.main.activity_watch_table_part.*
 import android.util.Log
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.ChoiseWork.Shipping.Loading
 import com.intek.wpma.R
+import kotlinx.android.synthetic.main.activity_show_info.*
 import kotlinx.android.synthetic.main.activity_watch_table_part.PreviousAction
+import kotlinx.android.synthetic.main.activity_watch_table_part.table
+
 
 class WatchTablePart : BarcodeDataReceiver() {
 
@@ -75,34 +80,34 @@ class WatchTablePart : BarcodeDataReceiver() {
         number.typeface = Typeface.SERIF
         number.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.09).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         number.gravity = Gravity.CENTER
-        number.textSize = 22F
+        number.textSize = 18F
         number.setTextColor(-0x1000000)
         val address = TextView(this)
         address.text = "Адрес"
         address.typeface = Typeface.SERIF
-        address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.29).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
-        address.textSize = 22F
+        address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.27).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
+        address.textSize = 18F
         address.setTextColor(-0x1000000)
         val code = TextView(this)
         code.text = "Инв.код"
         code.typeface = Typeface.SERIF
         code.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.29).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         code.gravity = Gravity.CENTER
-        code.textSize = 22F
+        code.textSize = 18F
         code.setTextColor(-0x1000000)
         val count = TextView(this)
         count.text = "Кол."
         count.typeface = Typeface.SERIF
-        count.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.08).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
+        count.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.1).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         count.gravity = Gravity.CENTER
-        count.textSize = 22F
+        count.textSize = 18F
         count.setTextColor(-0x1000000)
         val sum = TextView(this)
         sum.text = "Сумма"
         sum.typeface = Typeface.SERIF
         sum.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.25).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         sum.gravity = Gravity.CENTER
-        sum.textSize = 22F
+        sum.textSize = 18F
         sum.setTextColor(-0x1000000)
 
         linearLayout.addView(number)
@@ -164,6 +169,9 @@ class WatchTablePart : BarcodeDataReceiver() {
         textQuery = SS.QuerySetParam(textQuery, "addressID", addressID)
         val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
 
+        var oldx : Float = 0F
+        var CurrentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
+
         if(dataTable.isNotEmpty()){
             for (i in 1 until dataTable.size){
                 val row = TableRow(this)
@@ -176,7 +184,7 @@ class WatchTablePart : BarcodeDataReceiver() {
                 number.setTextColor(-0x1000000)
                 val address = TextView(this)
                 address.text = dataTable[i][1]
-                address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.29).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
+                address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.27).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 address.textSize = 16F
                 address.setTextColor(-0x1000000)
                 val code = TextView(this)
@@ -187,7 +195,7 @@ class WatchTablePart : BarcodeDataReceiver() {
                 code.setTextColor(-0x1000000)
                 val count = TextView(this)
                 count.text = dataTable[i][3]
-                count.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.08).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
+                count.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.1).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 count.gravity = Gravity.CENTER
                 count.textSize = 16F
                 count.setTextColor(-0x1000000)
@@ -210,9 +218,29 @@ class WatchTablePart : BarcodeDataReceiver() {
                     row.setBackgroundColor(Color.YELLOW)
                 }
                 table.addView(row)
+                table.setOnTouchListener { v, event ->
+
+                    if (event.action == MotionEvent.ACTION_DOWN) {
+                        oldx = event.x
+                        true
+                    } else if (event.action == MotionEvent.ACTION_MOVE) {
+                        if (event.x > oldx) {
+                            val setInitialization = Intent(this, SetInitialization::class.java)
+                            setInitialization.putExtra("DocSetID",iddoc)
+                            setInitialization.putExtra("AddressID",addressID)
+                            setInitialization.putExtra("PreviousAction",PreviousAction.text.toString())
+                            setInitialization.putExtra("PrinterPath",PrinterPath)
+                            setInitialization.putExtra("CountFact",CountFact.toString())
+                            setInitialization.putExtra("ParentForm","WatchTablePart")
+                            startActivity(setInitialization)
+                            finish()
+                        }
+                    }
+                    true
+                }
 
             }
-            sum.text = dataTable[1][5]
+           // sum.text = dataTable[1][5]
         }
         return true
     }

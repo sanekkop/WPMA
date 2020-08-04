@@ -146,7 +146,6 @@ val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
             for (DR in dataTable){
                 val row1 = TableRow(this)
                 val number = TextView(this)
-
                 val linearLayout1 = LinearLayout(this)
                 val sector = RefSection()
                 sector.FoundID(DR["Сектор"].toString())

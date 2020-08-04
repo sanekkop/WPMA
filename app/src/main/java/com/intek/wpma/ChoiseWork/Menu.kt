@@ -9,7 +9,6 @@ import android.util.Log
 import android.view.KeyEvent
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.ChoiseWork.Accept.Search
 import com.intek.wpma.ChoiseWork.Set.SetInitialization
 import com.intek.wpma.ChoiseWork.Shipping.ChoiseWorkShipping
 import com.intek.wpma.Global
@@ -109,9 +108,6 @@ class Menu : BarcodeDataReceiver() {
         }
         else if (num == 1)
         {
-            val accept = Intent(this, Search::class.java)
-            accept.putExtra("ParenForm", "Menu")
-            startActivity(accept)
             //приемка
             /*val choiseWorkShipingInit = Intent(this, ChoiseWorkShipping::class.java)
             choiseWorkShipingInit.putExtra("ParentForm","Menu")

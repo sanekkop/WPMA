@@ -21,10 +21,6 @@ class SetComplete : BarcodeDataReceiver() {
 
     val SetInit: SetInitialization = SetInitialization()
     var DocSet: String = ""
-    var Employer: String = ""
-    var EmployerFlags: String = ""
-    var EmployerIDD: String = ""
-    var EmployerID: String = ""
     var Barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     var Places: Int? = null
@@ -55,10 +51,6 @@ class SetComplete : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set_complete)
 
-        Employer = intent.extras!!.getString("Employer")!!
-        EmployerFlags = intent.extras!!.getString("EmployerFlags")!!
-        EmployerIDD = intent.extras!!.getString("EmployerIDD")!!
-        EmployerID = intent.extras!!.getString("EmployerID")!!
         PrinterPath = intent.extras!!.getString("PrinterPath")!!
         terminalView.text = SS.terminal
         title = SS.title
@@ -170,7 +162,7 @@ class SetComplete : BarcodeDataReceiver() {
         }
         var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = SS.ExtendID(DocSet, "КонтрольНабора")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(EmployerID, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FEmployer.ID, "Спр.Сотрудники")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = SS.ExtendID(addressID, "Спр.Секции")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = Places!!
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = PrinterPath
@@ -184,10 +176,6 @@ class SetComplete : BarcodeDataReceiver() {
             FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
             //сборочный уже закрыт, уйдем с формы завершения набора
             val setInitialization = Intent(this, SetInitialization::class.java)
-            setInitialization.putExtra("Employer", Employer)
-            setInitialization.putExtra("EmployerIDD", EmployerIDD)
-            setInitialization.putExtra("EmployerFlags", EmployerFlags)
-            setInitialization.putExtra("EmployerID", EmployerID)
             setInitialization.putExtra("PrinterPath", PrinterPath)
             setInitialization.putExtra("ParentForm", "SetComplete")
             startActivity(setInitialization)
@@ -204,10 +192,6 @@ class SetComplete : BarcodeDataReceiver() {
 
         //вернемся обратно в SetInitialization
         val setInitialization = Intent(this, SetInitialization::class.java)
-        setInitialization.putExtra("Employer", Employer)
-        setInitialization.putExtra("EmployerIDD", EmployerIDD)
-        setInitialization.putExtra("EmployerFlags", EmployerFlags)
-        setInitialization.putExtra("EmployerID", EmployerID)
         setInitialization.putExtra("PrinterPath", PrinterPath)
         setInitialization.putExtra("ParentForm", "SetComplete")
         startActivity(setInitialization)

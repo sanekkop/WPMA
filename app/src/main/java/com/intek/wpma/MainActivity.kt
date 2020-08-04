@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.intek.wpma.ChoiseWork.Menu
+import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.Ref.RefEmployer
 import kotlinx.android.synthetic.main.activity_main.*
 import java.math.BigInteger
@@ -128,8 +129,21 @@ class MainActivity :  BarcodeDataReceiver() {
         //ИДД = "99990" + СокрЛП(Сред(ШК,3,2)) + "00" + Сред(ШК,5,8);
         //99990010010982023
         //Это перелогин или первый логин
-        if (EmployerIDD != "" && EmployerIDD == "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)) {
-            if (!Logout(EmployerID)) {
+        val barcoderes =  SS.helper.DisassembleBarcode(Barcode)
+        val typeBarcode = barcoderes["Type"].toString()
+        //если это не типовой справочник, то выходим
+        if (typeBarcode != "113")   {
+            actionLbl.text = "Нет действий с этим ШК в данном режиме"
+        }
+        val idd = barcoderes["IDD"].toString()
+        //если это не сотрудник выходим
+        if (!SS.IsSC(idd, "Сотрудники")) {
+            actionLbl.text = "Нет действий с этим ШК в данном режиме"
+        }
+        //все, то что нужно, проверяем а логирован сотрудник или нет
+        if (SS.FEmployer.Selected && SS.FEmployer.IDD == idd){
+            //логинился
+            if (!Logout(SS.FEmployer.ID)) {
                 resLbl.text = "Ошибка выхода из системы!"
                 return
             }
@@ -139,53 +153,42 @@ class MainActivity :  BarcodeDataReceiver() {
             finish()
             return
         }
-        if (EmployerIDD == "" || EmployerIDD != "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)) {
-            if(EmployerIDD != "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12) && EmployerIDD != "") {
-                if (!Logout(EmployerID)) {
-                    resLbl.text = "Ошибка выхода из системы!"
-                    return
-                }
-            }
-            EmployerIDD = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
-
-            val textQuery: String =
-                "Select top 1 descr as Descr, SC838.SP4209 as Settings, ID as ID From SC838 (nolock) WHERE SP1933 = '" + EmployerIDD + "'"
-            val dataTable = SS.ExecuteWithRead(textQuery)
-            if (dataTable == null) {
-                actionLbl.text = SS.ExcStr
-                return
-            } else if (dataTable.isEmpty()) {
+        if (!SS.FEmployer.Selected ){
+           if (!SS.FEmployer.FoundIDD(idd)) {
                 actionLbl.text = "Нет действий с ШК в данном режиме!"
                 return
             }
-
-            Employer = dataTable!!?.get(1)[0].trim()
-            EmployerFlags = dataTable[1][1]
-            EmployerID = dataTable[1][2]
-            SS.FEmployer.FoundID(EmployerID)
             SS.title = SS.Vers + " " + SS.terminal.trim() + " " + SS.helper.GetShortFIO(SS.FEmployer.Name)
             //инициализация входа
-            if (!Login(EmployerID)) {
+            if (!Login(SS.FEmployer.ID)) {
                 actionLbl.text = "Ошибка входа в систему!"
                 return
             }
-            //конвертнем настройки сотрудника в 2ую сс
-            var bigInteger: BigInteger = EmployerFlags.toBigInteger()
-            EmployerFlags = bigInteger.toString(2)
         }
-
-        if (Employer != "") {
-            actionLbl.text = Employer
+            else if (SS.FEmployer.IDD != idd) {
+            if (!Logout(SS.FEmployer.ID)) {
+                resLbl.text = "Ошибка выхода из системы!"
+                return
+            }
+            if (!SS.FEmployer.FoundIDD(idd)) {
+                actionLbl.text = "Нет действий с ШК в данном режиме!"
+                return
+            }
+            SS.title = SS.Vers + " " + SS.terminal.trim() + " " + SS.helper.GetShortFIO(SS.FEmployer.Name)
+            //инициализация входа
+            if (!Login(SS.FEmployer.ID)) {
+                actionLbl.text = "Ошибка входа в систему!"
+                return
+            }
+        }
+        if (SS.FEmployer.Selected) {
+            actionLbl.text = SS.FEmployer.Name
             scanRes = null
             val menu = Intent(this, Menu::class.java)
-            menu.putExtra("Employer", Employer)
-            menu.putExtra("EmployerIDD",EmployerIDD)
-            menu.putExtra("EmployerFlags",EmployerFlags)
-            menu.putExtra("EmployerID",EmployerID)
             menu.putExtra("ParentForm","MainActivity")
             startActivity(menu)
-        } else
-            actionLbl.text = "Нет действий с этим ШК в данном режиме"
+
+        }
     }
     private fun UpdateProgram()
     {

@@ -11,6 +11,7 @@ import android.widget.TextView
 import android.util.Log
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -20,7 +21,10 @@ import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.SQL.SQL1S
+import kotlinx.android.synthetic.main.activity_loading.*
 import kotlinx.android.synthetic.main.activity_show_info.*
+import kotlinx.android.synthetic.main.activity_show_info.table
+import kotlinx.android.synthetic.main.activity_show_info.terminalView
 
 
 class ShowInfo : BarcodeDataReceiver() {
@@ -134,6 +138,8 @@ val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
         val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
 
         var cvet = Color.rgb(192,192,192)
+        var oldx : Float = 0F
+        var CurrentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
 
         if(dataTable.isNotEmpty()){
 
@@ -144,15 +150,15 @@ val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
                 val linearLayout1 = LinearLayout(this)
                 val sector = RefSection()
                 sector.FoundID(DR["Сектор"].toString())
-                number.text = sector.Name + "-" + DR["НомерЛиста"]
-                number.layoutParams = LinearLayout.LayoutParams(80,ViewGroup.LayoutParams.WRAP_CONTENT)
+                number.text = sector.Name
+                number.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.1).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 number.gravity = Gravity.CENTER_HORIZONTAL
                 number.textSize = 16F
                 number.setTextColor(-0x1000000)
 
                 val nmest = TextView(this)
                 nmest.text = DR["Мест"]
-                nmest.layoutParams = LinearLayout.LayoutParams(25, ViewGroup.LayoutParams.WRAP_CONTENT)
+                nmest.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.05).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
                 nmest.gravity = Gravity.CENTER_HORIZONTAL
                 nmest.textSize = 16F
                 nmest.setTextColor(Color.RED)
@@ -162,7 +168,7 @@ val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
                 var employ = RefEmployer()
                 employ.FoundID(DR["Наборщик"].toString())
                 address.text = " " + SS.helper.GetShortFIO(employ.Name)
-                address.layoutParams = LinearLayout.LayoutParams(165,ViewGroup.LayoutParams.WRAP_CONTENT)
+                address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.4).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 address.gravity = Gravity.LEFT
                 address.textSize = 16F
                 address.setTextColor(-0x1000000)
@@ -171,9 +177,8 @@ val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
                 count.text = " " + SS.helper.ShortDate(DR["Дата1"].toString()) + " " +
                         SS.helper.timeToString(DR["Время1"].toString().toInt()) + " - " +
                         SS.helper.timeToString(DR["Время2"].toString().toInt())
-                count.layoutParams = LinearLayout.LayoutParams(180,ViewGroup.LayoutParams.WRAP_CONTENT)
+                count.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.45).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 count.gravity = Gravity.LEFT
-
                 count.textSize = 16F
                 count.setTextColor(-0x1000000)
 
@@ -186,21 +191,19 @@ val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
                 row1.setBackgroundColor(cvet)
                 row1.addView(linearLayout1)
 
-
-
                 val row2 = TableRow(this)
                 val linearLayout2 = LinearLayout(this)
 
                 val mest = TextView(this)
                 mest.text = " -" + DR["НомерЛиста"]
-                mest.layoutParams = LinearLayout.LayoutParams(80,ViewGroup.LayoutParams.WRAP_CONTENT)
+                mest.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.1).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 mest.gravity = Gravity.CENTER
                 mest.textSize = 16F
                 mest.setTextColor(-0x1000000)
 
                 val kmest = TextView(this)
                 kmest.text = DR["КолМест"]
-                kmest.layoutParams = LinearLayout.LayoutParams(25, ViewGroup.LayoutParams.WRAP_CONTENT)
+                kmest.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.05).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
                 kmest.gravity = Gravity.CENTER_HORIZONTAL
                 kmest.textSize = 16F
                 kmest.setTextColor(Color.BLACK)
@@ -209,22 +212,22 @@ val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
                 val code = TextView(this)
                 employ.FoundID(DR["Комплектовщик"].toString())
                 code.text = " " + SS.helper.GetShortFIO(employ.Name)
-                code.layoutParams = LinearLayout.LayoutParams(165,ViewGroup.LayoutParams.WRAP_CONTENT)
+                code.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.4).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 code.gravity = Gravity.LEFT
                 code.textSize = 16F
                 code.setTextColor(-0x1000000)
 
                 val sum = TextView(this)
                 sum.text = " " + SS.helper.ShortDate(DR["Дата2"].toString()) + " " + SS.helper.timeToString(DR["Время3"].toString().toInt())
-                sum.layoutParams = LinearLayout.LayoutParams(150,ViewGroup.LayoutParams.WRAP_CONTENT)
+                sum.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.25).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 sum.gravity = Gravity.LEFT
                 sum.textSize = 16F
                 sum.setTextColor(-0x1000000)
 
                 val nstrok = TextView(this)
                 nstrok.text = DR["КолСтрок"] + " "
-                nstrok.layoutParams = LinearLayout.LayoutParams(30,ViewGroup.LayoutParams.WRAP_CONTENT)
-                nstrok.gravity = Gravity.RIGHT
+                nstrok.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.2).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
+                nstrok.gravity = Gravity.CENTER_HORIZONTAL
                 nstrok.textSize = 16F
                 nstrok.setTextColor(Color.BLUE)
 
@@ -240,6 +243,26 @@ val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
 
                 table.addView(row1)
                 table.addView(row2)
+                table.setOnTouchListener { v, event ->
+
+                    if (event.action == MotionEvent.ACTION_DOWN) {
+                        oldx = event.x
+                        true
+                    } else if (event.action == MotionEvent.ACTION_MOVE) {
+                        if (event.x < oldx) {
+                            val load = Intent(this, Loading::class.java)
+                            load.putExtra("ParentForm", "Loading")
+                            load.putExtra(
+                                "Number",
+                                CurrentLineWayBillDT["ProposalNumber"].toString()
+                            )
+                            load.putExtra("Doc", CurrentLineWayBillDT["Doc"].toString())
+                            startActivity(load)
+                            finish()
+                        }
+                    }
+                    true
+                }
 
                 if (cvet == Color.rgb(192,192,192)) cvet = Color.WHITE else cvet = Color.rgb(192,192,192)
             }

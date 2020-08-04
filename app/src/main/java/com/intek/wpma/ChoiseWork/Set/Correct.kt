@@ -26,10 +26,6 @@ class Correct : BarcodeDataReceiver() {
 
     var iddoc: String = ""
     var AddressID: String = ""
-    var Employer: String = ""
-    var EmployerFlags: String = ""
-    var EmployerIDD: String = ""
-    var EmployerID: String = ""
     val MainWarehouse = "     D   "
     var CCItem: Model.StructItemSet? = null
     var DocSet: Model.StrictDoc? = null
@@ -73,10 +69,6 @@ class Correct : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_correct)
 
-        Employer = intent.extras!!.getString("Employer")!!
-        EmployerFlags = intent.extras!!.getString("EmployerFlags")!!
-        EmployerIDD = intent.extras!!.getString("EmployerIDD")!!
-        EmployerID = intent.extras!!.getString("EmployerID")!!
         iddoc = intent.extras!!.getString("iddoc")!!
         AddressID = intent.extras!!.getString("AddressID")!!
         title = SS.title
@@ -294,10 +286,6 @@ class Correct : BarcodeDataReceiver() {
            if (ChoiseCorrect == 0) {
                PreviousAction.text = ""
                val setInitialization = Intent(this, SetInitialization::class.java)
-               setInitialization.putExtra("Employer", Employer)
-               setInitialization.putExtra("EmployerIDD", EmployerIDD)
-               setInitialization.putExtra("EmployerFlags", EmployerFlags)
-               setInitialization.putExtra("EmployerID", EmployerID)
                setInitialization.putExtra("ParentForm", "Correct")
                setInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
                setInitialization.putExtra("AddressID", CCItem!!.AdressID)
@@ -506,19 +494,11 @@ class Correct : BarcodeDataReceiver() {
         // переходим обратно на форму отбора и завершаем корректировку
         val setInitialization = Intent(this, SetInitialization::class.java)
         if (CountCorrect == CCItem!!.Count) {
-            setInitialization.putExtra("Employer", Employer)
-            setInitialization.putExtra("EmployerIDD", EmployerIDD)
-            setInitialization.putExtra("EmployerFlags", EmployerFlags)
-            setInitialization.putExtra("EmployerID", EmployerID)
             setInitialization.putExtra("ParentForm", "Correct")
             setInitialization.putExtra("DocSetID", "")  //скорректировали полностью
             setInitialization.putExtra("AddressID", "")
         } else {
-            setInitialization.putExtra("Employer", Employer)
-            setInitialization.putExtra("EmployerIDD", EmployerIDD)
-            setInitialization.putExtra("EmployerFlags", EmployerFlags)
-            setInitialization.putExtra("EmployerID", EmployerID)
-            setInitialization.putExtra("ParentForm", "Correct")
+           setInitialization.putExtra("ParentForm", "Correct")
             setInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
             if (CountCorrect == CCItem!!.Count) {
                 setInitialization.putExtra("AddressID", "")

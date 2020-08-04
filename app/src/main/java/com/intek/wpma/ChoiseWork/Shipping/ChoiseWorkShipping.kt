@@ -12,8 +12,7 @@ import android.widget.Toast
 import com.intek.wpma.*
 import com.intek.wpma.ChoiseWork.Menu
 import kotlinx.android.synthetic.main.activity_menu_shipping.*
-import kotlinx.android.synthetic.main.activity_menu_shipping.terminalView
-import kotlinx.android.synthetic.main.activity_unloading.*
+
 
 class ChoiseWorkShipping: BarcodeDataReceiver() {
 
@@ -79,7 +78,6 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
         //terminalView.text = intent.extras!!.getString("terminalView")!!
-        terminalView.text = SS.terminal
         title = SS.title
 
         btnCancel.setOnClickListener {
@@ -127,14 +125,14 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
         //выход из сессии
         if (SS.FEmployer.IDD == "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)) {
             if (!Logout(SS.FEmployer.ID)) {
-                Lbl.text = "Ошибка выхода из системы!"
+                FExcStr.text = "Ошибка выхода из системы!"
                 return
             }
             val main = Intent(this, MainActivity::class.java)
             startActivity(main)
             return
         } else {
-            Lbl.text = "Нет действий с ШК в данном режиме!"
+            FExcStr.text = "Нет действий с ШК в данном режиме!"
         }
     }
 

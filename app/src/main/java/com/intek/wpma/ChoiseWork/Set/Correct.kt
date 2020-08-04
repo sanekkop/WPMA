@@ -17,10 +17,7 @@ import com.intek.wpma.Model.Model
 import com.intek.wpma.R
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_correct.*
-import kotlinx.android.synthetic.main.activity_correct.PreviousAction
-import kotlinx.android.synthetic.main.activity_correct.terminalView
-import kotlinx.android.synthetic.main.activity_menu_shipping.*
-import kotlinx.android.synthetic.main.activity_set.*
+
 
 class Correct : BarcodeDataReceiver() {
 
@@ -41,6 +38,7 @@ class Correct : BarcodeDataReceiver() {
     var flagBtn = 0
     var flagMark = 0                    //флаг маркировки
 
+    //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("IntentApiSample: ", "onReceive")
@@ -64,6 +62,40 @@ class Correct : BarcodeDataReceiver() {
             }
         }
     }
+    companion object {
+        var scanRes: String? = null
+        var scanCodeId: String? = null
+    }
+    override fun onResume() {
+        super.onResume()
+        //        IntentFilter intentFilter = new IntentFilter("hsm.RECVRBI");
+        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
+        claimScanner()
+        Log.d("IntentApiSample: ", "onResume")
+        if(scanRes != null){
+            try {
+                Barcode = scanRes.toString()
+                codeId = scanCodeId.toString()
+                reactionBarcode(Barcode)
+            }
+            catch (e: Exception){
+                val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
+                toast.show()
+            }
+        }
+    }
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(barcodeDataReceiver)
+        releaseScanner()
+        Log.d("IntentApiSample: ", "onPause")
+    }
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+
+        ReactionKey(keyCode, event)
+        return super.onKeyDown(keyCode, event)
+    }
+    //endregion
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,7 +104,6 @@ class Correct : BarcodeDataReceiver() {
         iddoc = intent.extras!!.getString("iddoc")!!
         AddressID = intent.extras!!.getString("AddressID")!!
         title = SS.title
-        terminalView.text = SS.terminal
         CountFact = intent.extras!!.getString("CountFact")!!.toInt()
         PrinterPath = intent.extras!!.getString("PrinterPath")!!
         //заполним заново товар и док
@@ -82,7 +113,7 @@ class Correct : BarcodeDataReceiver() {
         label.text = "Корректировка позиции ${CCItem!!.InvCode}"
         val enterCountCorrect: EditText = findViewById(R.id.enterCountCorrect)
         NoQRCode.setOnClickListener {
-            PreviousAction.text = "Введите колво товара без QR-кода"
+            FExcStr.text = "Введите колво товара без QR-кода"
             enterCountCorrect?.setText("")
             enterCountCorrect.visibility = View.VISIBLE
             NoQRCode.isFocusable = false
@@ -112,19 +143,14 @@ class Correct : BarcodeDataReceiver() {
             enterCountCorrect()
         }
         if (SS.isMobile){
-            btnScanCorrect.visibility = View.VISIBLE
-            btnScanCorrect!!.setOnClickListener {
+            btnScan.visibility = View.VISIBLE
+            btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@Correct, ScanActivity::class.java)
                 scanAct.putExtra("ParentForm","SetCorrect")
                 startActivity(scanAct)
             }
         }
 
-    }
-
-    companion object {
-        var scanRes: String? = null
-        var scanCodeId: String? = null
     }
 
     private fun reactionBarcode(Barcode: String) {
@@ -140,7 +166,7 @@ class Correct : BarcodeDataReceiver() {
                             "and SC7277.SP7271 = '${CCItem!!.ID}' "
                 val dt = SS.ExecuteWithRead(textQuery) ?: return
                 if (dt.isEmpty()){
-                    PreviousAction.text = "Маркировка не найдена, либо товар уже набран/скорректирован! Отсканируйте QR - код"
+                    FExcStr.text = "Маркировка не найдена, либо товар уже набран/скорректирован! Отсканируйте QR - код"
                     return
                 }
                 if (dt[1][2].toInt() == 1 && dt[1][1] == SS.ExtendID(iddoc,"КонтрольНабора")) {
@@ -158,12 +184,12 @@ class Correct : BarcodeDataReceiver() {
                     return
                 }
                 countCorrect += 1
-                PreviousAction.text = "Корректировка принята " + CCItem!!.InvCode.trim() + " - " + countCorrect.toString() + " шт. ( Осталось: " + (EnterCount - countCorrect).toString() + ") Отсканируйте QR - код!"
+                FExcStr.text = "Корректировка принята " + CCItem!!.InvCode.trim() + " - " + countCorrect.toString() + " шт. ( Осталось: " + (EnterCount - countCorrect).toString() + ") Отсканируйте QR - код!"
                 if (countCorrect == EnterCount) { // скорректировали задданное колво позиций
                     CompleteCorrect(ChoiseCorrect, countCorrect)
                 }
             } else {
-                PreviousAction.text = "Неправильный тип QR - кода"
+                FExcStr.text = "Неправильный тип QR - кода"
             }
         }
     }
@@ -280,29 +306,24 @@ class Correct : BarcodeDataReceiver() {
 
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+    private fun ReactionKey(keyCode: Int, event: KeyEvent?) {
+
         // нажали назад, вернемся на форму набора
         if (keyCode == 4) {
-           if (ChoiseCorrect == 0) {
-               PreviousAction.text = ""
-               val setInitialization = Intent(this, SetInitialization::class.java)
-               setInitialization.putExtra("ParentForm", "Correct")
-               setInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
-               setInitialization.putExtra("AddressID", CCItem!!.AdressID)
-               setInitialization.putExtra("PrinterPath", PrinterPath)
-               setInitialization.putExtra("PreviousAction", PreviousAction.text.toString())
-               setInitialization.putExtra("CountFact", CountFact.toString())
-               setInitialization.putExtra("isMobile",SS.isMobile.toString())
-               startActivity(setInitialization)
-               finish()
-           }
+            if (ChoiseCorrect == 0) {
+                FExcStr.text = ""
+                val setInitialization = Intent(this, SetInitialization::class.java)
+                setInitialization.putExtra("ParentForm", "Correct")
+                setInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
+                setInitialization.putExtra("AddressID", CCItem!!.AdressID)
+                setInitialization.putExtra("PrinterPath", PrinterPath)
+                setInitialization.putExtra("PreviousAction", FExcStr.text.toString())
+                setInitialization.putExtra("CountFact", CountFact.toString())
+                setInitialization.putExtra("isMobile",SS.isMobile.toString())
+                startActivity(setInitialization)
+                finish()
+            }
         }
-
-        ReactionKey(keyCode, event)
-        return super.onKeyDown(keyCode, event)
-    }
-
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?) {
 
         if (keyCode in 8..10) {
 
@@ -334,16 +355,16 @@ class Correct : BarcodeDataReceiver() {
 
     private fun enterCountCorrect(){
         enterCountCorrect.visibility = View.VISIBLE
-        PreviousAction.text = "Укажите количество в штуках"
+        FExcStr.text = "Укажите количество в штуках"
         enterCountCorrect.setOnKeyListener { v: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                 try {
                     if (flagBtn == 0) {
                         EnterCount = enterCountCorrect.getText().toString().toInt()
                         if (EnterCount > CCItem!!.Count || EnterCount > (CCItem!!.Count - CountFact)) {
-                            PreviousAction.text = "Нельзя скорректировать столько! "
+                            FExcStr.text = "Нельзя скорректировать столько! "
                             if (EnterCount > (CCItem!!.Count - CountFact)) {
-                                PreviousAction.text =
+                                FExcStr.text =
                                     "Нельзя скорректировать столько! Возможно: " + (CCItem!!.Count - CountFact).toString() + " шт"
                             }
                         } else {
@@ -363,7 +384,7 @@ class Correct : BarcodeDataReceiver() {
                             //есть маркировка, пусть сканируют QR-code
                             if (dt!!.isNotEmpty()) {
                                 flagMark = 1
-                                PreviousAction.text = "Отсканируйте QR - код! (Осталось: " + (EnterCount - countCorrect).toString() + " шт)"
+                                FExcStr.text = "Отсканируйте QR - код! (Осталось: " + (EnterCount - countCorrect).toString() + " шт)"
                                 enterCountCorrect.visibility = View.INVISIBLE
                                 //без QR - кода можно корректировать только при недостачи
                                 if(btnShortage.isVisible) {
@@ -381,7 +402,7 @@ class Correct : BarcodeDataReceiver() {
                         //нажали кн "без QR - кода "
                         EnterCountWithoutQRCode = enterCountCorrect.getText().toString().toInt()
                         if (EnterCountWithoutQRCode > EnterCount - countCorrect) {
-                            PreviousAction.text =
+                            FExcStr.text =
                                 "Нельзя скорректировать столько! Возможно: " + (EnterCount - countCorrect).toString() + " шт"
 
                         } else {
@@ -393,7 +414,7 @@ class Correct : BarcodeDataReceiver() {
                                 //все позиций скорректированы, завершим корректировку
                                 CompleteCorrect(ChoiseCorrect, countCorrect)
                             }
-                            PreviousAction.text = "Корректировка принята " + CCItem!!.InvCode.trim() + " - " + countCorrect.toString() + " шт. ( Осталось: " + (EnterCount - countCorrect).toString() + ") Отсканируйте QR - код!"
+                            FExcStr.text = "Корректировка принята " + CCItem!!.InvCode.trim() + " - " + countCorrect.toString() + " шт. ( Осталось: " + (EnterCount - countCorrect).toString() + ") Отсканируйте QR - код!"
                         }
                     }
 
@@ -416,7 +437,7 @@ class Correct : BarcodeDataReceiver() {
         //конец заглушки
 
         if (CountCorrect <= 0 || CountCorrect > CCItem!!.Count) {
-            PreviousAction.text = "Нельзя скорректировать столько!"
+            FExcStr.text = "Нельзя скорректировать столько!"
             return false
         }
 
@@ -450,7 +471,7 @@ class Correct : BarcodeDataReceiver() {
             }
 
             else -> {
-                PreviousAction.text = "Неясная причина корректировки!"
+                FExcStr.text = "Неясная причина корректировки!"
                 return false
             }
         }
@@ -488,7 +509,7 @@ class Correct : BarcodeDataReceiver() {
         if (!SS.ExecuteWithoutRead(textQuery)) {
             return false
         }
-        PreviousAction.text =
+        FExcStr.text =
             "Корректировка принята " + CCItem!!.InvCode.trim() + " - " + CountCorrect.toString() + " шт. (" + what + ")"
 
         // переходим обратно на форму отбора и завершаем корректировку
@@ -505,7 +526,7 @@ class Correct : BarcodeDataReceiver() {
             } else setInitialization.putExtra("AddressID", CCItem!!.AdressID)
         }
         setInitialization.putExtra("PrinterPath", PrinterPath)
-        setInitialization.putExtra("PreviousAction", PreviousAction.text.toString())
+        setInitialization.putExtra("PreviousAction", FExcStr.text.toString())
         setInitialization.putExtra("isMobile",SS.isMobile.toString())
         setInitialization.putExtra("CountFact", CountFact.toString())
         startActivity(setInitialization)
@@ -514,32 +535,6 @@ class Correct : BarcodeDataReceiver() {
 
         return true
     } // CompleteCorrect
-
-    override fun onResume() {
-        super.onResume()
-        //        IntentFilter intentFilter = new IntentFilter("hsm.RECVRBI");
-        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
-        claimScanner()
-        Log.d("IntentApiSample: ", "onResume")
-        if(scanRes != null){
-            try {
-                Barcode = scanRes.toString()
-                codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
-            }
-            catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
-                toast.show()
-            }
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(barcodeDataReceiver)
-        releaseScanner()
-        Log.d("IntentApiSample: ", "onPause")
-    }
 
 }
 

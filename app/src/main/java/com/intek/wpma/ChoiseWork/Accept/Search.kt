@@ -1,10 +1,13 @@
 package com.intek.wpma.ChoiseWork.Accept
 
+
 import android.annotation.SuppressLint
+
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+
 import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
@@ -21,14 +24,27 @@ import com.intek.wpma.ParentForm
 import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_accept.table
 
+import android.os.Bundle
+import android.util.Log
+import android.view.KeyEvent
+import android.view.View
+import android.widget.Toast
+import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.R
+import com.intek.wpma.ScanActivity
+import kotlinx.android.synthetic.main.activity_set_complete.*
+
+
 
 class Search : BarcodeDataReceiver() {
+
 
     var iddoc: String = ""
     var iddocControl: String = ""
     var number: String = ""
     var Barcode: String = ""
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
+
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("IntentApiSample: ", "onReceive")
@@ -37,23 +53,20 @@ class Search : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
 
-                    Barcode = intent.getStringExtra("data")
-                    codeId = intent.getStringExtra("codeId")
-                    reactionBarcode(Barcode)
+                    try {
+                        Barcode = intent.getStringExtra("data")
+                        reactionBarcode(Barcode)
+                    }
+                    catch(e: Exception) {
+                        val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
+                        toast.show()
+                    }
 
                 }
             }
         }
     }
 
-    private fun reactionBarcode(Barcode: String) {
-        val toast = Toast.makeText(
-            applicationContext,
-            "ШК не работают на данном экране!",
-            Toast.LENGTH_SHORT
-        )
-        toast.show()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,8 +74,7 @@ class Search : BarcodeDataReceiver() {
         iddoc = intent.extras!!.getString("Doc")!!
         number = intent.extras!!.getString("Number")!!
         ParentForm = intent.extras!!.getString("ParentForm")!!
-        //terminalView.text = SS.terminal
-        title = SS.FEmployer.Name
+        title = SS.title
 
         Alitem()
     }
@@ -221,11 +233,24 @@ class Search : BarcodeDataReceiver() {
         }
     }
 
+
     override fun onResume() {
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
         Log.d("IntentApiSample: ", "onResume")
+
+        if(scanRes != null){
+            try {
+                Barcode = scanRes.toString()
+                codeId = scanCodeId.toString()
+                reactionBarcode(Barcode)
+            }
+            catch (e: Exception){
+                val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
+                toast.show()
+            }
+        }
     }
 
     override fun onPause() {
@@ -234,7 +259,7 @@ class Search : BarcodeDataReceiver() {
         releaseScanner()
         Log.d("IntentApiSample: ", "onPause")
     }
-}
+
 /*
 
 private bool ToModeAcceptance()
@@ -1013,3 +1038,47 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc)
 }
 
  */
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+
+        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+    }
+
+    companion object {
+        var scanRes: String? = null
+        var scanCodeId: String? = null
+    }
+    //endregion
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_search)
+
+        title = SS.title
+
+        if (SS.isMobile){
+            btnScanSetComplete.visibility = View.VISIBLE
+            btnScanSetComplete!!.setOnClickListener {
+                val scanAct = Intent(this@Search, ScanActivity::class.java)
+                scanAct.putExtra("ParentForm","SetComplete")
+                startActivity(scanAct)
+            }
+        }
+    }
+
+    private fun reactionBarcode(Barcode: String): Boolean {
+
+        return true
+    }
+
+    private fun ReactionKey(keyCode: Int, event: KeyEvent?):Boolean {
+
+        // нажали назад, выйдем и разблокируем доки
+        if (keyCode == 4){
+            return true
+        }
+        return false
+    }
+
+}
+

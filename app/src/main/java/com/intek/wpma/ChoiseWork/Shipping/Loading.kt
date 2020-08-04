@@ -20,8 +20,6 @@ import com.intek.wpma.Helpers.Translation
 import com.intek.wpma.R
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_loading.*
-import kotlinx.android.synthetic.main.activity_loading.FExcStr
-import kotlinx.android.synthetic.main.activity_loading.terminalView
 
 
 class Loading : BarcodeDataReceiver() {
@@ -98,8 +96,8 @@ class Loading : BarcodeDataReceiver() {
         title = SS.title
 
         if (SS.isMobile){
-            btnScanLoadingMode.visibility = View.VISIBLE
-            btnScanLoadingMode!!.setOnClickListener {
+            btnScan.visibility = View.VISIBLE
+            btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@Loading, ScanActivity::class.java)
                 scanAct.putExtra("ParentForm","Loading")
                 startActivity(scanAct)

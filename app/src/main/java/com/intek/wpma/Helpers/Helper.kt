@@ -1,6 +1,5 @@
 package com.intek.wpma.Helpers
 
-import java.io.File.separator
 import java.math.BigInteger
 import java.text.SimpleDateFormat
 import java.util.*
@@ -21,7 +20,8 @@ class Helper {
         }
         return result
     }
-fun GetShortFIO(FIO:String):String    {
+
+    fun GetShortFIO(FIO:String):String    {
         var result = ""
         var fio = FIO.trim()
         var space = false
@@ -134,7 +134,6 @@ fun GetShortFIO(FIO:String):String    {
         return result
     }
 
-
     fun ControlSymbolEAN(strBarcode:String):String    {
         var even = 0;
         var odd = 0;
@@ -154,7 +153,7 @@ fun GetShortFIO(FIO:String):String    {
         }
     }
 
-    fun  StringToList(SourceStr: String, separator: String): MutableList<String>    {
+    fun StringToList(SourceStr: String, separator: String): MutableList<String>    {
         var SourceStr = SourceStr.replace(" ", "")
         var result: MutableList<String>
         result = mutableListOf()

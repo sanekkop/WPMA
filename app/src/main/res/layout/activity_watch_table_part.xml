@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".ChoiseWork.Set.WatchTablePart">
 
-
     <ScrollView
         android:id="@+id/scroll"
         android:layout_width="match_parent"

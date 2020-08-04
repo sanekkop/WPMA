@@ -19,21 +19,14 @@ import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.MainActivity
 import com.intek.wpma.ParentForm
 import com.intek.wpma.R
+import kotlinx.android.synthetic.main.activity_accept.*
 import kotlinx.android.synthetic.main.activity_accept.table
 
-import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
-import android.view.View
-import android.widget.Toast
-import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.R
-import com.intek.wpma.ScanActivity
-import kotlinx.android.synthetic.main.activity_set_complete.*
 
+import com.intek.wpma.ScanActivity
 
 
 class Search : BarcodeDataReceiver() {
@@ -74,8 +67,17 @@ class Search : BarcodeDataReceiver() {
         iddoc = intent.extras!!.getString("Doc")!!
         number = intent.extras!!.getString("Number")!!
         ParentForm = intent.extras!!.getString("ParentForm")!!
+
         title = SS.title
 
+        if (SS.isMobile){
+            btnScan.visibility = View.VISIBLE
+            btnScan!!.setOnClickListener {
+                val scanAct = Intent(this@Search, ScanActivity::class.java)
+                scanAct.putExtra("ParentForm","SetComplete")
+                startActivity(scanAct)
+            }
+        }
         Alitem()
     }
 
@@ -1049,22 +1051,6 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc)
         var scanCodeId: String? = null
     }
     //endregion
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_search)
-
-        title = SS.title
-
-        if (SS.isMobile){
-            btnScanSetComplete.visibility = View.VISIBLE
-            btnScanSetComplete!!.setOnClickListener {
-                val scanAct = Intent(this@Search, ScanActivity::class.java)
-                scanAct.putExtra("ParentForm","SetComplete")
-                startActivity(scanAct)
-            }
-        }
-    }
 
     private fun reactionBarcode(Barcode: String): Boolean {
 

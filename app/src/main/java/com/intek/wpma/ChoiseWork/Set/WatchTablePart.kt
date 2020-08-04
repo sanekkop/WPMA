@@ -225,6 +225,7 @@ class WatchTablePart : BarcodeDataReceiver() {
                     row.setBackgroundColor(Color.YELLOW)
                 }
                 table.addView(row)
+
             }
             sum.text = dataTable[1][5]
         }

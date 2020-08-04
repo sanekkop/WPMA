@@ -42,12 +42,6 @@ fun GetShortFIO(FIO:String):String    {
         }
         return result;
     }
-    fun timeToString(sec : Any) : String {
-        sec as Int
-        val Hours = sec / 3600
-        val Minutes = (sec -(Hours * 3600)) / 60
-        return "$Hours:$Minutes"
-    }
 
    fun timeToString(sec : Any) : String {
         sec as Int

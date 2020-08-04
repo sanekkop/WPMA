@@ -119,6 +119,7 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
                 finish()
 
                  */
+
         }
     }
 

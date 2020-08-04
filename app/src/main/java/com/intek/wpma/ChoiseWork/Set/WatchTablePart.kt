@@ -27,10 +27,6 @@ class WatchTablePart : BarcodeDataReceiver() {
     var iddoc: String = ""
     var addressID: String = ""
     var InvCode: String = ""
-    var Employer: String = ""
-    var EmployerFlags: String = ""
-    var EmployerIDD: String = ""
-    var EmployerID: String = ""
     var Barcode: String = ""
     //при принятии маркировок, чтобы не сбились уже отсканированные QR-коды
     var CountFact: Int = 0
@@ -63,10 +59,6 @@ class WatchTablePart : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_watch_table_part)
 
-        Employer = intent.extras!!.getString("Employer")!!
-        EmployerFlags = intent.extras!!.getString("EmployerFlags")!!
-        EmployerIDD = intent.extras!!.getString("EmployerIDD")!!
-        EmployerID = intent.extras!!.getString("EmployerID")!!
         iddoc = intent.extras!!.getString("iddoc")!!
         addressID = intent.extras!!.getString("addressID")!!
         InvCode = intent.extras!!.getString("ItemCode")!!
@@ -84,34 +76,34 @@ class WatchTablePart : BarcodeDataReceiver() {
         val number = TextView(this)
         number.text = "№"
         number.typeface = Typeface.SERIF
-        number.layoutParams = LinearLayout.LayoutParams(45,ViewGroup.LayoutParams.WRAP_CONTENT)
+        number.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.09).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         number.gravity = Gravity.CENTER
         number.textSize = 22F
         number.setTextColor(-0x1000000)
         val address = TextView(this)
         address.text = "Адрес"
         address.typeface = Typeface.SERIF
-        address.layoutParams = LinearLayout.LayoutParams(135,ViewGroup.LayoutParams.WRAP_CONTENT)
+        address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.29).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         address.textSize = 22F
         address.setTextColor(-0x1000000)
         val code = TextView(this)
         code.text = "Инв.код"
         code.typeface = Typeface.SERIF
-        code.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
+        code.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.29).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         code.gravity = Gravity.CENTER
         code.textSize = 22F
         code.setTextColor(-0x1000000)
         val count = TextView(this)
         count.text = "Кол."
         count.typeface = Typeface.SERIF
-        count.layoutParams = LinearLayout.LayoutParams(75,ViewGroup.LayoutParams.WRAP_CONTENT)
+        count.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.08).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         count.gravity = Gravity.CENTER
         count.textSize = 22F
         count.setTextColor(-0x1000000)
         val sum = TextView(this)
         sum.text = "Сумма"
         sum.typeface = Typeface.SERIF
-        sum.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT)
+        sum.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.25).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         sum.gravity = Gravity.CENTER
         sum.textSize = 22F
         sum.setTextColor(-0x1000000)
@@ -133,10 +125,6 @@ class WatchTablePart : BarcodeDataReceiver() {
 
         if (keyCode == 21){ //нажали влево; вернемся к документу
             val setInitialization = Intent(this, SetInitialization::class.java)
-            setInitialization.putExtra("Employer", Employer)
-            setInitialization.putExtra("EmployerIDD",EmployerIDD)
-            setInitialization.putExtra("EmployerFlags",EmployerFlags)
-            setInitialization.putExtra("EmployerID",EmployerID)
             setInitialization.putExtra("DocSetID",iddoc)
             setInitialization.putExtra("AddressID",addressID)
             setInitialization.putExtra("PreviousAction",PreviousAction.text.toString())
@@ -185,30 +173,30 @@ class WatchTablePart : BarcodeDataReceiver() {
                 val number = TextView(this)
                 val linearLayout = LinearLayout(this)
                 number.text = dataTable[i][0]
-                number.layoutParams = LinearLayout.LayoutParams(45,ViewGroup.LayoutParams.WRAP_CONTENT)
+                number.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.09).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 number.gravity = Gravity.CENTER
                 number.textSize = 16F
                 number.setTextColor(-0x1000000)
                 val address = TextView(this)
                 address.text = dataTable[i][1]
-                address.layoutParams = LinearLayout.LayoutParams(135,ViewGroup.LayoutParams.WRAP_CONTENT)
+                address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.29).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 address.textSize = 16F
                 address.setTextColor(-0x1000000)
                 val code = TextView(this)
                 code.text = dataTable[i][2]
-                code.layoutParams = LinearLayout.LayoutParams(135,ViewGroup.LayoutParams.WRAP_CONTENT)
+                code.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.29).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 code.gravity = Gravity.CENTER
                 code.textSize = 16F
                 code.setTextColor(-0x1000000)
                 val count = TextView(this)
                 count.text = dataTable[i][3]
-                count.layoutParams = LinearLayout.LayoutParams(40,ViewGroup.LayoutParams.WRAP_CONTENT)
+                count.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.08).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 count.gravity = Gravity.CENTER
                 count.textSize = 16F
                 count.setTextColor(-0x1000000)
                 val sum = TextView(this)
                 sum.text = dataTable[i][4]
-                sum.layoutParams = LinearLayout.LayoutParams(120,ViewGroup.LayoutParams.WRAP_CONTENT)
+                sum.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.25).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
                 sum.gravity = Gravity.CENTER
                 sum.textSize = 16F
                 sum.setTextColor(-0x1000000)

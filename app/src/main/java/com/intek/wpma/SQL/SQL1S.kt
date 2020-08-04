@@ -1,5 +1,6 @@
 package com.intek.wpma.SQL
 
+import com.intek.wpma.Global
 import com.intek.wpma.Helpers.ConstantsDepot
 import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.Ref.RefEmployer
@@ -28,6 +29,9 @@ object SQL1S : SQLSynchronizer() {
     var widthDisplay:Int = 400
     var heightDisplay:Int = 800
     var title:String = Vers
+    var CurrentAction: Global.ActionSet? = null
+    var CurrentMode: Global.Mode? = null
+
     /*Конструктор класса
 
      */

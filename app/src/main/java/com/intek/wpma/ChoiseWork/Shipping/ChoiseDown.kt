@@ -18,9 +18,6 @@ import com.intek.wpma.Ref.RefPrinter
 import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.SQL.SQL1S.Const
 import kotlinx.android.synthetic.main.activity_choise_down.*
-import kotlinx.android.synthetic.main.activity_choise_down.FExcStr
-import kotlinx.android.synthetic.main.activity_choise_down.terminalView
-import kotlinx.android.synthetic.main.activity_unloading.*
 
 
 class ChoiseDown : BarcodeDataReceiver() {
@@ -87,7 +84,6 @@ class ChoiseDown : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_choise_down)
 
-        terminalView.text = SS.terminal
         title = SS.title
         btn9.isEnabled = false
 

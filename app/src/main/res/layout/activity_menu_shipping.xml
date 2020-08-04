@@ -86,19 +86,6 @@
         app:layout_constraintVertical_bias="0.153" />
 
     <TextView
-        android:id="@+id/terminalView"
-        android:layout_width="84dp"
-        android:layout_height="31dp"
-        android:textColor="#000000"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.974"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.011" />
-
-    <TextView
         android:id="@+id/choiseWorkLbl"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -113,30 +100,18 @@
         app:layout_constraintVertical_bias="0.033" />
 
     <TextView
-        android:id="@+id/employer"
-        android:layout_width="282dp"
-        android:layout_height="86dp"
-        android:gravity="center_horizontal"
-        android:textColor="#D12114"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.762" />
-
-    <TextView
-        android:id="@+id/Lbl"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/choiseWorkLb2"
+        android:id="@+id/FExcStr"
+        android:layout_width="322dp"
+        android:layout_height="95dp"
+        android:gravity="center"
+        android:text="Выберите режим работы"
         android:textColor="#070AA0"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.444"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.946" />
+        app:layout_constraintVertical_bias="0.986" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -16,9 +16,6 @@ import com.intek.wpma.Ref.RefPrinter
 import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_downing.*
-import kotlinx.android.synthetic.main.activity_downing.FExcStr
-import kotlinx.android.synthetic.main.activity_downing.lblState
-import kotlinx.android.synthetic.main.activity_downing.terminalView
 
 
 class Downing : BarcodeDataReceiver() {
@@ -90,12 +87,11 @@ class Downing : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_downing)
 
-        terminalView.text = SS.terminal
         title = SS.title
 
         if (SS.isMobile){
-            btnScanDowningMode.visibility = View.VISIBLE
-            btnScanDowningMode!!.setOnClickListener {
+            btnScan.visibility = View.VISIBLE
+            btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@Downing, ScanActivity::class.java)
                 scanAct.putExtra("ParentForm","Downing")
                 startActivity(scanAct)

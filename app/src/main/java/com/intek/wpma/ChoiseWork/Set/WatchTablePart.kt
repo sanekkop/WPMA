@@ -19,8 +19,6 @@ import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_watch_table_part.PreviousAction
-import kotlinx.android.synthetic.main.activity_watch_table_part.terminalView
-
 
 class WatchTablePart : BarcodeDataReceiver() {
 
@@ -63,7 +61,6 @@ class WatchTablePart : BarcodeDataReceiver() {
         addressID = intent.extras!!.getString("addressID")!!
         InvCode = intent.extras!!.getString("ItemCode")!!
         PreviousAction.text = intent.extras!!.getString("DocView")!!
-        terminalView.text = SS.terminal
         CountFact = intent.extras!!.getString("CountFact")!!.toInt()
         PrinterPath = intent.extras!!.getString("PrinterPath")!!
         title = SS.title

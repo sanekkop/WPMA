@@ -15,9 +15,8 @@ import com.intek.wpma.ChoiseWork.Shipping.ChoiseWorkShipping
 import com.intek.wpma.Global
 import com.intek.wpma.MainActivity
 import com.intek.wpma.R
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_menu.*
-import kotlinx.android.synthetic.main.activity_menu.terminalView
+
 
 
 class Menu : BarcodeDataReceiver() {

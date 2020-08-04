@@ -5,18 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ChoiseWork.Set.WatchTablePart">
-
-
-    <TextView
-        android:id="@+id/terminalView"
-        android:layout_width="84dp"
-        android:layout_height="30dp"
-        android:layout_marginTop="32dp"
-        android:textColor="#000000"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <TextView
         android:id="@+id/sum"
         android:layout_width="85dp"
@@ -31,8 +19,8 @@
 
     <ScrollView
         android:id="@+id/scroll"
-        android:layout_width="361dp"
-        android:layout_height="638dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"

@@ -16,10 +16,7 @@ import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefPrinter
 import com.intek.wpma.ScanActivity
-import kotlinx.android.synthetic.main.activity_downing.*
-import kotlinx.android.synthetic.main.activity_set_complete.*
-import kotlinx.android.synthetic.main.activity_set_complete.FExcStr
-import kotlinx.android.synthetic.main.activity_set_complete.terminalView
+import kotlinx.android.synthetic.main.activity_new_complectation.*
 
 
 class NewComplectation : BarcodeDataReceiver() {
@@ -31,7 +28,6 @@ class NewComplectation : BarcodeDataReceiver() {
 
     var CurentAction: Action = Action.Complectation
     var DownSituation: MutableList<MutableMap<String, String>> = mutableListOf()
-    var CCRP: MutableList<MutableMap<String, String>> = mutableListOf()
     var ScaningBox = ""
     var ScaningBoxIddoc = ""
     var NeedAdressComplete = ""
@@ -111,23 +107,39 @@ class NewComplectation : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_complectation)
 
-        terminalView.text = SS.terminal
         title = SS.title
 
         if (SS.isMobile) {
-            btnScanSetComplete.visibility = View.VISIBLE
-            btnScanSetComplete!!.setOnClickListener {
+            btnScan.visibility = View.VISIBLE
+            btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@NewComplectation, ScanActivity::class.java)
                 scanAct.putExtra("ParentForm", "NewComplectation")
                 startActivity(scanAct)
             }
         }
-
         btnCansel.setOnClickListener {
             RepealNewComplectation()
         }
+        NewComplectationGetFirstOrder()
+
     }
 
+    fun NewComplectationGetFirstOrder() {
+        var textQuery =
+        "declare @res int " +
+                "begin tran " +
+                "exec WPM_GetFirstOrderComplectationNew :Employer, @res output " +
+                "if @res = 0 rollback tran else commit tran " +
+                "";
+        textQuery = SS.QuerySetParam(textQuery, "Employer",    SS.FEmployer.ID);
+
+        if (!SS.ExecuteWithoutRead(textQuery))
+        {
+            BadVoise()
+            return
+        }
+        ToModeNewComplectation()
+    }
 
     fun RepealNewComplectation() {
         if (DocDown["IsFirstOrder"] == "1") {
@@ -203,62 +215,10 @@ class NewComplectation : BarcodeDataReceiver() {
             finish()
             return
         }
-        FExcStr.text = "Напечатать этикетку, отсканировать адрес паллеты";
-        //Подсосем маршруты
-        RefreshRoute()
         FExcStr.text = "Сканируйте коробки и адрес комплектации!";
         ScaningBox = ""
         CurentAction = Action.ComplectationComplete
         RefreshActivity()
-    }
-
-    fun RefreshRoute() {
-        var textQuery =
-            "select " +
-                    "right(min(journForBill.docno), 5) as Bill, " +
-                    "rtrim(min(isnull(Sections.descr, 'Пу'))) + '-' + cast(min(DocCC.\$КонтрольНабора.НомерЛиста ) as char) as CC, " +
-                    "max(AllTab.CountAllBox) as Boxes, " +
-                    "rtrim(max(RefAdress9.descr)) as Adress, " +
-                    "max(Gate.descr) as Gate " +
-                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
-                    "inner join DH\$КонтрольНабора as DocCC (nolock) " +
-                    "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
-                    "left join \$Спр.Секции as Sections (nolock) " +
-                    "on Sections.id = DocCC.\$КонтрольНабора.Сектор " +
-                    "inner join DH\$КонтрольРасходной as DocCB (nolock) " +
-                    "on DocCB .iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
-                    "inner JOIN DH\$Счет as Bill (nolock) " +
-                    "on Bill.iddoc = DocCB.\$КонтрольРасходной.ДокументОснование " +
-                    "inner join _1sjourn as journForBill (nolock) " +
-                    "on journForBill.iddoc = Bill.iddoc " +
-                    "left join \$Спр.Секции as RefAdress9 (nolock) " +
-                    "on RefAdress9.id = dbo.WMP_fn_GetAdressComplete(Ref.id) " +
-                    "left join \$Спр.Ворота as Gate (nolock) " +
-                    "on Gate.id = DocCB.\$КонтрольРасходной.Ворота " +
-                    "inner join ( " +
-                    "select " +
-                    "DocCC.iddoc as iddoc, " +
-                    "count(*) as CountAllBox " +
-                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
-                    "inner join DH\$КонтрольНабора as DocCC (nolock) " +
-                    "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
-                    "where " +
-                    "Ref.ismark = 0 " +
-                    "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
-                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
-                    "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
-                    "group by DocCC.iddoc ) as AllTab " +
-                    "on AllTab.iddoc = DocCC.iddoc " +
-                    "where " +
-                    "Ref.ismark = 0 " +
-                    "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
-                    "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
-                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
-                    "group by DocCC.iddoc";
-        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
-        CCRP = SS.ExecuteWithReadNew(textQuery) ?: return
-
     }
 
     fun LoadBadDoc(ID: String) {
@@ -374,7 +334,6 @@ class NewComplectation : BarcodeDataReceiver() {
         }
     }
 
-
     private fun reactionBarcode(Barcode: String): Boolean {
         val barcoderes = SS.helper.DisassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
@@ -459,7 +418,8 @@ class NewComplectation : BarcodeDataReceiver() {
                     ToModeNewComplectation()
                     return true
 
-                } else {
+                }
+                else {
                     var textQuery =
                         "Select " +
                                 "isnull(Sections.descr, 'Пу') as Sector, " +
@@ -515,7 +475,6 @@ class NewComplectation : BarcodeDataReceiver() {
                         FExcStr.text = "Нет действий с данным штрихкодом!"
                         return false
                     }
-
                     if (!SS.IsVoidDate(DT[0]["Date"].toString())) {
                         FExcStr.text = "Место уже скомплектовано!"
                         return false
@@ -546,13 +505,15 @@ class NewComplectation : BarcodeDataReceiver() {
                     return true
 
                 }
-            } else {
+            }
+            else {
                 FExcStr.text = "Нет действий с данным ШК в данном режиме!"
                 BadVoise()
                 return false
             }
 
-        } else if (typeBarcode == "113") {
+        }
+        else if (typeBarcode == "113") {
             //справочники типовые
             val idd = barcoderes["IDD"].toString()
             if (SS.IsSC(idd, "Сотрудники")) {
@@ -561,7 +522,8 @@ class NewComplectation : BarcodeDataReceiver() {
                 mainInit.putExtra("ParentForm", "ChoiseDown")
                 startActivity(mainInit)
                 finish()
-            } else if (CurentAction == Action.ComplectationComplete && SS.IsSC(idd, "Секции")) {
+            }
+            else if (CurentAction == Action.ComplectationComplete && SS.IsSC(idd, "Секции")) {
                 val id = barcoderes["ID"].toString()
                 if (DownSituation[0]["NumberOfOrder"].toString() == "0") {
                     FExcStr.text = "Не присвоен номер задания! Напечатайте этикетку!"
@@ -578,7 +540,8 @@ class NewComplectation : BarcodeDataReceiver() {
                 // ToModeDown()
                 return true
             }
-        } else {
+        }
+        else {
             FExcStr.text = "Нет действий с данным ШК в данном режиме!"
             BadVoise()
             return false
@@ -590,6 +553,16 @@ class NewComplectation : BarcodeDataReceiver() {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4) {
+            return true
+        }
+        if (SS.helper.WhatDirection(keyCode) == "Left") {
+            val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
+            shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
+            shoiseWorkInit.putExtra("BadDocID", BadDoc["ID"])
+            shoiseWorkInit.putExtra("BadDocView", BadDoc["View"])
+
+            startActivity(shoiseWorkInit)
+            finish()
             return true
         }
         return false

@@ -11,6 +11,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.Global
 import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.R
 import com.intek.wpma.Ref.ARef
@@ -22,8 +23,8 @@ import kotlinx.android.synthetic.main.activity_unloading.*
 
 class UnLoading : BarcodeDataReceiver() {
 
-    var CurrentAction: String = ""
-   var AdressUnLoad:String = ""
+    var CurrentAction:Global.ActionSet = Global.ActionSet.ScanBox
+    var AdressUnLoad:String = ""
     var BoxUnLoad:String = ""
 
 
@@ -87,14 +88,13 @@ class UnLoading : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_unloading)
 
-       terminalView.text = SS.terminal
         title = SS.title
         header.text  = "Свободная разргузка"
-        CurrentAction = "ScanBox"
+        CurrentAction = Global.ActionSet.ScanBox
 
         if (SS.isMobile){
-            btnScanUnloadingMode.visibility = View.VISIBLE
-            btnScanUnloadingMode!!.setOnClickListener {
+            btnScan.visibility = View.VISIBLE
+            btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@UnLoading, ScanActivity::class.java)
                 scanAct.putExtra("ParentForm","UnLoading")
                 startActivity(scanAct)
@@ -113,7 +113,7 @@ class UnLoading : BarcodeDataReceiver() {
             val idd = barcoderes["IDD"].toString()
             if (SS.IsSC(idd, "Секции")) {
 
-                if ( CurrentAction != "ScanAdress")
+                if ( CurrentAction != Global.ActionSet.ScanAdress)
                 {
                     FExcStr.text = "Неверно! Отсканируйте адрес."
                     BadVoise()
@@ -142,11 +142,11 @@ class UnLoading : BarcodeDataReceiver() {
                     return false
                 }
 
-                CurrentAction = "ScanBox"
+                CurrentAction =  Global.ActionSet.ScanBox
              }
             else
             {
-                FExcStr.text = "Неверно! " + if(CurrentAction == "ScanAdress") "Отсканируйте адрес." else "Отсканируйте коробку."
+                FExcStr.text = "Неверно! " + if(CurrentAction ==  Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
                 BadVoise()
                 return false
             }
@@ -155,14 +155,14 @@ class UnLoading : BarcodeDataReceiver() {
         {
             val id = barcoderes["ID"].toString()
             if (SS.IsSC(id, "МестаПогрузки")) {
-                if ( CurrentAction != "ScanBox")
+                if ( CurrentAction !=  Global.ActionSet.ScanBox)
                 {
                     FExcStr.text = "Неверно! Отсканируйте адрес."
                     BadVoise()
                     return false
                 }
 
-                CurrentAction = "ScanAdress"
+                CurrentAction =  Global.ActionSet.ScanAdress
                 AdressUnLoad = ""
                 BoxUnLoad = id
 
@@ -174,7 +174,7 @@ class UnLoading : BarcodeDataReceiver() {
             }
         }
         else {
-            FExcStr.text = "Нет действий с данным ШК! " + if(CurrentAction == "ScanAdress") "Отсканируйте адрес." else "Отсканируйте коробку."
+            FExcStr.text = "Нет действий с данным ШК! " + if(CurrentAction ==  Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
             BadVoise()
             return false
         }
@@ -261,7 +261,7 @@ class UnLoading : BarcodeDataReceiver() {
             adressScan.FoundID(AdressUnLoad)
             lblDocInfo.text = "Новый адрес: " + adressScan.Name;
         }
-        FExcStr.text = if(CurrentAction == "ScanAdress") "Отсканируйте адрес." else "Отсканируйте коробку."
+        FExcStr.text = if(CurrentAction ==  Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
 
     }
 

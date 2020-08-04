@@ -18,7 +18,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.847" />
 
-
     <Button
         android:id="@+id/btn1"
         android:layout_width="182dp"
@@ -176,19 +175,6 @@
         app:layout_constraintVertical_bias="0.847" />
 
     <TextView
-        android:id="@+id/terminalView"
-        android:layout_width="84dp"
-        android:layout_height="31dp"
-        android:textColor="#000000"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.974"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.011" />
-
-    <TextView
         android:id="@+id/FExcStr"
         android:layout_width="322dp"
         android:layout_height="95dp"
@@ -201,6 +187,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.986" />
+
     <TextView
         android:id="@+id/lblState"
         android:layout_width="275dp"

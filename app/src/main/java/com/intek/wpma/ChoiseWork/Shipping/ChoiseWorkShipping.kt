@@ -107,17 +107,10 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
             finish()
         }
         btnFree.setOnClickListener {
-            BadVoise()
-            FExcStr.text = "Режим в разработке!"
-
-            /*
-                val freeComplectationInit = Intent(this, FreeComplectation::class.java)
-                freeComplectationInit.putExtra("ParentForm","ChoiseWorkShipping")
-                startActivity(freeComplectationInit)
-                finish()
-
-                 */
-
+            val freeComplectationInit = Intent(this, FreeComplectation::class.java)
+            freeComplectationInit.putExtra("ParentForm", "ChoiseWorkShipping")
+            startActivity(freeComplectationInit)
+            finish()
         }
     }
 

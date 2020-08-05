@@ -5,23 +5,23 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.Helpers.Helper
+import com.intek.wpma.MainActivity
 import com.intek.wpma.R
+import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.ScanActivity
-import kotlinx.android.synthetic.main.activity_set_complete.*
-import kotlinx.android.synthetic.main.activity_set_complete.FExcStr
-import kotlinx.android.synthetic.main.activity_set_complete.terminalView
+import kotlinx.android.synthetic.main.activity_free_complectation.*
+
 
 class FreeComplectation : BarcodeDataReceiver() {
 
-    var DocSet: String = ""
-    var Places: Int? = null
-    var PrinterPath = ""
+    var DocDown:MutableMap<String,String> = mutableMapOf()
+    var BadDoc: MutableMap<String, String> = mutableMapOf()
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var Barcode: String = ""
@@ -78,179 +78,203 @@ class FreeComplectation : BarcodeDataReceiver() {
         var scanCodeId: String? = null
     }
     //endregion
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_set_complete)
-
-        PrinterPath = intent.extras!!.getString("PrinterPath")!!
-        terminalView.text = SS.terminal
+        setContentView(R.layout.activity_free_complectation)
         title = SS.title
 
-        if (PrinterPath != "") {
-            printer.text = PrinterPath
-            FExcStr.text = "Введите колво мест"
-            enterCountPlace.visibility = View.VISIBLE
-        }
-        DocSet = intent.extras!!.getString("iddoc")!!
-        val textQuery =
-            "SELECT " +
-                    "journForBill.docno as DocNo, " +
-                    "CONVERT(char(8), CAST(LEFT(journForBill.date_time_iddoc, 8) as datetime), 4) as DateDoc, " +
-                    "journForBill.iddoc as Bill, " +
-                    "Sector.descr as Sector, " +
-                    "DocCCHead.SP3595 as Number, " +
-                    "DocCCHead.SP2841 as SelfRemovel " +
-                    "FROM " +
-                    "DH2776 as DocCCHead (nolock) " +
-                    "LEFT JOIN SC1141 as Sector (nolock) " +
-                    "ON Sector.id = DocCCHead.SP2764 " +
-                    "LEFT JOIN DH2763 as DocCB (nolock) " +
-                    "ON DocCB.iddoc = DocCCHead.SP2771 " +
-                    "LEFT JOIN DH196 as Bill (nolock) " +
-                    "ON Bill.iddoc = DocCB.SP2759 " +
-                    "LEFT JOIN _1sjourn as journForBill (nolock) " +
-                    "ON journForBill.iddoc = Bill.iddoc " +
-                    "WHERE DocCCHead.iddoc = '$DocSet'"
-        val dataTable = SS.ExecuteWithRead(textQuery)
-        previousAction.text = if (dataTable!![1][5].toInt() == 1) "(C) " else {
-            ""
-        } + dataTable[1][3].trim() + "-" +
-                dataTable[1][4] + " Заявка " + dataTable[1][0] + " (" + dataTable[1][1] + ")"
-
-        if (dataTable[1][5].toInt() == 1) DocView.text = "САМОВЫВОЗ" else DocView.text = "ДОСТАВКА"
-        //тут этот код дублирую, чтобы поймать нажатие на enter после ввода колва с уже установленным принтером
-        enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
-            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                // сохраняем текст, введенный до нажатия Enter в переменную
-                try {
-                    val count = enterCountPlace.text.toString().toInt()
-                    Places = count
-                    enterCountPlace.visibility = View.INVISIBLE
-                    countPlace.text = "Колво мест: $Places"
-                    countPlace.visibility = View.VISIBLE
-                    FExcStr.text = "Ожидание команды"
-                } catch (e: Exception) {
-
-                }
-            }
-            false
-        }
-
-        if (SS.isMobile){
-            btnScanSetComplete.visibility = View.VISIBLE
-            btnScanSetComplete!!.setOnClickListener {
+        if (SS.isMobile) {
+            btnScan.visibility = View.VISIBLE
+            btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@FreeComplectation, ScanActivity::class.java)
-                scanAct.putExtra("ParentForm","SetComplete")
+                scanAct.putExtra("ParentForm", "FreeComplectation")
                 startActivity(scanAct)
             }
         }
+        ToModeFreeDownComplete()
+    }
+
+    fun ToModeFreeDownComplete() {
+
+        var textQuery = "select * from dbo.WPM_fn_ToModeFreeDownComplete(:Employer)";
+        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
+        //QuerySetParam(ref TextQuery, "EmptyDate",   GetVoidDate());
+        //QuerySetParam(ref TextQuery, "EmptyID",     GetVoidID());
+        val DT = SS.ExecuteWithReadNew(textQuery) ?: return
+        if (DT.isEmpty()) {
+            FExcStr.text = "Отсканируйте место!";
+        }
+        else {
+            if (BadDoc["ID"] == null) {
+
+                LoadBadDoc(DT[0]["id"].toString())
+            }
+
+            DocDown.put("ID", DT[0]["id"].toString())
+            DocDown.put(
+                "View",
+                DT[0]["Sector"].toString()
+                    .trim() + "-" + DT[0]["Number"].toString() + " Заявка " + DT[0]["docno"].toString() + " (" + DT[0]["datedoc"].toString() + ")"
+            )
+            DocDown.put("NumberBill", DT[0]["DocNo"].toString().trim())
+            DocDown.put("NumberCC", DT[0]["Number"].toString())
+            DocDown.put("MainSectorName", DT[0]["Sector"].toString())
+            DocDown.put("SetterName", DT[0]["SetterName"].toString())
+            DocDown.put("Boxes", DT[0]["NumberBox"].toString())
+            FExcStr.text = "Отсканируйте адрес!"
+        }
+        RefreshActivity()
+    }
+
+    fun LoadBadDoc(ID: String) {
+        var textQuery =
+            "Select " +
+                    "isnull(Sections.descr, 'Пу') as Sector, " +
+                    "CONVERT(char(8), CAST(LEFT(journForBill.date_time_iddoc, 8) as datetime), 4) as DateDoc, " +
+                    "journForBill.docno as DocNo, " +
+                    "DocCC.\$КонтрольНабора.НомерЛиста as Number, " +
+                    "Ref.\$Спр.МестаПогрузки.КонтрольНабора as Doc,  " +
+                    "TabBox.CountAllBox as CountBox, " +
+                    "Gate.descr as Gate " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "inner join DH\$КонтрольНабора as DocCC (nolock) " +
+                    "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
+                    "left join \$Спр.Секции as Sections (nolock) " +
+                    "on Sections.id = DocCC.\$КонтрольНабора.Сектор " +
+                    "inner join DH\$КонтрольРасходной as DocCB (nolock) " +
+                    "on DocCB.iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
+                    "inner JOIN DH\$Счет as Bill (nolock) " +
+                    "on Bill.iddoc = DocCB.\$КонтрольРасходной.ДокументОснование " +
+                    "INNER JOIN _1sjourn as journForBill (nolock) " +
+                    "on journForBill.iddoc = Bill.iddoc " +
+                    "left join \$Спр.Ворота as Gate (nolock) " +
+                    "on Gate.id = DocCB.\$КонтрольРасходной.Ворота " +
+                    "left join ( " +
+                    "select " +
+                    "DocCB.iddoc as iddoc, " +
+                    "count(*) as CountAllBox " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "inner join DH\$КонтрольНабора as DocCC (nolock) " +
+                    "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
+                    "inner join DH\$КонтрольРасходной as DocCB (nolock) " +
+                    "on DocCB.iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
+                    "where " +
+                    "Ref.ismark = 0 " +
+                    "group by DocCB.iddoc ) as TabBox " +
+                    "on TabBox.iddoc = DocCB.iddoc " +
+                    "where Ref.id = :id";
+        textQuery = SS.QuerySetParam(textQuery, "id", ID);
+        val DT = SS.ExecuteWithReadNew(textQuery) ?: return
+        if (DT.isEmpty()) {
+            return
+        }
+        BadDoc.put("ID", DT[0]["Doc"].toString())
+        BadDoc.put(
+            "View",
+            DT[0]["Sector"].toString()
+                .trim() + "-" + DT[0]["Number"].toString() + " " + DT[0]["DocNo"].toString() + " (" + DT[0]["DateDoc"].toString() + ") мест " + DT[0]["CountBox"].toString()
+        )
+    } // LoadBadDoc()
+
+    fun RefreshActivity() {
+
+
+        lblState.text = "Свободный спуск или комплектация"
+        if (DocDown["ID"] != null)
+        {
+            lblInfo1.text = DocDown["NumberBill"].toString().substring(
+                DocDown["NumberBill"].toString().length - 5,
+                DocDown["NumberBill"].toString().length - 3
+            ) + " " +
+                    DocDown["NumberBill"].toString()
+                        .substring(DocDown["NumberBill"].toString().length - 3) +
+                    " сектор: " + DocDown["MainSectorName"].toString()
+                .trim() + "-" + DocDown["NumberCC"].toString()
+            lblInfo2.text = " место № " + DocDown["Boxes"].toString();
+        }
+
     }
 
 
     private fun reactionBarcode(Barcode: String): Boolean {
-        val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
+        val helper: Helper = Helper()
+        val barcoderes = helper.DisassembleBarcode(Barcode)
+        val typeBarcode = barcoderes["Type"].toString()
+        if (typeBarcode == "113")
+        {
+            val idd = barcoderes["IDD"].toString()
+            if (SS.IsSC(idd, "Сотрудники")) {
+                SS.FEmployer = RefEmployer()
+                val mainInit = Intent(this, MainActivity::class.java)
+                mainInit.putExtra("ParentForm", "NewComplectation")
+                startActivity(mainInit)
+                finish()
+            }
+            else if (SS.IsSC(idd, "Секции")) {
+                if (DocDown["ID"] == null)
+                {
+                    FExcStr.text = "Отсканируйте место !!!";
+                    return false;
+                }
 
-        if (SS.IsSC(idd, "Принтеры")) {
-            //получим путь принтера
-            val textQuery =
-                "select descr, SP2461 " +
-                        "from SC2459 " +
-                        "where SP2465 = '$idd'"
-            val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
-
-            PrinterPath = dataTable[1][1]
-            printer.text = PrinterPath
-            FExcStr.text = "Введите колво мест"
-            enterCountPlace.visibility = View.VISIBLE
-
-            return true
-        } else if (!SS.IsSC(idd, "Секции")) {
-            FExcStr.text = "Нужен принтер и адрес предкомплектации, а не это!"
-            return false
+                //Прописываем адрес
+                var textQuery = "declare @res int; exec WPM_PutInAdress :employer, :adress, @res output; select @res as result; ";
+                textQuery = SS.QuerySetParam(textQuery, "employer", SS.FEmployer.ID);
+                textQuery = SS.QuerySetParam(textQuery, "adress", barcoderes["ID"].toString());
+                val DT = SS.ExecuteWithReadNew(textQuery) ?:return false
+                if (DT[0]["result"].toString() != "1") {
+                    ToModeFreeDownComplete();
+                    return false;
+                }
+                ToModeFreeDownComplete()
+                RefreshActivity()
+            }
+            else
+            {
+                FExcStr.text = "Нет действий с данным штрихкодом!";
+                return false;
+            }
         }
-        if (PrinterPath.isEmpty()) {
-            FExcStr.text = "Не выбран принтер!"
-            return false
+        else if (typeBarcode == "6") {
+            //это место
+            val id = barcoderes["ID"].toString()
+            var textQuery = "declare @res int; exec WPM_TakeBoxFDC :employer, :box, @res output; select @res as result;";
+            textQuery = SS.QuerySetParam(textQuery, "employer", SS.FEmployer.ID);
+            textQuery = SS.QuerySetParam(textQuery, "box",  id);
+            val DT = SS.ExecuteWithReadNew(textQuery) ?:return false
+
+            LoadBadDoc(id);//Подсосем данные по документу для просмотра состояния
+
+            if (DT[0]["result"].toString() != "1")
+            {
+                ToModeFreeDownComplete()
+                return false
+            }
+
+            ToModeFreeDownComplete()
+            RefreshActivity()
         }
-        if (Places == null){
-            FExcStr.text = "Количество мест не указано!"
-            return false
-        }
-        //подтянем адрес комплектации
-        val textQuery =
-            "SELECT ID, SP3964, descr FROM SC1141 (nolock) WHERE SP1935= '$idd'"
-        val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
-        val addressType = dataTable[1][1]
-        val addressID = dataTable[1][0]
-        if (addressType == "12") {
-            FExcStr.text = "Отсканируйте адрес предкопмплектации!"
-            return false
-        }
-        var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = SS.ExtendID(DocSet, "КонтрольНабора")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FEmployer.ID, "Спр.Сотрудники")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = SS.ExtendID(addressID, "Спр.Секции")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = Places!!
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = PrinterPath
-
-        var dataMapRead: MutableMap<String, Any> = mutableMapOf()
-        var fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
-
-        dataMapRead = ExecCommand("PicingComplete", dataMapWrite, fieldList, dataMapRead, "")
-
-        if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
-            FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
-            //сборочный уже закрыт, уйдем с формы завершения набора
-            val setInitialization = Intent(this, ChoiseWorkShipping::class.java)
-            setInitialization.putExtra("PrinterPath", PrinterPath)
-            setInitialization.putExtra("ParentForm", "SetComplete")
-            startActivity(setInitialization)
-            finish()
-            return false
-        }
-        if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() != 3) {
-            FExcStr.text = "Не известный ответ робота... я озадачен..."
-            return false
-        }
-        FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
-
-        LockoutDoc(DocSet)      //разблокируем доки
-
-        //вернемся обратно в SetInitialization
-        val setInitialization = Intent(this, ChoiseWorkShipping::class.java)
-        setInitialization.putExtra("PrinterPath", PrinterPath)
-        setInitialization.putExtra("ParentForm", "SetComplete")
-        startActivity(setInitialization)
-        finish()
-
-
         return true
     }
 
     private fun ReactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
-        // нажали назад, выйдем и разблокируем доки
-        if (keyCode == 4){
+        if (keyCode == 4) {
+            return true
+        }
+        if (SS.helper.WhatDirection(keyCode) == "Left") {
+            val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
+            shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
+            shoiseWorkInit.putExtra("BadDocID", BadDoc["ID"])
+            shoiseWorkInit.putExtra("BadDocView", BadDoc["View"])
+
+            startActivity(shoiseWorkInit)
+            finish()
             return true
         }
 
-        enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
-            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                // сохраняем текст, введенный до нажатия Enter в переменную
-                try {
-                    val count = enterCountPlace.text.toString().toInt()
-                    Places = count
-                    enterCountPlace.visibility = View.INVISIBLE
-                    countPlace.text = "Колво мест: $Places"
-                    countPlace.visibility = View.VISIBLE
-                    FExcStr.text = "Ожидание команды"
-                } catch (e: Exception) {
-
-                }
-            }
-            false
-        }
         return false
     }
 

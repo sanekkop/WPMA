@@ -10,12 +10,9 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.Global
-import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.R
-import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.ScanActivity
-import kotlinx.android.synthetic.main.activity_unloading.*
+import kotlinx.android.synthetic.main.activity_show_info_new_comp.*
 
 class ShowInfoNewComp: BarcodeDataReceiver() {
 

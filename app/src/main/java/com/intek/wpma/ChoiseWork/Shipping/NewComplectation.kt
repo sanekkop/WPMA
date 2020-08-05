@@ -519,7 +519,7 @@ class NewComplectation : BarcodeDataReceiver() {
             if (SS.IsSC(idd, "Сотрудники")) {
                 SS.FEmployer = RefEmployer()
                 val mainInit = Intent(this, MainActivity::class.java)
-                mainInit.putExtra("ParentForm", "ChoiseDown")
+                mainInit.putExtra("ParentForm", "NewComplectation")
                 startActivity(mainInit)
                 finish()
             }

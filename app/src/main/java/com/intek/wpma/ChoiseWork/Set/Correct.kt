@@ -302,6 +302,7 @@ class Correct : BarcodeDataReceiver() {
             dataTable[1][21]                            //BoxID
         )
 
+
         return true
 
     }

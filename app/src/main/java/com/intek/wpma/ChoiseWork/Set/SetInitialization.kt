@@ -399,7 +399,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             if(dt != null && dt.isNotEmpty()) {
 
 
-                if (dt[0]["CountCC"] == "null") {        //потерянные маркировки есть, а в доке нет ни одной принятой позиции
+                if (dt[0]["CountCC"] == "null") {        //потерянные маркировки есть, а в доке нет ни одной отобранной позиции
                     if (dt[0]["CountMark"].toString().toInt() > 0) {
                         CountFact = dt[0]["CountMark"].toString().toInt()
                     }

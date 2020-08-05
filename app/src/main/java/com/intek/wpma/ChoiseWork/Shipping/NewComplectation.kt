@@ -8,6 +8,7 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
@@ -121,6 +122,23 @@ class NewComplectation : BarcodeDataReceiver() {
             RepealNewComplectation()
         }
         NewComplectationGetFirstOrder()
+        var oldx : Float = 0F
+        FExcStr.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                oldx = event.x
+                true
+            } else if (event.action == MotionEvent.ACTION_MOVE) {
+                if (event.x < oldx) {
+                    val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
+                    shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
+                    shoiseWorkInit.putExtra("BadDocID", BadDoc["ID"])
+                    shoiseWorkInit.putExtra("BadDocView", BadDoc["View"])
+                    startActivity(shoiseWorkInit)
+                    finish()
+                }
+            }
+            true
+        }
 
     }
 

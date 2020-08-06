@@ -12,6 +12,7 @@ import android.view.*
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
 import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.isVisible
@@ -67,6 +68,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                             Toast.LENGTH_LONG
                         )
                         toast.show()
+                        BadVoise()
                     }
                 }
             }
@@ -459,6 +461,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         item.text = CCItem!!.Name
         item.visibility = VISIBLE
 
+
         var oldx : Float = 0F
         item.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
@@ -680,6 +683,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         if (Barcode.substring(0, 2) == "25" && barcoderes["Type"] == "113") {
             if (barcoderes["IDD"]!! == "") {
                 FExcStr.text = "Не удалось преобразовать штрихкод!"
+                BadVoise()
                 return
             }
 
@@ -732,7 +736,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
            //     FExcStr.text = "Ожидание команды"
            // } else {
                 if (SS.CurrentMode == Global.Mode.Set) {
-                    //BadDone();
+                    BadVoise()
                     return
                 }
                 FExcStr.text = SS.ExcStr
@@ -745,7 +749,9 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         when (SS.CurrentMode) {
             Global.Mode.Set -> return RBSet(Barcode)
             else -> {
-                FExcStr.text = "Нет действий с этим штирхкодом в данном режиме!"; return false
+                FExcStr.text = "Нет действий с этим штирхкодом в данном режиме!"
+                BadVoise()
+                return false
             }
         }
     }
@@ -766,7 +772,9 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
 
             else -> {
-                FExcStr.text = "Нет действий с данным справочником в данном режиме!"; false
+                FExcStr.text = "Нет действий с данным справочником в данном режиме!"
+                BadVoise()
+                false
             }
         }
     }
@@ -774,6 +782,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     private fun RBSet(Barcode: String): Boolean {
         if (SS.CurrentAction != Global.ActionSet.ScanItem && SS.CurrentAction != Global.ActionSet.ScanQRCode) {
             FExcStr.text = "Неверно! " + WhatUNeed()
+            BadVoise()
             return false
         }
         var textQuery: String
@@ -792,6 +801,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             dt = SS.ExecuteWithRead(textQuery) ?: return false
             if (dt.isEmpty()){
                 FExcStr.text = "Маркировка не найдена, либо товар уже набран/скорректирован!" + WhatUNeed()
+                BadVoise()
                 return false
             }
             else {
@@ -804,6 +814,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                             "and SC7277.SP7271 = '${CCItem!!.ID}' "
                 if (!SS.ExecuteWithoutRead(textQuery)) {
                     FExcStr.text = "QR - code не распознан! Заново " + WhatUNeed()
+                    BadVoise()
                     return false
                 }
 
@@ -832,6 +843,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         //нужно сканировать маркировку, а сканиуруют что-то другое
         if (SS.CurrentAction == Global.ActionSet.ScanQRCode && codeId != BarcodeId){
             FExcStr.text = "Неверно! " + WhatUNeed()
+            BadVoise()
             return false
         }
         if (SS.CurrentAction == Global.ActionSet.ScanItem) {

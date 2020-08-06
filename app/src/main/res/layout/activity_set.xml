@@ -121,8 +121,8 @@
 
     <TextView
         android:id="@+id/InvCode"
-        android:layout_width="140dp"
-        android:layout_height="51dp"
+        android:layout_width="0dp"
+        android:layout_height="49dp"
         android:textColorHint="#000000"
         android:textSize="25sp"
         android:textStyle="bold"
@@ -132,22 +132,25 @@
         app:layout_constraintHorizontal_bias="0.004"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.355" />
+        app:layout_constraintVertical_bias="0.355"
+        app:layout_constraintWidth_percent="0.35"/>
 
     <TextView
         android:id="@+id/item"
-        android:layout_width="173dp"
-        android:layout_height="106dp"
+        android:layout_width="0dp"
+        android:layout_height="127dp"
         android:gravity="left"
         android:textColor="#000000"
-        android:textSize="18sp"
+        android:textSize="22sp"
+        android:textStyle="bold"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.965"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_bias="0.004"
+        app:layout_constraintStart_toEndOf="@+id/InvCode"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.395" />
+        app:layout_constraintVertical_bias="0.4"
+        app:layout_constraintWidth_percent="0.65"/>
 
     <TextView
         android:id="@+id/details"

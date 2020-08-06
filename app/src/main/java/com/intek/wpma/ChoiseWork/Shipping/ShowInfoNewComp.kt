@@ -12,22 +12,20 @@ import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
-import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.Global
+import com.intek.wpma.*
 import com.intek.wpma.Helpers.Helper
-import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
-import com.intek.wpma.ScanActivity
+import kotlinx.android.synthetic.main.activity_new_complectation.*
 import kotlinx.android.synthetic.main.activity_show_info.*
 import kotlinx.android.synthetic.main.activity_show_info_new_comp.*
+import kotlinx.android.synthetic.main.activity_show_info_new_comp.FExcStr
 import kotlinx.android.synthetic.main.activity_show_info_new_comp.table
 
 class ShowInfoNewComp: BarcodeDataReceiver() {
 
     var CCRP: MutableList<MutableMap<String, String>> = mutableListOf()
     var BadDoc: MutableMap<String, String> = mutableMapOf()
-
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var Barcode: String = ""
@@ -99,16 +97,9 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_show_info_new_comp)
         title = SS.title
-        if (SS.isMobile) {
-            btnScan.visibility = View.VISIBLE
-            btnScan!!.setOnClickListener {
-                val scanAct = Intent(this@ShowInfoNewComp, ScanActivity::class.java)
-                scanAct.putExtra("ParentForm", "UnLoading")
-                startActivity(scanAct)
-            }
-        }
         BadDoc.put("ID",intent.extras!!.getString("BadDocID")!!)
         BadDoc.put("View",intent.extras!!.getString("BadDocView")!!)
+
         RefreshRoute()
 
 
@@ -158,54 +149,37 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                     "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
                     "group by DocCC.iddoc"
 
-      /*  var textQuery = "Select" +
-                "isnull(Sections.descr, 'Пу') as Sector ," +
-                "CONVERT(char(8), CAST(LEFT(journForBill.date_time_iddoc, 8) as datetime), 4) as DateDoc ," +
-                "journForBill.docno as DocNo ," +
-                "DocCC.\$КонтрольНабора.НомерЛиста as Number ," +
-                "Ref.\$Спр.МестаПогрузки.КонтрольНабора as Doc ," +
-                "TabBox.CountAllBox as CountBox, " +
-                "Gate.descr as Gate " +
-                "from \$Спр.МестаПогрузки as Ref (nolock) " +
-                "inner join DH\$КонтрольНабора as DocCC (nolock) " +
-                "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
-                "left join \$Спр.Секции as Sections (nolock) " +
-                "on Sections.id = DocCC.\$КонтрольНабора.Сектор " +
-                "inner join DH\$КонтрольРасходной as DocCB (nolock) " +
-                "on DocCB.iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
-                "inner JOIN DH\$Счет as Bill (nolock) " +
-                "on Bill.iddoc = DocCB.\$КонтрольРасходной.ДокументОснование " +
-                "INNER JOIN _1sjourn as journForBill (nolock) " +
-                "on journForBill.iddoc = Bill.iddoc " +
-                "left join \$Спр.Ворота as Gate (nolock) " +
-                "on Gate.id = DocCB.\$КонтрольРасходной.Ворота " +
-                "left join ( " +
-                "select " +
-                "DocCB.iddoc as iddoc, " +
-                "count(*) as CountAllBox " +
-                "from \$Спр.МестаПогрузки as Ref (nolock) " +
-                "inner join DH\$КонтрольНабора as DocCC (nolock) " +
-                "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
-                "inner join DH\$КонтрольРасходной as DocCB (nolock) " +
-                "on DocCB.iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
-                "where" +
-                "Ref.ismark = 0 " +
-                "group by DocCB.iddoc ) as TabBox" +
-                "on TabBox.iddoc = DocCB.iddoc " +
-                "where Ref.id = :id" */
-
         textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
         textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
         textQuery = "select * from WPM_fn_ViewBillStatus(:iddoc)"
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", BadDoc["ID"].toString());
+        textQuery = SS.QuerySetParam(textQuery, "iddoc", BadDoc["ID"].toString())
+        textQuery =  SS.QuerySetParam(textQuery, "View", BadDoc["Veiw"].toString())
         CCRP = SS.ExecuteWithReadNew(textQuery) ?: return
 
         var oldx : Float = 0F
         var cvet = Color.rgb(192,192,192)
 
+        Shapka.text = "Комплектация в тележку (новая)" + "\n" + BadDoc["View"].toString() //SS.QueryParser("lblDocInfo")
+
+        FExcStr.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                oldx = event.x
+                true
+            } else if (event.action == MotionEvent.ACTION_MOVE) {
+                if (event.x > oldx) {
+                    val shoiseWorkInit = Intent(this, NewComplectation::class.java)
+                    shoiseWorkInit.putExtra("ParentForm", "ShowInfoNewComp")
+                    startActivity(shoiseWorkInit)
+                    finish()
+                }
+            }
+            true
+        }
+
         if(CCRP.isNotEmpty()){
 
             for (DR in CCRP){
+
                 val row1 = TableRow(this)
                 val number = TextView(this)
                 val linearLayout1 = LinearLayout(this)
@@ -229,7 +203,6 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 address.gravity = Gravity.LEFT
                 address.textSize = 16F
-
 
                 val count = TextView(this)
                 count.text = DR["adress"]
@@ -264,12 +237,12 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 kmest.gravity = Gravity.CENTER_HORIZONTAL
                 kmest.textSize = 16F
 
-
                 val code = TextView(this)
-                code.text =  " " + SS.helper.ShortDate(DR["date2"].toString()) +
+                code.text =  " " +
+                        if (SS.IsVoidDate((DR["date2"].toString())) == true) SS.helper.ShortDate(DR["date1"].toString())
+                        else {SS.helper.ShortDate(DR["date2"].toString())} +
                         " " + SS.helper.timeToString(DR["time1"].toString().toInt()) +
                         " - " + if (DR["time2"] != "0") SS.helper.timeToString(DR["time2"].toString().toInt()) else "..."
-
                 code.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.4).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 code.gravity = Gravity.LEFT
@@ -327,36 +300,20 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 row2.setBackgroundColor(cvet)
                 row2.addView(linearLayout2)
 
-
                 table.addView(row1)
                 table.addView(row2)
-                table.setOnTouchListener { v, event ->
 
-                    if (event.action == MotionEvent.ACTION_DOWN) {
-                        oldx = event.x
-                        true
-                    } else if (event.action == MotionEvent.ACTION_MOVE) {
-                        if (event.x > oldx) {
-                            val shoiseWorkInit = Intent(this, NewComplectation::class.java)
-                            shoiseWorkInit.putExtra("ParentForm", "ShowInfoNewComp")
-                            startActivity(shoiseWorkInit)
-                            finish()
-                        }
-                    }
-                    true
-                }
                 if (cvet == Color.rgb(192,192,192)) cvet = Color.WHITE else cvet = Color.rgb(192,192,192)
             }
         }
         return
     }
 
-
     private fun reactionBarcode(Barcode: String): Boolean {
 
-        RefreshActivity()
-        return true
-    }
+                    RefreshActivity()
+                    return true
+                }
 
     private fun ReactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
@@ -373,7 +330,6 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
     }
 
     fun RefreshActivity() {
-
 
     }
 

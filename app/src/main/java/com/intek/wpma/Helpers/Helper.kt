@@ -47,14 +47,18 @@ class Helper {
         sec as Int
         val Hours = sec / 3600
         val Minutes = (sec -(Hours * 3600)) / 60
-        return "$Hours:$Minutes"
+        return if (Hours < 10) "0" + "$Hours" else {"$Hours" } + ":" +  if (Minutes < 10) "0" + "$Minutes" else "$Minutes"
     }
 
     fun ShortDate(dat : Any) : String {
         val datFormat:SimpleDateFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
         val date2 = datFormat.parse(dat.toString())
 
-        return "(" + date2.date.toString() + "." + (date2.month + 1).toString() + ")"
+       // return "(" +  date2.date.toString() + "." + (date2.month + 1).toString() + ")"
+        return "(" + if(date2.date.toDouble() < 10) { "0" + date2.date.toString() }
+        else { date2.date.toString() } +
+                "." + if(date2.month.toDouble() < 10) { "0" + (date2.month + 1).toString() }
+        else { (date2.month + 1).toString() } + ")"
     }
 
     fun GetIDD(Barcode:String):String    {

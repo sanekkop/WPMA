@@ -24,12 +24,6 @@ class RefItem(): ARef() {
         Refresh();
         return FName != ""
     } // FoundBarcode
-    fun GetGatesProperty(name:String):RefGates    {
-        var result = RefGates()
-        val currId = GetAttribute(name).toString()
-        result.FoundID(currId);
-        return result
-    } // GetGatesProperty
 
     init {
         HaveName    = true

@@ -33,7 +33,6 @@ class WatchTablePart : BarcodeDataReceiver() {
     var Barcode: String = ""
     //при принятии маркировок, чтобы не сбились уже отсканированные QR-коды
     var CountFact: Int = 0
-    var PrinterPath = ""
     var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
@@ -43,7 +42,6 @@ class WatchTablePart : BarcodeDataReceiver() {
                 val version = intent.getIntExtra("version", 0)
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
-
                     Barcode = intent.getStringExtra("data")
                     codeId = intent.getStringExtra("codeId")
                     reactionBarcode(Barcode)
@@ -67,7 +65,6 @@ class WatchTablePart : BarcodeDataReceiver() {
         InvCode = intent.extras!!.getString("ItemCode")!!
         PreviousAction.text = intent.extras!!.getString("DocView")!!
         CountFact = intent.extras!!.getString("CountFact")!!.toInt()
-        PrinterPath = intent.extras!!.getString("PrinterPath")!!
         title = SS.title
 
         //строка с шапкой
@@ -130,7 +127,6 @@ class WatchTablePart : BarcodeDataReceiver() {
             setInitialization.putExtra("DocSetID",iddoc)
             setInitialization.putExtra("AddressID",addressID)
             setInitialization.putExtra("PreviousAction",PreviousAction.text.toString())
-            setInitialization.putExtra("PrinterPath",PrinterPath)
             setInitialization.putExtra("CountFact",CountFact.toString())
             setInitialization.putExtra("ParentForm","WatchTablePart")
             startActivity(setInitialization)
@@ -229,7 +225,6 @@ class WatchTablePart : BarcodeDataReceiver() {
                             setInitialization.putExtra("DocSetID",iddoc)
                             setInitialization.putExtra("AddressID",addressID)
                             setInitialization.putExtra("PreviousAction",PreviousAction.text.toString())
-                            setInitialization.putExtra("PrinterPath",PrinterPath)
                             setInitialization.putExtra("CountFact",CountFact.toString())
                             setInitialization.putExtra("ParentForm","WatchTablePart")
                             startActivity(setInitialization)

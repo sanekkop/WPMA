@@ -17,12 +17,10 @@ import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_menu.*
 
 
-
 class Menu : BarcodeDataReceiver() {
 
     var Barcode: String = ""
     var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
-    var ParentForm: String = ""
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -48,9 +46,11 @@ class Menu : BarcodeDataReceiver() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
-
-        ParentForm = intent.extras!!.getString("ParentForm")!!
         title = SS.title
+        if (SS.ExcStr != null && SS.ExcStr != "" &&  SS.ExcStr != "null" )
+        {
+            FExcStr.text = SS.ExcStr
+        }
         btnSet.setOnClickListener {
             startActivity(0)
         }
@@ -65,16 +65,16 @@ class Menu : BarcodeDataReceiver() {
         val typeBarcode = barcoderes["Type"].toString()
         //если это не типовой справочник, то выходим
         if (typeBarcode != "113")   {
-            Lbl.text = "Нет действий с этим ШК в данном режиме"
+            FExcStr.text = "Нет действий с этим ШК в данном режиме"
         }
         val idd = barcoderes["IDD"].toString()
         //если это не сотрудник выходим
         if (!SS.IsSC(idd, "Сотрудники")) {
-            Lbl.text = "Нет действий с этим ШК в данном режиме"
+            FExcStr.text = "Нет действий с этим ШК в данном режиме"
         }
         if(SS.FEmployer.IDD == idd){
             if(!Logout(SS.FEmployer.ID)){
-                Lbl.text = "Ошибка выхода из системы!"
+                FExcStr.text = "Ошибка выхода из системы!"
                 return
             }
             val main = Intent(this, MainActivity::class.java)
@@ -82,12 +82,19 @@ class Menu : BarcodeDataReceiver() {
             finish()
         }
         else  {
-            Lbl.text = "Нет действий с ШК в данном режиме!"
+            FExcStr.text = "Нет действий с ШК в данном режиме!"
         }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
+        if (keyCode == 4)
+        {
+            //нажали назад
+            val main = Intent(this, MainActivity::class.java)
+            startActivity(main)
+            finish()
+        }
         val key = SS.helper.WhatInt(keyCode)
         if (key in 0..9) {
             //нажали цифру
@@ -115,8 +122,7 @@ class Menu : BarcodeDataReceiver() {
 
              */
         }
-        else if (num == 3)
-        {
+        else if (num == 3) {
             val choiseWorkShipingInit = Intent(this, ChoiseWorkShipping::class.java)
             choiseWorkShipingInit.putExtra("ParentForm","Menu")
             startActivity(choiseWorkShipingInit)

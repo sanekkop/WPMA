@@ -85,6 +85,13 @@ abstract class ARef() {
         return result;
     }
 
+    fun GetGatesProperty(name:String):RefGates    {
+        var result = RefGates()
+        val currId = GetAttribute(name).toString()
+        result.FoundID(currId);
+        return result
+    } // GetGatesProperty
+
     open fun Refresh() {
         if (Selected) {
             FoundIDDorID(ID, true);

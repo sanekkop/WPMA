@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -26,7 +27,6 @@ class Correct : BarcodeDataReceiver() {
     val MainWarehouse = "     D   "
     var CCItem: Model.StructItemSet? = null
     var DocSet: Model.StrictDoc? = null
-    var PrinterPath = ""
     var Barcode: String = ""
     var ChoiseCorrect: Int = 0          //тип корректировки
     var CountFact: Int = 0              //при наборе маркировок, чтобы не сбились уже отсканированные QR-коды
@@ -47,8 +47,8 @@ class Correct : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        codeId = intent.getStringExtra("codeId")
+                        Barcode = intent.getStringExtra("data")!!
+                        codeId = intent.getStringExtra("codeId")!!
                         reactionBarcode(Barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
@@ -105,7 +105,6 @@ class Correct : BarcodeDataReceiver() {
         AddressID = intent.extras!!.getString("AddressID")!!
         title = SS.title
         CountFact = intent.extras!!.getString("CountFact")!!.toInt()
-        PrinterPath = intent.extras!!.getString("PrinterPath")!!
         //заполним заново товар и док
         GetItemAndDocSet()
         val label: TextView = findViewById(R.id.label)
@@ -158,12 +157,11 @@ class Correct : BarcodeDataReceiver() {
             if (codeId == BarcodeId) {//проверим DataMatrix ли пришедший код
                 //проверим, был ли уже принят этот товар с маркировкой
                 var testBatcode = Barcode.replace("'","''")
-
                 var textQuery =
-                    "SELECT SP7271, SP7274, SP7275 " +
-                            "FROM SC7277 " +
-                            "WHERE SC7277.SP7270 like ('%' + SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                            "and SC7277.SP7271 = '${CCItem!!.ID}' "
+                    "SELECT \$Спр.МаркировкаТовара.Товар, \$Спр.МаркировкаТовара.ДокОтгрузки, \$Спр.МаркировкаТовара.ФлагОтгрузки " +
+                            "FROM \$Спр.МаркировкаТовара " +
+                            "WHERE \$Спр.МаркировкаТовара.Маркировка like ('%' + SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
+                            "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' "
                 val dt = SS.ExecuteWithRead(textQuery) ?: return
                 if (dt.isEmpty()){
                     FExcStr.text = "Маркировка не найдена, либо товар уже набран/скорректирован! Отсканируйте QR - код"
@@ -175,10 +173,10 @@ class Correct : BarcodeDataReceiver() {
                 }
                 //найдем маркировку в справочнике МаркировкаТовара, занулим флаг
                 textQuery =
-                    "UPDATE SC7277 " +
-                            "SET SP7274 = '${SS.ExtendID(iddoc,"КонтрольНабора")}', SP7275 = 0 " +
-                            "where SC7277.SP7270 like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                            "and SC7277.SP7271 = '${CCItem!!.ID}' "
+                    "UPDATE \$Спр.МаркировкаТовара " +
+                            "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(iddoc,"КонтрольНабора")}', \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 " +
+                            "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
+                            "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' "
                 if (!SS.ExecuteWithoutRead(textQuery)) {
                     FExcStr.text = "Не удалось освободить маркировку!"
                     return
@@ -199,72 +197,72 @@ class Correct : BarcodeDataReceiver() {
             "DECLARE @curdate DateTime; " +
                     "SELECT @curdate = DATEADD(DAY, 1 - DAY(curdate), curdate) FROM _1ssystem (nolock); " +
                     "select top 1 " +
-                    "DocCC.SP3109 as ID, " +
+                    "DocCC.\$КонтрольНабора.Товар as ID, " +
                     "DocCC.lineno_ as LINENO_, " +
                     "Goods.descr as ItemName, " +
-                    "Goods.SP1036 as InvCode, " +
-                    "Goods.SP5086 as Details, " +
-                    "DocCC.SP3110 as Count, " +
-                    "DocCC.SP5508 as Adress, " +
-                    "DocCC.SP3112 as Price, " +
+                    "Goods.\$Спр.Товары.ИнвКод as InvCode, " +
+                    "Goods.\$Спр.Товары.КоличествоДеталей as Details, " +
+                    "DocCC.\$КонтрольНабора.Количество as Count, " +
+                    "DocCC.\$КонтрольНабора.Адрес0 as Adress, " +
+                    "DocCC.\$КонтрольНабора.Цена as Price, " +
                     "Sections.descr as AdressName, " +
-                    "ISNULL(AOT.Balance, 0) as Balance, " +
-                    //Реквизиты документа
+                    "ISNULL(AOT.Balance, 0) as Balance, " +  //Реквизиты документа
                     "DocCC.iddoc as IDDOC, " +
                     "journForBill.docno as DocNo, " +
                     "CONVERT(char(8), CAST(LEFT(journForBill.date_time_iddoc, 8) as datetime), 4) as DateDoc, " +
                     "journForBill.iddoc as Bill, " +
-                    "DocCCHead.SP2814 as Rows, " +
+                    "DocCCHead.\$КонтрольНабора.КолСтрок as Rows, " +
                     "Sector.descr as Sector, " +
-                    "DocCCHead.SP3114 as Sum, " +
-                    "DocCCHead.SP3595 as Number, " +
-                    "DocCCHead.SP2841 as SelfRemovel, " +
+                    "DocCCHead.\$КонтрольНабора.Сумма as Sum, " +
+                    "DocCCHead.\$КонтрольНабора.НомерЛиста as Number, " +
+                    "DocCCHead.\$КонтрольНабора.ФлагСамовывоза as SelfRemovel, " +
                     "Clients.descr as Client, " +
-                    "Bill.SP3094 as TypeNakl, " +
-                    "isnull(DocCCHead.SP6525 , :EmptyID) as BoxID, " +
+                    "Bill.\$Счет.ТипНакладной as TypeNakl, " +
+                    "isnull(DocCCHead.\$КонтрольНабора.Коробка , :EmptyID) as BoxID, " +
                     "AdressBox.descr as Box " +
                     "from " +
-                    "DT2776 as DocCC (nolock) " +
-                    "LEFT JOIN DH2776 as DocCCHead (nolock) " +
+                    "DT\$КонтрольНабора as DocCC (nolock) " +
+                    "LEFT JOIN DH\$КонтрольНабора as DocCCHead (nolock) " +
                     "ON DocCCHead.iddoc = DocCC.iddoc " +
-                    "LEFT JOIN SC33 as Goods (nolock) " +
-                    "ON Goods.id = DocCC.SP3109 " +
-                    "LEFT JOIN SC1141 as Sections (nolock) " +
-                    "ON Sections.id = DocCC.SP5508 " +
+                    "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
+                    "ON Goods.id = DocCC.\$КонтрольНабора.Товар " +
+                    "LEFT JOIN \$Спр.Секции as Sections (nolock) " +
+                    "ON Sections.id = DocCC.\$КонтрольНабора.Адрес0 " +
                     "LEFT JOIN ( " +
                     "select " +
-                    "RegAOT.SP4342 as item, " +
-                    "RegAOT.SP4344 as adress, " +
-                    "sum(RegAOT.SP4347 ) as balance " +
+                    "RegAOT.\$Рег.АдресОстаткиТоваров.Товар as item, " +
+                    "RegAOT.\$Рег.АдресОстаткиТоваров.Адрес as adress, " +
+                    "sum(RegAOT.\$Рег.АдресОстаткиТоваров.Количество ) as balance " +
                     "from " +
-                    "RG4350 as RegAOT (nolock) " +
+                    "RG\$Рег.АдресОстаткиТоваров as RegAOT (nolock) " +
                     "where " +
                     "period = @curdate " +
-                    "and SP4343 = :Warehouse " +
-                    "and SP4345 = 2 " +
-                    "group by RegAOT.SP4342 , RegAOT.SP4344 " +
+                    "and \$Рег.АдресОстаткиТоваров.Склад = :Warehouse " +
+                    "and \$Рег.АдресОстаткиТоваров.Состояние = 2 " +
+                    "group by RegAOT.\$Рег.АдресОстаткиТоваров.Товар , RegAOT.\$Рег.АдресОстаткиТоваров.Адрес " +
                     ") as AOT " +
-                    "ON AOT.item = DocCC.SP3109 and AOT.adress = DocCC.SP5508 " +
-                    "LEFT JOIN DH2763 as DocCB (nolock) " +
-                    "ON DocCB.iddoc = DocCCHead.SP2771 " +
-                    "LEFT JOIN DH196 as Bill (nolock) " +
-                    "ON Bill.iddoc = DocCB.SP2759 " +
+                    "ON AOT.item = DocCC.\$КонтрольНабора.Товар and AOT.adress = DocCC.\$КонтрольНабора.Адрес0 " +
+                    "LEFT JOIN DH\$КонтрольРасходной as DocCB (nolock) " +
+                    "ON DocCB.iddoc = DocCCHead.\$КонтрольНабора.ДокументОснование " +
+                    "LEFT JOIN DH\$Счет as Bill (nolock) " +
+                    "ON Bill.iddoc = DocCB.\$КонтрольРасходной.ДокументОснование " +
                     "LEFT JOIN _1sjourn as journForBill (nolock) " +
                     "ON journForBill.iddoc = Bill.iddoc " +
-                    "LEFT JOIN SC1141 as Sector (nolock) " +
-                    "ON Sector.id = DocCCHead.SP2764 " +
-                    "LEFT JOIN SC46 as Clients (nolock) " +
-                    "ON Bill.SP199 = Clients.id " +
-                    "LEFT JOIN SC1141 as AdressBox (nolock) " +
-                    "ON AdressBox.id = DocCCHead.SP6525 " +
+                    "LEFT JOIN \$Спр.Секции as Sector (nolock) " +
+                    "ON Sector.id = DocCCHead.\$КонтрольНабора.Сектор " +
+                    "LEFT JOIN \$Спр.Клиенты as Clients (nolock) " +
+                    "ON Bill.\$Счет.Клиент = Clients.id " +
+                    "LEFT JOIN \$Спр.Секции as AdressBox (nolock) " +
+                    "ON AdressBox.id = DocCCHead.\$КонтрольНабора.Коробка " +
                     "where " +
-                    "DocCC.SP5986 = :EmptyDate " +
-                    "and DocCC.SP3116 = 0 " +
-                    "and DocCC.SP3110 > 0 " +
-                    "and DocCC.iddoc = :iddoc " +
-                    "and DocCC.SP5508 = :AddressID " +
+                    "DocCC.iddoc = :iddoc " +
+                    "and DocCC.\$КонтрольНабора.Дата5 = :EmptyDate " +
+                    "and DocCC.\$КонтрольНабора.Корректировка = 0 " +
+                    "and DocCC.\$КонтрольНабора.Количество > 0 " +
+                    "and DocCC.\$КонтрольНабора.Адрес0 = :AddressID " +
                     "order by " +
-                    "DocCCHead.SP2764 , Sections.SP5103 , LINENO_"
+                    "DocCCHead.\$КонтрольНабора.Сектор , Sections.\$Спр.Секции.Маршрут , LINENO_"
+
         textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID())
         textQuery = SS.QuerySetParam(textQuery, "Warehouse", MainWarehouse)
         textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
@@ -317,7 +315,6 @@ class Correct : BarcodeDataReceiver() {
                 setInitialization.putExtra("ParentForm", "Correct")
                 setInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
                 setInitialization.putExtra("AddressID", CCItem!!.AdressID)
-                setInitialization.putExtra("PrinterPath", PrinterPath)
                 setInitialization.putExtra("PreviousAction", FExcStr.text.toString())
                 setInitialization.putExtra("CountFact", CountFact.toString())
                 setInitialization.putExtra("isMobile",SS.isMobile.toString())
@@ -354,11 +351,15 @@ class Correct : BarcodeDataReceiver() {
         }
     }
 
-    private fun enterCountCorrect(){
+    private fun enterCountCorrect() {
         enterCountCorrect.visibility = View.VISIBLE
         FExcStr.text = "Укажите количество в штуках"
         enterCountCorrect.setOnKeyListener { v: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                if (SS.isMobile){  //спрячем клаву
+                    val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
+                }
                 try {
                     if (flagBtn == 0) {
                         EnterCount = enterCountCorrect.getText().toString().toInt()
@@ -370,16 +371,14 @@ class Correct : BarcodeDataReceiver() {
                             }
                         } else {
                             //проверим есть ли маркировка
-                            val textQuery =
-                                "SELECT " +
-                                        "Product.SP1036, Product.descr, Product.SP1436 " +
-                                        "FROM " +
-                                        "SC33 as Product " +
-                                        "INNER JOIN SC1434 as Categories " +
-                                        "ON Categories.id = Product.SP1436 " +
-                                        "WHERE " +
-                                        "Product.id = '${CCItem!!.ID}' and Categories.SP7268 = 1"
-
+                            val textQuery = "SELECT " +
+                                    "Product.\$Спр.Товары.ИнвКод as ИнвКод , Product.descr as Name , Product.\$Спр.Товары.Категория as Категория " +
+                                    "FROM " +
+                                    "\$Спр.Товары  as Product (nolock)" +
+                                    "INNER JOIN \$Спр.КатегорииТоваров  as Categories (nolock) " +
+                                    "ON Categories.id = Product.\$Спр.Товары.Категория " +
+                                    "WHERE " +
+                                    "Product.id = '${CCItem!!.ID}' and Categories.\$Спр.КатегорииТоваров.Маркировка = 1 "
                             val dt = SS.ExecuteWithRead(textQuery)
 
                             //есть маркировка, пусть сканируют QR-code
@@ -419,7 +418,8 @@ class Correct : BarcodeDataReceiver() {
                         }
                     }
 
-                } catch (e: Exception) {
+                }
+                catch (e: Exception) {
 
                 }
             }
@@ -442,7 +442,7 @@ class Correct : BarcodeDataReceiver() {
             return false
         }
 
-        var adressCode: Int = 0
+        var adressCode:Int
         var correctReason: String
         var what: String
         when (Choise) {
@@ -479,27 +479,28 @@ class Correct : BarcodeDataReceiver() {
 
         var textQuery =
             "begin tran; " +
-                    "update DT2776 " +
-                    "set SP3110 = :count, " +
-                    "SP3114 = SP3112 *:count " +
-                    "where DT2776 .iddoc = :iddoc and DT2776 .lineno_ = :currline; " +
+                    "update DT\$КонтрольНабора " +
+                    "set \$КонтрольНабора.Количество = :count, " +
+                    "\$КонтрольНабора.Сумма =  :count*\$КонтрольНабора.Цена " +
+                    "where DT\$КонтрольНабора .iddoc = :iddoc and DT\$КонтрольНабора .lineno_ = :currline; " +
                     "if @@rowcount > 0 begin " +
-                    "insert into DT2776 (SP3108 , SP3109 , SP3110 ," +
-                    "SP3111 , SP3112 , SP3113 , SP3114 ," +
-                    "SP3115 , SP3116 , SP3117 , SP4977 ," +
-                    "SP5507 , SP5508 , SP5509 , SP5510 ," +
-                    "SP5673 , SP5986 , SP5987 , SP5988 , " +
-                    "lineno_, iddoc, SP6447 ) " +
-                    "select SP3108 , SP3109 , :CountCorrect ," +
-                    "SP3111 , SP3112 , SP3113 , SP3112 * :CountCorrect A," +
-                    "SP3115 , :CountCorrect , :Reason, SP4977 ," +
-                    "SP5507 , SP5508 , :AdressCode , SP5508 ," +
-                    "SP5673 , SP5986 , SP5987 , SP5988 , " +
-                    "(select max(lineno_) + 1 from DT2776 where iddoc = :iddoc), iddoc, 0 " +
-                    "from DT2776 as ForInst where ForInst.iddoc = :iddoc and ForInst.lineno_ = :currline; " +
+                    "insert into DT\$КонтрольНабора (\$КонтрольНабора.СтрокаИсх , \$КонтрольНабора.Товар , \$КонтрольНабора.Количество ," +
+                    "\$КонтрольНабора.Единица , \$КонтрольНабора.Цена , \$КонтрольНабора.Коэффициент , \$КонтрольНабора.Сумма ," +
+                    "\$КонтрольНабора.Секция , \$КонтрольНабора.Корректировка , \$КонтрольНабора.ПричинаКорректировки , \$КонтрольНабора.ЕдиницаШК ," +
+                    "\$КонтрольНабора.Состояние0 , \$КонтрольНабора.Адрес0 , \$КонтрольНабора.СостояниеКорр , \$КонтрольНабора.АдресКорр ," +
+                    "\$КонтрольНабора.ДокБлокировки , \$КонтрольНабора.Дата5 , \$КонтрольНабора.Время5 , \$КонтрольНабора.Контейнер , " +
+                    "lineno_, iddoc, \$КонтрольНабора.Контроль ) " +
+                    "select \$КонтрольНабора.СтрокаИсх , \$КонтрольНабора.Товар , :CountCorrect ," +
+                    "\$КонтрольНабора.Единица , \$КонтрольНабора.Цена , \$КонтрольНабора.Коэффициент , :CountCorrect*\$КонтрольНабора.Цена ," +
+                    "\$КонтрольНабора.Секция , :CountCorrect , :Reason, , \$КонтрольНабора.ЕдиницаШК ," +
+                    "\$КонтрольНабора.Состояние0 , \$КонтрольНабора.Адрес0 , :AdressCode , \$КонтрольНабора.АдресКорр ," +
+                    "\$КонтрольНабора.ДокБлокировки , \$КонтрольНабора.Дата5 , \$КонтрольНабора.Время5 , \$КонтрольНабора.Контейнер , " +
+                    "(select max(lineno_) + 1 from DT\$КонтрольНабора where iddoc = :iddoc), iddoc, 0 " +
+                    "from DT\$КонтрольНабора as ForInst where ForInst.iddoc = :iddoc and ForInst.lineno_ = :currline; " +
                     "if @@rowcount = 0 rollback tran else commit tran " +
                     "end " +
                     "else rollback"
+
         textQuery = SS.QuerySetParam(textQuery, "count", CCItem!!.Count - CountCorrect)
         textQuery = SS.QuerySetParam(textQuery, "CountCorrect", CountCorrect)
         textQuery = SS.QuerySetParam(textQuery, "iddoc", DocSet!!.ID)
@@ -526,7 +527,6 @@ class Correct : BarcodeDataReceiver() {
                 setInitialization.putExtra("AddressID", "")
             } else setInitialization.putExtra("AddressID", CCItem!!.AdressID)
         }
-        setInitialization.putExtra("PrinterPath", PrinterPath)
         setInitialization.putExtra("PreviousAction", FExcStr.text.toString())
         setInitialization.putExtra("isMobile",SS.isMobile.toString())
         setInitialization.putExtra("CountFact", CountFact.toString())

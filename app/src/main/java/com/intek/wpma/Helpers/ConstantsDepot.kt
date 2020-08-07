@@ -26,8 +26,7 @@ object ConstantsDepot {
     /// Штамп последнего обновления данных из конфы
     var RefreshTimestamp:Int = 0
     /// Обновляет значения, только если превышено время хранения
-    fun CondRefresh()
-    {
+    fun CondRefresh() {
 
         val sdf = SimpleDateFormat("yyyyMMdd HH:mm:ss")
         val currentTime = SQL1S.timeStrToSeconds(sdf.format(Date()).substring(9, 17))
@@ -37,20 +36,17 @@ object ConstantsDepot {
             Refresh(false)
         }
     }
-    fun ConstantsDepot()
-    {
+    fun ConstantsDepot() {
         UpdateInterval = 600; //Раз в 10 минут
         FSettingsMOD = "0000000000000000000000000000000000000000000000000000000";    //default value
         Refresh();
     }
     /// Обновляет данные, сосет из базы (все данные обновляются)
-    fun Refresh()
-    {
+    fun Refresh() {
         Refresh(true);
     }
     /// непосредственно сосет из базы
-    fun Refresh(RefreshAll:Boolean)
-    {
+    fun Refresh(RefreshAll:Boolean) {
 
         //Настройки обмена МОД
         var textQuery = "SELECT VALUE as val FROM _1sconst (nolock) WHERE ID = \$Константа.НастройкиОбменаМОД ";

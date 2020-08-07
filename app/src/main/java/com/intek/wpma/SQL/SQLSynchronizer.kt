@@ -26,7 +26,7 @@ open class SQLSynchronizer
     /// <summary>
     /// Строка исключения или ошибки
     /// </summary>
-    public var ExcStr: String
+    var ExcStr: String
        get() = FExcStr.toString()
        set(value) {FExcStr  = value }
 

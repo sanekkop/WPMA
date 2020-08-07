@@ -28,7 +28,8 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
     val EXTRA_SCAN = "com.honeywell.aidc.extra.EXTRA_SCAN"
 
     val sdkVersion = Build.VERSION.SDK_INT
-    val SS:SQL1S = SQL1S
+    val SS: SQL1S = SQL1S
+
     //для штрих-кода типа data matrix
     val BarcodeId = "w"
     val ResponceTime: Int = 60 //время ожидания отклика от 1С
@@ -48,6 +49,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
             ctxt.sendBroadcast(explicit)
         }
     }
+
     fun mysendBroadcast(intent: Intent) {
         if (sdkVersion < 26) {
             sendBroadcast(intent)
@@ -58,6 +60,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         }
 
     }
+
     fun releaseScanner() {
         Log.d("IntentApiSample: ", "releaseScanner")
         mysendBroadcast(Intent(ACTION_RELEASE_SCANNER))
@@ -83,18 +86,21 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         )
     }
 
-    fun GoodDone(){
+    fun GoodDone() {
         //GoodVoise()
 
     }
-    fun BadVoise(){
-        val bad = MediaPlayer.create(this,R.raw.bad)
+
+    fun BadVoise() {
+        val bad = MediaPlayer.create(this, R.raw.bad)
         bad.start()
     }
-    fun GoodVoise(){
-        val good = MediaPlayer.create(this,R.raw.good)
+
+    fun GoodVoise() {
+        val good = MediaPlayer.create(this, R.raw.good)
         good.start()
     }
+
     /// <summary>
     /// формирует строку присвоений для инструкции SET в UPDATE из переданной таблицы
     /// Поддерживает типы - int, DateTime, string
@@ -129,21 +135,20 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
     /// <param name="Command"></param>
     /// <param name="DataMapWrite"></param>
     /// <returns></returns>
-    fun ExecCommandNoFeedback(Command: String, DataMapWrite: MutableMap<String, Any>): Boolean    {
+    fun ExecCommandNoFeedback(Command: String, DataMapWrite: MutableMap<String, Any>): Boolean {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(11, 19))
         val query =
             "UPDATE " + SS.GetSynh("Спр.СинхронизацияДанных") +
-                    " SET DESCR='" + Command + "'," + ToSetString(DataMapWrite) + (if(DataMapWrite.isEmpty())  "" else ",") +
+                    " SET DESCR='" + Command + "'," + ToSetString(DataMapWrite) + (if (DataMapWrite.isEmpty()) "" else ",") +
                     SS.GetSynh("Спр.СинхронизацияДанных.Дата") + " = '" + currentDate + "', " +
                     SS.GetSynh("Спр.СинхронизацияДанных.Время") + " = " + currentTime + ", " +
                     SS.GetSynh("Спр.СинхронизацияДанных.ФлагРезультата") + " = 1," +
                     SS.GetSynh("Спр.СинхронизацияДанных.ИДТерминала") + " = '" + SS.ANDROID_ID + "'" +
                     " WHERE ID = (SELECT TOP 1 ID FROM " + SS.GetSynh("Спр.СинхронизацияДанных") +
                     " WHERE " + SS.GetSynh("Спр.СинхронизацияДанных.ФлагРезультата") + "=0)"
-        if (!SS.ExecuteWithoutRead(query))
-        {
+        if (!SS.ExecuteWithoutRead(query)) {
             return false
         }
         return true
@@ -246,7 +251,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         return commandID
     }
 
-    fun IBS_Inicialization(EmployerID: String): Boolean    {
+    fun IBS_Inicialization(EmployerID: String): Boolean {
         var textQuery =
             "set nocount on; " +
                     "declare @id bigint; " +
@@ -256,8 +261,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         textQuery = SS.QuerySetParam(textQuery, "HostName", "Android")
         textQuery = SS.QuerySetParam(textQuery, "DeviceID", SS.ANDROID_ID)
         val dt = SS.ExecuteWithRead(textQuery) ?: return false
-        if (dt.isEmpty())
-        {
+        if (dt.isEmpty()) {
             return false
         }
         return dt[1][0].toInt() > 0
@@ -277,8 +281,53 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         return true
     }
 
-     fun checkCameraHardware(context: Context): Boolean {
-         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+    fun LockDoc(IDDoc: String): Boolean {
+        return IBS_Lock("int_doc_$IDDoc")
+    }
+
+    fun IBS_Lock(BlockText: String): Boolean {
+
+        var textQuery =
+            "set nocount on; " +
+                    "declare @result int; " +
+                    "exec IBS_Lock :BlockText, @result output; " +
+                    "select @result as result;"
+        textQuery = SS.QuerySetParam(textQuery, "BlockText", BlockText)
+        var dataTable: Array<Array<String>>? = SS.ExecuteWithRead(textQuery) ?: return false
+        if (dataTable!![1][0].toInt() > 0) {
+            return true
+        }
+        else {
+            SS.ExcStr = "Объект заблокирован!"
+            FExcStr.text = "Объект заблокирован!" //Ответ по умолчанию
+            //Покажем кто заблокировал
+            textQuery =
+                "SELECT " +
+                        "rtrim(Collation.HostName) as HostName, " +
+                        "rtrim(Collation.UserName) as UserName, " +
+                        "convert(char(8), Block.date_time, 4) as Date, " +
+                        "substring(convert(char, Block.date_time, 21), 12, 8) as Time " +
+                        "FROM " +
+                        "IBS_Block as Block " +
+                        "INNER JOIN IBS_Collation as Collation " +
+                        "ON Collation.ID = Block.ProcessID " +
+                        "WHERE " +
+                        "left(Block.BlockText, len(:BlockText)) = :BlockText "
+            textQuery = SS.QuerySetParam(textQuery, "BlockText", BlockText)
+            dataTable = SS.ExecuteWithRead(textQuery)
+            if (dataTable!!.isNotEmpty()) {
+                FExcStr.text =
+                    "Объект заблокирован! " + dataTable[1][1] + ", " + dataTable[1][0] +
+                            ", в " + dataTable[1][3] + " (" + dataTable[1][2] + ")"
+                SS.ExcStr = "Объект заблокирован! " + dataTable[1][1] + ", " + dataTable[1][0] +
+                        ", в " + dataTable[1][3] + " (" + dataTable[1][2] + ")"
+            }
+            return false
+        }
+    }
+
+    fun checkCameraHardware(context: Context): Boolean {
+        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
     }
 
     fun Login(EmployerID: String): Boolean {
@@ -295,7 +344,8 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         }
 
         var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(EmployerID, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] =
+            SS.ExtendID(EmployerID, "Спр.Сотрудники")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.ANDROID_ID
         if (!ExecCommandNoFeedback("Login", dataMapWrite)) {
             return false
@@ -303,9 +353,10 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         return true
     }
 
-    fun Logout(EmployerID: String): Boolean{
+    fun Logout(EmployerID: String): Boolean {
         var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(EmployerID, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] =
+            SS.ExtendID(EmployerID, "Спр.Сотрудники")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.ANDROID_ID
         if (!ExecCommandNoFeedback("Logout", dataMapWrite)) {
             return false
@@ -314,5 +365,19 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         return true
     }
 
+    fun IsMarkProduct(ItemID: String): Boolean {
+        var textQuery =
+            "SELECT " +
+                    "Product.\$Спр.Товары.ИнвКод as ИнвКод , Product.descr as Name , Product.\$Спр.Товары.Категория as Категория " +
+                    "FROM " +
+                    "\$Спр.Товары  as Product (nolock)" +
+                    "INNER JOIN \$Спр.КатегорииТоваров  as Categories (nolock) " +
+                    "ON Categories.id = Product.\$Спр.Товары.Категория " +
+                    "WHERE " +
+                    "Product.id = '${ItemID}' and Categories.\$Спр.КатегорииТоваров.Маркировка = 1 "
+
+        var dt = SS.ExecuteWithReadNew(textQuery) ?: return false
+        return dt.isNotEmpty()
+    }
 
 }

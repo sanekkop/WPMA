@@ -19,12 +19,10 @@ import kotlinx.android.synthetic.main.activity_set_complete.terminalView
 
 class SetComplete : BarcodeDataReceiver() {
 
-    val SetInit: SetInitialization = SetInitialization()
     var DocSet: String = ""
     var Barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     var Places: Int? = null
-    var PrinterPath = ""
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -34,7 +32,7 @@ class SetComplete : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")
+                        Barcode = intent.getStringExtra("data")!!
                         reactionBarcode(Barcode)
                     }
                     catch(e: Exception) {
@@ -51,12 +49,11 @@ class SetComplete : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set_complete)
 
-        PrinterPath = intent.extras!!.getString("PrinterPath")!!
         terminalView.text = SS.terminal
         title = SS.title
 
-        if (PrinterPath != "") {
-            printer.text = PrinterPath
+        if (SS.FPrinter.Selected) {
+            printer.text = SS.FPrinter.Path
             FExcStr.text = "Введите колво мест"
             enterCountPlace.visibility = View.VISIBLE
         }
@@ -126,14 +123,11 @@ class SetComplete : BarcodeDataReceiver() {
 
         if (SS.IsSC(idd, "Принтеры")) {
             //получим путь принтера
-            val textQuery =
-                "select descr, SP2461 " +
-                        "from SC2459 " +
-                        "where SP2465 = '$idd'"
-            val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
-
-            PrinterPath = dataTable[1][1]
-            printer.text = PrinterPath
+            if(!SS.FPrinter.FoundIDD(idd))
+            {
+                return false
+            }
+            printer.text = SS.FPrinter.Path
             FExcStr.text = "Введите колво мест"
             enterCountPlace.visibility = View.VISIBLE
 
@@ -142,7 +136,7 @@ class SetComplete : BarcodeDataReceiver() {
             FExcStr.text = "Нужен принтер и адрес предкомплектации, а не это!"
             return false
         }
-        if (PrinterPath.isEmpty()) {
+        if (!SS.FPrinter.Selected) {
             FExcStr.text = "Не выбран принтер!"
             return false
         }
@@ -165,7 +159,7 @@ class SetComplete : BarcodeDataReceiver() {
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FEmployer.ID, "Спр.Сотрудники")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = SS.ExtendID(addressID, "Спр.Секции")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = Places!!
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = PrinterPath
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = SS.FPrinter.Path
 
         var dataMapRead: MutableMap<String, Any> = mutableMapOf()
         var fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
@@ -176,7 +170,6 @@ class SetComplete : BarcodeDataReceiver() {
             FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
             //сборочный уже закрыт, уйдем с формы завершения набора
             val setInitialization = Intent(this, SetInitialization::class.java)
-            setInitialization.putExtra("PrinterPath", PrinterPath)
             setInitialization.putExtra("ParentForm", "SetComplete")
             startActivity(setInitialization)
             finish()
@@ -192,7 +185,6 @@ class SetComplete : BarcodeDataReceiver() {
 
         //вернемся обратно в SetInitialization
         val setInitialization = Intent(this, SetInitialization::class.java)
-        setInitialization.putExtra("PrinterPath", PrinterPath)
         setInitialization.putExtra("ParentForm", "SetComplete")
         startActivity(setInitialization)
         finish()

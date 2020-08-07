@@ -3,10 +3,9 @@ package com.intek.wpma
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.Result
-import com.intek.wpma.ChoiseWork.Set.Correct
-import com.intek.wpma.ChoiseWork.Set.SetInitialization
-import com.intek.wpma.ChoiseWork.Set.SetComplete
+import com.intek.wpma.ChoiseWork.Set.*
 import com.intek.wpma.ChoiseWork.Shipping.*
+import com.intek.wpma.SQL.SQL1S
 import me.dm7.barcodescanner.zxing.ZXingScannerView
 
     var ParentForm: String = ""
@@ -50,7 +49,7 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
             "UPC_E"         -> codeId = "D"
             "QR_CODE"       -> codeId = "s"
         }
-
+        SQL1S.CurrentMode
         when(ParentForm) {
             "MainActivity" -> {
                 MainActivity.scanRes = rawResult.text
@@ -93,7 +92,6 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
                 NewComplectation.scanCodeId = codeId
             }
         }
-
 
         onBackPressed()
 

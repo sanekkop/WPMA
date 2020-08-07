@@ -95,7 +95,7 @@
 
     <TextView
         android:id="@+id/mainView"
-        android:layout_width="230dp"
+        android:layout_width="match_parent"
         android:layout_height="42dp"
         android:gravity="center"
         android:text="Для получения задания отбора - нажмите кнопку 1"
@@ -121,7 +121,7 @@
 
     <TextView
         android:id="@+id/InvCode"
-        android:layout_width="140dp"
+        android:layout_width="0dp"
         android:layout_height="51dp"
         android:textColorHint="#000000"
         android:textSize="25sp"
@@ -132,11 +132,12 @@
         app:layout_constraintHorizontal_bias="0.004"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.355" />
+        app:layout_constraintVertical_bias="0.355"
+        app:layout_constraintWidth_percent="0.35"/>
 
     <TextView
         android:id="@+id/item"
-        android:layout_width="173dp"
+        android:layout_width="0dp"
         android:layout_height="106dp"
         android:gravity="left"
         android:textColor="#000000"
@@ -147,7 +148,8 @@
         app:layout_constraintHorizontal_bias="0.965"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.395" />
+        app:layout_constraintVertical_bias="0.395"
+        app:layout_constraintWidth_percent="0.65"/>
 
     <TextView
         android:id="@+id/details"
@@ -194,19 +196,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.598" />
-
-    <TextView
-        android:id="@+id/terminalView"
-        android:layout_width="64dp"
-        android:layout_height="29dp"
-        android:textColor="#000000"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.987"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.003" />
 
     <Button
         android:id="@+id/correct"

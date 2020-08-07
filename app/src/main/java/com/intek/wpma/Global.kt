@@ -3,7 +3,7 @@ package com.intek.wpma
 class Global {
 
     enum class Mode{
-        None, Waiting,Set, SetInicialization, SetComplete
+        Main, None, Waiting,Set, SetInicialization, SetComplete
     }
 
     enum class ActionSet{

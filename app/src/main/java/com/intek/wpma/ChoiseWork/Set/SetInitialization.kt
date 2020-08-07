@@ -8,32 +8,30 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.view.*
+import android.view.KeyEvent
+import android.view.MotionEvent
+import android.view.View
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.isVisible
 import com.intek.wpma.*
-import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.Model.Model
-import kotlinx.android.synthetic.main.activity_menu.*
+import com.intek.wpma.Ref.RefSection
 import kotlinx.android.synthetic.main.activity_set.*
-import kotlinx.android.synthetic.main.activity_set.terminalView
 import java.math.BigDecimal
-import java.math.BigInteger
 import java.text.SimpleDateFormat
 import java.util.*
+import com.intek.wpma.ChoiseWork.Menu
 
 
 class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
-
     val primordial = Model()
-
     var ParentForm: String = "" // форма из которой пришли
-
     var AllSetsRow: Int = 0
     var DocSetSum: BigDecimal = "0.00".toBigDecimal()
     val MainWarehouse = "     D   "
@@ -43,10 +41,9 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     var Section: Model.Section? = null
     var CCItem: Model.StructItemSet? = null
     var Barcode: String = ""
-    // количество принимаемой позиции
+    // количество набираемой  позиции
     var CountFact: Int = 0
     var CurrLine: Int = 0
-    var PrinterPath = ""    //сюда будем запоминать принтер после завершения набора, чтобы постоянно не сканировать
     var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
@@ -81,11 +78,18 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         title = SS.title
         scanRes = null //занулим повторно для перехода между формами
         if (ParentForm == "Menu") {
-            ToModeSetInicialization()
-        } else if (ParentForm == "Correct" || ParentForm == "WatchTablePart") {
+            if (!ToModeSetInicialization())
+            {
+                BadVoise()
+                val menu = Intent(this, Menu::class.java)
+                startActivity(menu)
+                finish()
+                return
+            }
+        }
+        else if (ParentForm == "Correct" || ParentForm == "WatchTablePart") {
             try {
                 PreviousAction.text = intent.extras!!.getString("PreviousAction")!!
-                PrinterPath = intent.extras!!.getString("PrinterPath")!!
                 //получим незаконченные задания по отбору
                 GetDocsSet()
                 //сообразим с какими параметрами нужно вызвать ToModeSet
@@ -101,11 +105,18 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 val toast = Toast.makeText(applicationContext, e.toString(), Toast.LENGTH_LONG)
                 toast.show()
             }
-        } else if (ParentForm == "SetComplete") {
+        }
+        else if (ParentForm == "SetComplete") {
             try {
-                PrinterPath = intent.extras!!.getString("PrinterPath")!!
                 GetDocsSet()
-                ToModeSetInicialization()
+                if (!ToModeSetInicialization())
+                {
+                    //облом выходим обратно
+                    BadVoise()
+                    val menu = Intent(this, Menu::class.java)
+                    startActivity(menu)
+                    finish()
+                }
             } catch (e: Exception) {
                 val toast = Toast.makeText(applicationContext, e.toString(), Toast.LENGTH_LONG)
                 toast.show()
@@ -128,7 +139,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 val correct = Intent(this, Correct::class.java)
                 correct.putExtra("iddoc", DocSet!!.ID)
                 correct.putExtra("AddressID", CCItem!!.AdressID)
-                correct.putExtra("PrinterPath", PrinterPath)
                 correct.putExtra("CountFact",CountFact.toString())
                 startActivity(correct)
                 finish()
@@ -150,7 +160,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     watchForm.putExtra("addressID", CCItem!!.AdressID)
                     watchForm.putExtra("DocView", DocSet!!.View)
                     watchForm.putExtra("CountFact", CountFact.toString())
-                    watchForm.putExtra("PrinterPath", PrinterPath)
                     startActivity(watchForm)
                     finish()
                 }
@@ -164,8 +173,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         var scanRes: String? = null
         var scanCodeId: String? = null
     }
-
-
 
     fun ToModeSetInicialization(): Boolean {
         SS.FEmployer.Refresh();    //Обновим данные сотрудника
@@ -214,7 +221,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         }
     }
 
-
     fun ToModeSet(AdressID: String?, iddoc: String?): Boolean {
         for (id in DocsSet) {
             if (!LockDoc(id)) {
@@ -225,78 +231,77 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             "DECLARE @curdate DateTime; " +
                     "SELECT @curdate = DATEADD(DAY, 1 - DAY(curdate), curdate) FROM _1ssystem (nolock); " +
                     "select top 1 " +
-                    "DocCC.SP3109 as ID, " +
+                    "DocCC.\$КонтрольНабора.Товар as ID, " +
                     "DocCC.lineno_ as LINENO_, " +
                     "Goods.descr as ItemName, " +
-                    "Goods.SP1036 as InvCode, " +
-                    "Goods.SP5086 as Details, " +
-                    "DocCC.SP3110 as Count, " +
-                    "DocCC.SP5508 as Adress, " +
-                    "DocCC.SP3112 as Price, " +
+                    "Goods.\$Спр.Товары.ИнвКод as InvCode, " +
+                    "Goods.\$Спр.Товары.КоличествоДеталей as Details, " +
+                    "DocCC.\$КонтрольНабора.Количество as Count, " +
+                    "DocCC.\$КонтрольНабора.Адрес0 as Adress, " +
+                    "DocCC.\$КонтрольНабора.Цена as Price, " +
                     "Sections.descr as AdressName, " +
-                    "ISNULL(AOT.Balance, 0) as Balance, " +
-                    //Реквизиты документа
+                    "ISNULL(AOT.Balance, 0) as Balance, " +  //Реквизиты документа
                     "DocCC.iddoc as IDDOC, " +
                     "journForBill.docno as DocNo, " +
                     "CONVERT(char(8), CAST(LEFT(journForBill.date_time_iddoc, 8) as datetime), 4) as DateDoc, " +
                     "journForBill.iddoc as Bill, " +
-                    "DocCCHead.SP2814 as Rows, " +
+                    "DocCCHead.\$КонтрольНабора.КолСтрок as Rows, " +
                     "Sector.descr as Sector, " +
-                    "DocCCHead.SP3114 as Sum, " +
-                    "DocCCHead.SP3595 as Number, " +
-                    "DocCCHead.SP2841 as SelfRemovel, " +
+                    "DocCCHead.\$КонтрольНабора.Сумма as Sum, " +
+                    "DocCCHead.\$КонтрольНабора.НомерЛиста as Number, " +
+                    "DocCCHead.\$КонтрольНабора.ФлагСамовывоза as SelfRemovel, " +
                     "Clients.descr as Client, " +
-                    "Bill.SP3094 as TypeNakl, " +
-                    "isnull(DocCCHead.SP6525 , :EmptyID) as BoxID, " +
+                    "Bill.\$Счет.ТипНакладной as TypeNakl, " +
+                    "isnull(DocCCHead.\$КонтрольНабора.Коробка , :EmptyID) as BoxID, " +
                     "AdressBox.descr as Box, " +
-                    "DocCCHead.SP2764 as Sector, " +
-                    "DocCCHead.SP2814 as Rows, " +
-                    "DocCCHead.SP2773 as TypeSetter, " +
-                    "DocCCHead.SP2841 as FlagDelivery " +
+                    "DocCCHead.\$КонтрольНабора.Сектор as Sector, " +
+                    "DocCCHead.\$КонтрольНабора.КолСтрок as Rows, " +
+                    "DocCCHead.\$КонтрольНабора.Наборщик as TypeSetter, " +
+                    "DocCCHead.\$КонтрольНабора.ФлагСамовывоза as FlagDelivery " +
                     "from " +
-                    "DT2776 as DocCC (nolock) " +
-                    "LEFT JOIN DH2776 as DocCCHead (nolock) " +
+                    "DT\$КонтрольНабора as DocCC (nolock) " +
+                    "LEFT JOIN DH\$КонтрольНабора as DocCCHead (nolock) " +
                     "ON DocCCHead.iddoc = DocCC.iddoc " +
-                    "LEFT JOIN SC33 as Goods (nolock) " +
-                    "ON Goods.id = DocCC.SP3109 " +
-                    "LEFT JOIN SC1141 as Sections (nolock) " +
-                    "ON Sections.id = DocCC.SP5508 " +
+                    "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
+                    "ON Goods.id = DocCC.\$КонтрольНабора.Товар " +
+                    "LEFT JOIN \$Спр.Секции as Sections (nolock) " +
+                    "ON Sections.id = DocCC.\$КонтрольНабора.Адрес0 " +
                     "LEFT JOIN ( " +
                     "select " +
-                    "RegAOT.SP4342 as item, " +
-                    "RegAOT.SP4344 as adress, " +
-                    "sum(RegAOT.SP4347 ) as balance " +
+                    "RegAOT.\$Рег.АдресОстаткиТоваров.Товар as item, " +
+                    "RegAOT.\$Рег.АдресОстаткиТоваров.Адрес as adress, " +
+                    "sum(RegAOT.\$Рег.АдресОстаткиТоваров.Количество ) as balance " +
                     "from " +
-                    "RG4350 as RegAOT (nolock) " +
+                    "RG\$Рег.АдресОстаткиТоваров as RegAOT (nolock) " +
                     "where " +
                     "period = @curdate " +
-                    "and SP4343 = :Warehouse " +
-                    "and SP4345 = 2 " +
-                    "group by RegAOT.SP4342 , RegAOT.SP4344 " +
+                    "and \$Рег.АдресОстаткиТоваров.Склад = :Warehouse " +
+                    "and \$Рег.АдресОстаткиТоваров.Состояние = 2 " +
+                    "group by RegAOT.\$Рег.АдресОстаткиТоваров.Товар , RegAOT.\$Рег.АдресОстаткиТоваров.Адрес " +
                     ") as AOT " +
-                    "ON AOT.item = DocCC.SP3109 and AOT.adress = DocCC.SP5508 " +
-                    "LEFT JOIN DH2763 as DocCB (nolock) " +
-                    "ON DocCB.iddoc = DocCCHead.SP2771 " +
-                    "LEFT JOIN DH196 as Bill (nolock) " +
-                    "ON Bill.iddoc = DocCB.SP2759 " +
+                    "ON AOT.item = DocCC.\$КонтрольНабора.Товар and AOT.adress = DocCC.\$КонтрольНабора.Адрес0 " +
+                    "LEFT JOIN DH\$КонтрольРасходной as DocCB (nolock) " +
+                    "ON DocCB.iddoc = DocCCHead.\$КонтрольНабора.ДокументОснование " +
+                    "LEFT JOIN DH\$Счет as Bill (nolock) " +
+                    "ON Bill.iddoc = DocCB.\$КонтрольРасходной.ДокументОснование " +
                     "LEFT JOIN _1sjourn as journForBill (nolock) " +
                     "ON journForBill.iddoc = Bill.iddoc " +
-                    "LEFT JOIN SC1141 as Sector (nolock) " +
-                    "ON Sector.id = DocCCHead.SP2764 " +
-                    "LEFT JOIN SC46 as Clients (nolock) " +
-                    "ON Bill.SP199 = Clients.id " +
-                    "LEFT JOIN SC1141 as AdressBox (nolock) " +
-                    "ON AdressBox.id = DocCCHead.SP6525 " +
+                    "LEFT JOIN \$Спр.Секции as Sector (nolock) " +
+                    "ON Sector.id = DocCCHead.\$КонтрольНабора.Сектор " +
+                    "LEFT JOIN \$Спр.Клиенты as Clients (nolock) " +
+                    "ON Bill.\$Счет.Клиент = Clients.id " +
+                    "LEFT JOIN \$Спр.Секции as AdressBox (nolock) " +
+                    "ON AdressBox.id = DocCCHead.\$КонтрольНабора.Коробка " +
                     "where " +
                     "DocCC.iddoc in (:Docs) " +
-                    "and DocCC.SP5986 = :EmptyDate " +
-                    "and DocCC.SP3116 = 0 " +
-                    "and DocCC.SP3110 > 0 "
+                    "and DocCC.\$КонтрольНабора.Дата5 = :EmptyDate " +
+                    "and DocCC.\$КонтрольНабора.Корректировка = 0 " +
+                    "and DocCC.\$КонтрольНабора.Количество > 0 " +
+                    (if (AdressID != null) "and DocCC.\$КонтрольНабора.Адрес0 = :Adress " else "") +
+                    (if (iddoc != null) "and DocCC.iddoc = :iddoc " else "") +
+                    "order by " +
+                    "DocCCHead.\$КонтрольНабора.Сектор , Sections.\$Спр.Секции.Маршрут , LINENO_"
 
-        if (AdressID != null) textQuery += "and DocCC.SP5508 = :Adress "
-        if (iddoc != null) textQuery += "and DocCC.iddoc = :iddoc "
-        textQuery += "order by " +
-                "DocCCHead.SP2764 , Sections.SP5103 , LINENO_"
         textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID())
         textQuery = textQuery.replace(":Docs", SS.helper.ListToStringWithQuotes(DocsSet))
         textQuery = SS.QuerySetParam(textQuery, "Warehouse", MainWarehouse)
@@ -372,17 +377,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         )
 
         //проверим есть ли маркировка
-        textQuery =
-            "SELECT " +
-                    "Product.\$Спр.Товары.ИнвКод as ИнвКод , Product.descr as Name , Product.\$Спр.Товары.Категория as Категория " +
-                    "FROM " +
-                    "\$Спр.Товары  as Product (nolock)" +
-                    "INNER JOIN \$Спр.КатегорииТоваров  as Categories (nolock) " +
-                    "ON Categories.id = Product.\$Спр.Товары.Категория " +
-                    "WHERE " +
-                    "Product.id = '${CCItem!!.ID}' and Categories.\$Спр.КатегорииТоваров.Маркировка = 1 "
-        var dt = SS.ExecuteWithRead(textQuery) ?: return false
-        if (dt.isNotEmpty()) {
+        if (IsMarkProduct(CCItem!!.ID)) {
             //проверим колво занятых маркировок с набранным колвом текущей позиции
             textQuery =
                 "declare @count INT " +
@@ -393,7 +388,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                             "and \$Спр.МаркировкаТовара.ФлагОтгрузки = 1 and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}') " +
                 "select SUM( DocCC.\$КонтрольНабора.Количество ) as CountCC, @count as CountMark " +
                 "from DT\$КонтрольНабора as DocCC (nolock) " +
-                "where iddoc = '${DocCC!!.ID}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate "
+                "where iddoc = '${DocCC!!.ID}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate and DocCC.\$КонтрольНабора.Товар = '${CCItem!!.ID}'"
             textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
             val dt = SS.ExecuteWithReadNew(textQuery)
             if(dt != null && dt.isNotEmpty()) {
@@ -474,7 +469,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     watchForm.putExtra("addressID", CCItem!!.AdressID)
                     watchForm.putExtra("DocView", DocSet!!.View)
                     watchForm.putExtra("CountFact", CountFact.toString())
-                    watchForm.putExtra("PrinterPath", PrinterPath)
                     startActivity(watchForm)
                     finish()
                 }
@@ -501,21 +495,21 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     private fun RefreshRowSum(): Boolean {
         var textQuery =
             "select " +
-                    "sum(DocCC.SP3114) as Sum, " +
+                    "sum(DocCC.\$КонтрольНабора.Сумма ) as Sum, " +
                     "count(*) Amount " +
                     "from " +
-                    "DT2776 as DocCC (nolock) " +
+                    "DT\$КонтрольНабора as DocCC (nolock) " +
                     "where " +
                     "DocCC.iddoc in (:Docs ) " +
-                    "and DocCC.SP5986 = :EmptyDate " +
-                    "and DocCC.SP3116 = 0 " +
-                    "and DocCC.SP3110 > 0 "
+                    "and DocCC.\$КонтрольНабора.Дата5 = :EmptyDate " +
+                    "and DocCC.\$КонтрольНабора.Корректировка = 0 " +
+                    "and DocCC.\$КонтрольНабора.Количество > 0 "
         textQuery = textQuery.replace(":Docs", SS.helper.ListToStringWithQuotes(DocsSet))
         textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
-        val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
+        val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return false
         if (dataTable.isNotEmpty()) {
-            DocSetSum = dataTable[1][0].toBigDecimal()
-            AllSetsRow = dataTable[1][1].toInt()
+            DocSetSum = dataTable[0]["Sum"].toString().toBigDecimal()
+            AllSetsRow = dataTable[0]["Amount"].toString().toInt()
         } else {
             DocSetSum = "0.00".toBigDecimal()
             AllSetsRow = 0
@@ -528,19 +522,19 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         var item: Model.StructItemSet = CCItem
         var textQuery = "SELECT " +
                 "isnull(OKEI2.descr, OKEI.descr) as Name, " +
-                "CAST(Units.SP2232 as int) as Coef, " +
-                "ceiling(2/SP2232 ) as AmountOKEI2 " +
+                "CAST(Units.\$Спр.ЕдиницыШК.Коэффициент as int) as Coef, " +
+                "ceiling(:amount/\$Спр.ЕдиницыШК.Коэффициент ) as AmountOKEI2 " +
                 "FROM " +
-                "SC2237 as Units (nolock) " +
-                "inner join SC2229 as OKEI (nolock)" +
-                "on OKEI.id = Units.SP2230 " +
-                "left join SC2229  as OKEI2 (nolock) " +
-                "on OKEI2.id = Units.SP6584 " +
+                "\$Спр.ЕдиницыШК as Units (nolock) " +
+                "inner join \$Спр.ОКЕИ as OKEI (nolock) " +
+                "on OKEI.id = Units.\$Спр.ЕдиницыШК.ОКЕИ " +
+                "left join \$Спр.ОКЕИ as OKEI2 (nolock) " +
+                "on OKEI2.id = Units.\$Спр.ЕдиницыШК.ОКЕИ2 " +
                 "WHERE " +
                 "Units.parentext = :CurrentItem " +
                 "and OKEI.id <> :OKEIKit" +
                 "and Units.ismark = 0 " +
-                "and ceiling(2/SP2232 )*SP2232 = :amount " +
+                "and ceiling(:amount/\$Спр.ЕдиницыШК.Коэффициент )*\$Спр.ЕдиницыШК.Коэффициент = :amount " +
                 "order by AmountOKEI2"
         textQuery = SS.QuerySetParam(textQuery, "CurrentItem", CCItem.ID)
         textQuery = SS.QuerySetParam(textQuery, "amount", CCItem.Count)
@@ -594,52 +588,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         return WhatUNeed(SS.CurrentAction)
     }  // WhatUNeed
 
-    fun LockDoc(IDDoc: String): Boolean {
-        return IBS_Lock("int_doc_$IDDoc")
-    }
-
-    fun IBS_Lock(BlockText: String): Boolean {
-        var textQuery =
-            "set nocount on; " +
-                    "declare @id bigint; " +
-                    "exec IBS_Inicialize_with_DeviceID_new :Employer, :HostName, :DeviceID, @id output; " +
-                    "select @id as ID;" +
-                    "set nocount on; " +
-                    "declare @result int; " +
-                    "exec IBS_Lock :BlockText, @result output; " +
-                    "select @result as result;"
-        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
-        textQuery = SS.QuerySetParam(textQuery, "HostName", "Android - " + SS.terminal)
-        textQuery = SS.QuerySetParam(textQuery, "DeviceID", SS.ANDROID_ID)
-        textQuery = SS.QuerySetParam(textQuery, "BlockText", BlockText)
-        var dataTable: Array<Array<String>>? = SS.ExecuteWithRead(textQuery) ?: return false
-        if (dataTable!![1][0].toInt() > 0) {
-            return true
-        } else {
-            FExcStr.text = "Объект заблокирован!" //Ответ по умолчанию
-            //Покажем кто заблокировал
-            textQuery =
-                "SELECT " +
-                        "rtrim(Collation.HostName) as HostName, " +
-                        "rtrim(Collation.UserName) as UserName, " +
-                        "convert(char(8), Block.date_time, 4) as Date, " +
-                        "substring(convert(char, Block.date_time, 21), 12, 8) as Time " +
-                        "FROM " +
-                        "IBS_Block as Block " +
-                        "INNER JOIN IBS_Collation as Collation " +
-                        "ON Collation.ID = Block.ProcessID " +
-                        "WHERE " +
-                        "left(Block.BlockText, len(:BlockText)) = :BlockText "
-            textQuery = SS.QuerySetParam(textQuery, "BlockText", BlockText)
-            dataTable = SS.ExecuteWithRead(textQuery)
-            if (dataTable!!.isNotEmpty()) {
-                FExcStr.text =
-                    "Объект заблокирован! " + dataTable[1][1] + ", " + dataTable[1][0] +
-                            ", в " + dataTable[1][3] + " (" + dataTable[1][2] + ")"
-            }
-            return false
-        }
-    }
 
     fun QuitModesSet(): Boolean {
         for (id in DocsSet) {
@@ -649,7 +597,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         }
         return true
     } // QuitModesSet
-
 
     private fun reactionBarcode(Barcode: String) {
         var isObject: Boolean = true
@@ -784,24 +731,26 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             //найдем маркировку в справочнике МаркировкаТовара
             var testBatcode = Barcode.replace("'","''")
             textQuery =
-                "SELECT SP7271 " +
-                        "FROM SC7277 " +
-                        "where SC7277.SP7270 like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                            "and SC7277.SP7271 = '${CCItem!!.ID}' " +
-                            "and SC7277.SP7273 = 1 and SC7277.SP7275 = 0 and SC7277.SP7274 = '   0     0   ' "
-            dt = SS.ExecuteWithRead(textQuery) ?: return false
-            if (dt.isEmpty()){
-                FExcStr.text = "Маркировка не найдена, либо товар уже набран/скорректирован!" + WhatUNeed()
+                "SELECT \$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен" +
+                        "FROM \$Спр.МаркировкаТовара (nolock) " +
+                        "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
+                        "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' " +
+                        "and \$Спр.МаркировкаТовара.ФлагПоступления = 1 " +
+                        "and ((\$Спр.МаркировкаТовара.ФлагОтгрузки = 0 and \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' )" +
+                        "or (\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 and \$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(DocCC!!.ID,"КонтрольНабора")}'))"
+            val dt_mark = SS.ExecuteWithReadNew(textQuery) ?: return false
+            if (dt_mark.isEmpty()){
+                FExcStr.text = "Маркировка не найдена, либо товар уже отгружен!" + WhatUNeed()
                 return false
             }
-            else {
+            else if (dt_mark[0]["Отгружен"].toString() == "0"){
                 //взведем фдаг отгрузки + проставим док отгрузки
                 textQuery =
-                    "UPDATE SC7277 " +
-                            "SET SP7274 = '${SS.ExtendID(DocCC!!.ID,"КонтрольНабора")}', SP7275 = 1 " +
+                    "UPDATE \$Спр.МаркировкаТовара " +
+                            "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(DocCC!!.ID,"КонтрольНабора")}', \$Спр.МаркировкаТовара.ФлагОтгрузки = 1 " +
                     "WHERE " +
-                            "SC7277.SP7270 like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                            "and SC7277.SP7271 = '${CCItem!!.ID}' "
+                            "\$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
+                            "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' "
                 if (!SS.ExecuteWithoutRead(textQuery)) {
                     FExcStr.text = "QR - code не распознан! Заново " + WhatUNeed()
                     return false
@@ -811,8 +760,24 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     CountFact += 1
                     //набрали все позиции с маркировкой
                     if (CountFact == CCItem!!.Count){
-                        EnterCountSet(CountFact)
-                        return true
+                        if (EnterCountSet(CountFact)){
+                            //Если все норм, то выходим
+                            return true
+                        }
+                        else{
+                            //не прошло что-то отменим маркировку
+                            textQuery =
+                                "UPDATE \$Спр.МаркировкаТовара " +
+                                        "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' , \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 " +
+                                        "WHERE " +
+                                        "\$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
+                                        "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' "
+                            if (!SS.ExecuteWithoutRead(textQuery)) {
+                                FExcStr.text = "QR - code не распознан! Заново " + WhatUNeed()
+                                return false
+                            }
+                        }
+
                     }
 
                     if (SS.isMobile){
@@ -822,10 +787,56 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 }
                 else {
                     CountFact = 1
-                    EnterCountSet(CountFact)
+                    if (!EnterCountSet(CountFact)){
+                        //не прошло что-то отменим маркировку
+                        textQuery =
+                            "UPDATE \$Спр.МаркировкаТовара " +
+                                    "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' , \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 " +
+                                    "WHERE " +
+                                    "\$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
+                                    "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' "
+                        if (!SS.ExecuteWithoutRead(textQuery)) {
+                            FExcStr.text = "QR - code не распознан! Заново " + WhatUNeed()
+                            return false
+                        }
+                    }
                 }
                 FExcStr.text = "Отобрано " + CCItem!!.InvCode.trim() + " - " + CountFact.toString() + " шт. (строка " + CCItem!!.CurrLine + ") " + WhatUNeed() + " - СЛЕДУЮЩИЙ!"
                 count.text = (CCItem!!.Count - CountFact).toString() + " шт по 1"
+            }
+            else {
+                //маркировка уже есть, надо сверить количество которео уже собрали и которое отсканировали по Qr кодам
+                //проверим колво занятых маркировок с набранным колвом текущей позиции
+                textQuery =
+                    "select SUM(Set_tabl.CountCC) as CountCC, " +
+                            "SUM(Set_tabl.CountMark) as CountMark " +
+                            "from ( select SUM(DocCC.\$КонтрольНабора.Количество ) as CountCC, " +
+                            "0 as CountMark " +
+                            "from DT\$КонтрольНабора as DocCC (nolock) " +
+                            "where " +
+                            "iddoc = '${DocCC!!.ID}' " +
+                            "and DocCC.\$КонтрольНабора.Корректировка = 0 " +
+                            "and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate "
+                "and DocCC.\$КонтрольНабора.Товар = '${CCItem!!.ID}'" +
+                        "union all " +
+                        "select 0 , count(*) " +
+                        "from \$Спр.МаркировкаТовара (nolock) " +
+                        "where \$Спр.МаркировкаТовара.ФлагПоступления = 1 " +
+                        "and \$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(
+                            DocCC!!.ID,
+                            "КонтрольНабора"
+                        )}' " +
+                        "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}'"
+                ") as Set_tabl "
+                textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
+                val dt_mark = SS.ExecuteWithReadNew(textQuery) ?: return false
+                if (dt_mark.isEmpty()) {
+                    //не может быть
+                    return false
+                }
+                //надо чтобы маркировок было не больше чем набранных строк
+                CountFact += dt_mark[0]["CountMark"].toString()
+                    .toInt() - dt_mark[0]["CountCC"].toString().toInt()
             }
             return true
         }
@@ -838,12 +849,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             textQuery =
                 "SELECT " +
                         "Units.parentext as ItemID, " +
-                        "Goods.SP1036 as InvCode, " +
-                        "Units.SP2230 as OKEI " +
-                        "FROM SC2237 as Units (nolock) " +
-                        "LEFT JOIN SC33 as Goods (nolock) " +
+                        "Goods.\$Спр.Товары.ИнвКод as InvCode, " +
+                        "Units.\$Спр.ЕдиницыШК.ОКЕИ as OKEI " +
+                        "FROM \$Спр.ЕдиницыШК as Units (nolock) " +
+                        "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
                         "ON Goods.id = Units.parentext " +
-                        "WHERE Units.SP2233 = :Barcode "
+                        "WHERE Units.\$Спр.ЕдиницыШК.Штрихкод = :Barcode ";
             textQuery = SS.QuerySetParam(textQuery, "Barcode", Barcode)
             dt = SS.ExecuteWithRead(textQuery) ?: return false
 
@@ -857,23 +868,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 return false
             }
             //проверим есть ли маркировка
-            textQuery =
-                "SELECT " +
-                        "Product.SP1036, Product.descr, Product.SP1436 " +
-                        "FROM " +
-                        "SC33 as Product " +
-                        "INNER JOIN SC1434 as Categories " +
-                        "ON Categories.id = Product.SP1436 " +
-                        "WHERE " +
-                        "Product.id = '${CCItem!!.ID}' and Categories.SP7268 = 1"
-
-            dt = SS.ExecuteWithRead(textQuery) ?: return false
-            //есть маркировка, пусть сканируют QR-code
-            if (dt.isNotEmpty()) {
-                SS.CurrentAction = Global.ActionSet.ScanQRCode
-                FExcStr.text = WhatUNeed()
-                return false
-            }
+           if (IsMarkProduct(CCItem!!.ID)) {
+               //есть маркировка, пусть сканируют QR-code
+               SS.CurrentAction = Global.ActionSet.ScanQRCode
+               FExcStr.text = WhatUNeed()
+               return false
+           }
         }
 
         SS.CurrentAction = Global.ActionSet.EnterCount
@@ -900,11 +900,14 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
     fun RSCSetInicialization(IDD: String): Boolean {
 
-        val textQuery: String =
-            "SELECT SP3964, descr FROM SC1141 (nolock) WHERE SP1935='$IDD'"
-        val result = SS.ExecuteWithRead(textQuery)
-        Section = Model.Section(result!![1][0], IDD, result.get(1)[0], result[1][1].trim())
-
+        val refSection = RefSection()
+        if (!refSection.FoundIDD(IDD)) return false
+        Section = Model.Section(
+            refSection.ID,
+            IDD,
+            refSection.Type.toString(),
+            refSection.Name.trim()
+        )
         if (Section!!.Type != "12") {
             FExcStr.text = "Неверный тип адреса! Отсканируйте коробку!"
             return false
@@ -921,14 +924,13 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             var textQuery: String
             if (SS.IsSC(IDD, "Секции")) {
                 if (SS.CurrentAction == Global.ActionSet.ScanAdress) {
-                    textQuery =
-                        "SELECT ID, SP3964, descr FROM SC1141 (nolock) WHERE SP1935='$IDD'"
-                    val result = SS.ExecuteWithRead(textQuery) ?: return false
+                    val refSection = RefSection()
+                    if (!refSection.FoundIDD(IDD)) return false
                     Section = Model.Section(
-                        result[1][0],
+                        refSection.ID,
                         IDD,
-                        result.get(1)[0],
-                        result[1][1].trim()
+                        refSection.Type.toString(),
+                        refSection.Name.trim()
                     )
 
                     if (Section!!.Type == "12") {
@@ -945,11 +947,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     } else {
                         //проверим есть ли маркировка
                         textQuery =
-                            "SELECT SP7271 " +
-                            "FROM SC7277 " +
+                            "SELECT \$Спр.МаркировкаТовара.Товар " +
+                            "FROM \$Спр.МаркировкаТовара (nolock) " +
                             "WHERE " +
-                                    "SC7277.SP7271 = '${CCItem!!.ID}' " +
-                                    "and SC7277.SP7273 = 1 and SC7277.SP7275 = 0 and SC7277.SP7274 = '   0     0   ' "
+                                    "\$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' " +
+                                    "and \$Спр.МаркировкаТовара.ФлагПоступления = 1 and \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 and \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' "
                         val dt = SS.ExecuteWithRead(textQuery) ?: return false
                         if (dt.isEmpty()){
                             SS.CurrentAction = Global.ActionSet.ScanItem
@@ -974,16 +976,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     FExcStr.text = "Неверно! " + WhatUNeed()
                     return false
                 }
-            } else if (SS.IsSC(IDD, "Принтеры")) {
+            }
+            else if (SS.IsSC(IDD, "Принтеры")) {
                 //получим путь принтера
-                textQuery =
-                    "select descr, SP2461 " +
-                            "from SC2459 " +
-                            "where SP2465 = '$IDD'"
-                val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
-
-                PrinterPath = dataTable[1][1]
-                FExcStr.text = "Отсканирован принтер " + PrinterPath.trim() + "\n" + WhatUNeed()
+                SS.FPrinter.FoundIDD(IDD)
+                if (!SS.FPrinter.Selected) return false
+                FExcStr.text = "Отсканирован принтер " + SS.FPrinter.Path.trim() + "\n" + WhatUNeed()
                 return true
             } else {
                 FExcStr.text = "Неверно! " + WhatUNeed()
@@ -998,6 +996,19 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     }
 
     fun EnterCountSet(Count: Int): Boolean {
+
+        //надо через попытку иначе если вылетет тут то будет косяк с маркировкой
+        if (SS.isMobile){  //спрячем клаву
+            //только если поле ввода количества активно
+            if (enterCount.isFocused) {
+                val inputManager: InputMethodManager =
+                    applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                inputManager.hideSoftInputFromWindow(
+                    this.currentFocus!!.windowToken,
+                    InputMethodManager.HIDE_NOT_ALWAYS
+                )
+            }
+        }
 
         if (SS.CurrentAction != Global.ActionSet.EnterCount && SS.CurrentAction != Global.ActionSet.ScanQRCode) {
             FExcStr.text = "Неверно! " + WhatUNeed()
@@ -1044,31 +1055,30 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             //добавить строчку надо
             var textQuery =
                 "begin tran; " +
-                        "update DT2776 " +
-                        "set SP3110 = :count, " +
-                        "SP3114 =  :count * SP3112 " +
-                        "where DT2776.iddoc = :iddoc and DT2776.lineno_ = :currline; " +
+                        "update DT\$КонтрольНабора " +
+                        "set \$КонтрольНабора.Количество = :count, " +
+                        "\$КонтрольНабора.Сумма =  :count*\$КонтрольНабора.Цена " +
+                        "where DT\$КонтрольНабора .iddoc = :iddoc and DT\$КонтрольНабора .lineno_ = :currline; " +
                         "if @@rowcount > 0 begin " +
-                        "insert into DT2776 (SP3108 , SP3109 , SP3110 ," +
-                        "SP3111 , SP3112 , SP3113 , SP3114 ," +
-                        "SP3115 , SP3116 , SP3117 , SP4977 ," +
-                        "SP5507 , SP5508 , SP5509 , SP5510 ," +
-                        "SP5673 , SP5986 , SP5987 , SP5988 , " +
-                        "lineno_, iddoc, SP6447 ) " +
-                        "select SP3108 , SP3109 , :remaincount ," +
-                        "SP3111 , SP3112 , SP3113 , :count * SP3112 ," +
-                        "SP3115 , SP3116 , SP3117 , SP4977 ," +
-                        "SP5507 , SP5508 , SP5509 , SP5510 ," +
-                        "SP5673 , SP5986 , SP5987 , SP5988 , " +
-                        "(select max(lineno_) + 1 from DT2776 where iddoc = :iddoc), iddoc, 0 " +
-                        "from DT2776 as ForInst where ForInst.iddoc = :iddoc and ForInst.lineno_ = :currline; " +
-                        "select max(lineno_) as newline from DT2776 where iddoc = :iddoc; " +
+                        "insert into DT\$КонтрольНабора (\$КонтрольНабора.СтрокаИсх , \$КонтрольНабора.Товар , \$КонтрольНабора.Количество ," +
+                        "\$КонтрольНабора.Единица , \$КонтрольНабора.Цена , \$КонтрольНабора.Коэффициент , \$КонтрольНабора.Сумма ," +
+                        "\$КонтрольНабора.Секция , \$КонтрольНабора.Корректировка , \$КонтрольНабора.ПричинаКорректировки , \$КонтрольНабора.ЕдиницаШК ," +
+                        "\$КонтрольНабора.Состояние0 , \$КонтрольНабора.Адрес0 , \$КонтрольНабора.СостояниеКорр , \$КонтрольНабора.АдресКорр ," +
+                        "\$КонтрольНабора.ДокБлокировки , \$КонтрольНабора.Дата5 , \$КонтрольНабора.Время5 , \$КонтрольНабора.Контейнер , " +
+                        "lineno_, iddoc, \$КонтрольНабора.Контроль ) " +
+                        "select \$КонтрольНабора.СтрокаИсх , \$КонтрольНабора.Товар , :remaincount ," +
+                        "\$КонтрольНабора.Единица , \$КонтрольНабора.Цена , \$КонтрольНабора.Коэффициент , :count*\$КонтрольНабора.Цена ," +
+                        "\$КонтрольНабора.Секция , \$КонтрольНабора.Корректировка , \$КонтрольНабора.ПричинаКорректировки , \$КонтрольНабора.ЕдиницаШК ," +
+                        "\$КонтрольНабора.Состояние0 , \$КонтрольНабора.Адрес0 , \$КонтрольНабора.СостояниеКорр , \$КонтрольНабора.АдресКорр ," +
+                        "\$КонтрольНабора.ДокБлокировки , \$КонтрольНабора.Дата5 , \$КонтрольНабора.Время5 , \$КонтрольНабора.Контейнер , " +
+                        "(select max(lineno_) + 1 from DT\$КонтрольНабора where iddoc = :iddoc), iddoc, 0 " +
+                        "from DT\$КонтрольНабора as ForInst where ForInst.iddoc = :iddoc and ForInst.lineno_ = :currline; " +
+                        "select max(lineno_) as newline from DT\$КонтрольНабора where iddoc = :iddoc; " +
                         "if @@rowcount = 0 rollback tran else commit tran " +
                         "end " +
-                        "else rollback"
+                        "else rollback";
             textQuery = SS.QuerySetParam(textQuery, "count", CountFact)
-            textQuery =
-                SS.QuerySetParam(textQuery, "remaincount", CCItem!!.Count - CountFact)
+            textQuery = SS.QuerySetParam(textQuery, "remaincount", CCItem!!.Count - CountFact)
             textQuery = SS.QuerySetParam(textQuery, "iddoc", DocSet!!.ID)
             textQuery = SS.QuerySetParam(textQuery, "currline", CCItem!!.CurrLine)
 
@@ -1077,12 +1087,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             CurrLine = dt[1][0].toInt()
         }
         //фиксируем строку
-        var textQuery = "UPDATE DT2776 WITH (rowlock) " +
-                "SET SP5986 = :Date5, " +
-                "SP5987 = :Time5, " +
-                "SP5988 = :id " +
-                "WHERE DT2776.iddoc = :DocCC and DT2776.lineno_ = :lineno_; "
-
+        var textQuery =
+            "UPDATE DT\$КонтрольНабора WITH (rowlock) " +
+                    "SET \$КонтрольНабора.Дата5 = :Date5, " +
+                    "\$КонтрольНабора.Время5 = :Time5, " +
+                    "\$КонтрольНабора.Контейнер = :id " +
+                    "WHERE DT\$КонтрольНабора .iddoc = :DocCC and DT\$КонтрольНабора .lineno_ = :lineno_; "
 
         val sdf = SimpleDateFormat("yyyyMMdd HH:mm:ss")
         val currentDate = sdf.format(Date()).substring(0, 8) + " 00:00:00.000"
@@ -1107,16 +1117,8 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         CountFact = 0
 
         enterCount.visibility = INVISIBLE
-        if (SS.isMobile){  //спрячем клаву
-            //val enterCount: EditText = findViewById(R.id.enterCount)
-            //enterCount.imeOptions = EditorInfo.IME_ACTION_DONE
-
-
-            //android:imeOptions="actionDone"
-        }
         return ToModeSet(null, null)
     }
-
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
@@ -1142,28 +1144,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     }
                     return true
                 }
-
             }
-            //свайп на просмотр
-//            MotionEvent.ACTION_MOVE -> {
-//                FExcStr.text = "Подгружаю список..."
-//                //перейдем на форму просмотра
-//                val WatchForm = Intent(this, WatchTablePart::class.java)
-//                WatchForm.putExtra("Employer", Employer)
-//                WatchForm.putExtra("EmployerIDD", EmployerIDD)
-//                WatchForm.putExtra("EmployerFlags", EmployerFlags)
-//                WatchForm.putExtra("EmployerID", EmployerID)
-//                WatchForm.putExtra("iddoc", DocSet!!.ID)
-//                WatchForm.putExtra("ItemCode", CCItem!!.InvCode)
-//                WatchForm.putExtra("addressID", CCItem!!.AdressID)
-//                WatchForm.putExtra("DocView", DocSet!!.View)
-//                WatchForm.putExtra("terminalView",terminalView.text.trim())
-//                WatchForm.putExtra("CountFact",CountFact.toString())
-//                WatchForm.putExtra("PrinterPath", PrinterPath)
-//                WatchForm.putExtra("isMobile",isMobile.toString())
-//                startActivity(WatchForm)
-//                finish()
-//            }
         }
 
         return true
@@ -1184,6 +1165,9 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
             QuitModesSet()
+            val menu = Intent(this, Menu::class.java)
+            startActivity(menu)
+            finish()
         }
     }
 
@@ -1209,7 +1193,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             watchForm.putExtra("addressID", CCItem!!.AdressID)
             watchForm.putExtra("DocView", DocSet!!.View)
             watchForm.putExtra("CountFact",CountFact.toString())
-            watchForm.putExtra("PrinterPath", PrinterPath)
             startActivity(watchForm)
             finish()
 
@@ -1226,7 +1209,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             val correct = Intent(this, Correct::class.java)
             correct.putExtra("iddoc", DocSet!!.ID)
             correct.putExtra("AddressID", CCItem!!.AdressID)
-            correct.putExtra("PrinterPath", PrinterPath)
             correct.putExtra("CountFact",CountFact.toString())
             startActivity(correct)
             finish()
@@ -1318,23 +1300,65 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         return ToModeSetInicialization()
     }
 
+    fun ChekMarkProduct():Boolean {
+
+        if (DocsSet == null || DocsSet.isEmpty()) {
+            return true
+        }
+        var textQuery = "SELECT " +
+                "SetTable.Item as Item , " +
+                "min(Item.\$Спр.Товары.ИнвКод ) as InvCode , " +
+                "SUM(SetTable.CountCC ) as CountCC, " +
+                "SUM(SetTable.CountMark ) as CountMark " +
+                "from ( " +
+                "SELECT " +
+                "DocCC.\$КонтрольНабора.Товар as Item , " +
+                "DocCC.\$КонтрольНабора.Количество as CountCC , " +
+                "0 as CountMark " +
+                "from DT\$КонтрольНабора as DocCC (nolock) " +
+                "where iddoc = '${DocsSet[0].toString()}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate " +
+                "union all " +
+                "select " +
+                "Mark.\$Спр.МаркировкаТовара.Товар ," +
+                "0, count(*) " +
+                "from \$Спр.МаркировкаТовара as Mark (nolock) " +
+                "where Mark.\$Спр.МаркировкаТовара.ФлагПоступления = 1 and Mark.\$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(
+                    DocsSet[0].toString(),"КонтрольНабора")}'" +
+                "and Mark.\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 " +
+                "group by Mark.\$Спр.МаркировкаТовара.Товар " +
+                ") as SetTable " +
+                "INNER JOIN \$Спр.Товары as Item (nolock) " +
+                "on SetTable.Item = Item.ID " +
+                "INNER JOIN \$Спр.КатегорииТоваров as Category (nolock) " +
+                "on Item.\$Спр.Товары.Категория = Category.ID " +
+                "where Category.\$Спр.КатегорииТоваров.Маркировка = 1 " +
+                "group by SetTable.Item " +
+                "having not SUM(SetTable.CountCC ) = SUM(SetTable.CountMark ) "
+        val dt = SS.ExecuteWithReadNew(textQuery) ?: return true
+        if (dt.isEmpty()) return true
+        //не сходится маркировка
+        FExcStr.text =
+            "Не сходится маркировка " + dt[0]["InvCode"].toString().trim() + "! Обратитесь к администратору!"
+        SS.ExcStr = FExcStr.text.toString().trim()
+        return false
+    }
+
     private fun ToModeSetComplete(): Boolean {
         //var empbtyBox = false
         //Проверим нет ли сборочного с пустой коробкой, его в первую очередь будем закрывать
-        var textQuery =
-            "SELECT " +
-                    "journ.iddoc as IDDOC " +
-                    "FROM " +
-                    "_1sjourn as journ (nolock) " +
-                    "INNER JOIN DH2776 as DocCC (nolock) " +
-                    "ON DocCC.iddoc = journ.iddoc " +
-                    "WHERE " +
-                    "DocCC.SP2773 = :Employer " +
-                    "and journ.iddocdef = 2776 " +
-                    "and DocCC.SP2767 = :EmptyDate " +
-                    "and not DocCC.SP2765 = :EmptyDate " +
-                    "and DocCC.SP6525 = :EmptyID " +
-                    "and journ.ismark = 0 "
+        var textQuery = "SELECT " +
+                "journ.iddoc as IDDOC " +
+                "FROM " +
+                "_1sjourn as journ (nolock) " +
+                "INNER JOIN DH\$КонтрольНабора as DocCC (nolock) " +
+                "ON DocCC.iddoc = journ.iddoc " +
+                "WHERE " +
+                "DocCC.\$КонтрольНабора.Наборщик = :Employer " +
+                "and journ.iddocdef = \$КонтрольНабора " +
+                "and DocCC.\$КонтрольНабора.Дата2 = :EmptyDate " +
+                "and not DocCC.\$КонтрольНабора.Дата1 = :EmptyDate " +
+                "and DocCC.\$КонтрольНабора.Коробка = :EmptyID " +
+                "and journ.ismark = 0 "
         textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
         textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
         textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID())
@@ -1355,10 +1379,14 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 //        OnChangeMode(new ChangeModeEventArgs(Mode.SetComplete));
 //        return true;
 
+        //нужно сверить маркировку если она есть
+        if (!ChekMarkProduct()){
+            return false
+        }
+
         SS.CurrentMode = Global.Mode.SetComplete
         //перейдем на форму завершения набора
         val setComplete = Intent(this, SetComplete::class.java)
-        setComplete.putExtra("PrinterPath", PrinterPath)
         //закроем доки, висящие на сотруднике с уже набранными строчками
         for (id in DocsSet) {
             setComplete.putExtra("iddoc", id)
@@ -1370,21 +1398,31 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
     private fun LoadDocSet(iddoc: String): Boolean {
         var textQuery =
-            "SELECT top 1 " +
+                "SELECT top 1 " +
                     "journ.iddoc as IDDOC, " +
-                    "DocCC.SP2841 as SelfRemovel, " +
-                    "DocCC.SP2814 as Rows, " +
+                    "DocCC.\$КонтрольНабора.ФлагСамовывоза as SelfRemovel, " +
+                    "DocCC.\$КонтрольНабора.КолСтрок as Rows, " +
                     "journForBill.iddoc as Bill, " +
-                    "Clients.descr as Client, DocCC.SP3114 as Sum, " +
-                    "Bill.SP3094 as TypeNakl, AdressBox.descr as Box, isnull(DocCC.SP6525 , '     0   ') as BoxID " +
+                    "Clients.descr as Client, " +
+                    "DocCC.\$КонтрольНабора.Сумма as Sum, " +
+                    "Bill.\$Счет.ТипНакладной as TypeNakl, " +
+                    "AdressBox.descr as Box, " +
+                    "isnull(DocCC.\$КонтрольНабора.Коробка , '     0   ') as BoxID " +
                     "FROM _1sjourn as journ (nolock) " +
-                    "INNER JOIN DH2776 as DocCC (nolock) ON DocCC.iddoc = journ.iddoc" +
-                    "LEFT JOIN DH2763 as DocCB (nolock) ON DocCB.iddoc = DocCC.SP2771 " +
-                    "LEFT JOIN DH196 as Bill (nolock) ON Bill.iddoc = DocCB.SP2759 " +
-                    "LEFT JOIN _1sjourn as journForBill (nolock) ON journForBill.iddoc = Bill.iddoc " +
-                    "LEFT JOIN SC1141 as Section (nolock) ON Section.id = DocCC.SP2764" +
-                    "LEFT JOIN SC46 as Clients (nolock) ON Bill.SP199 = Clients.id " +
-                    "LEFT JOIN SC1141 as AdressBox (nolock) ON AdressBox.id = DocCC.SP6525" +
+                    "INNER JOIN DH\$КонтрольНабора as DocCC (nolock) "+
+                    "ON DocCC.iddoc = journ.iddoc" +
+                    "LEFT JOIN DH\$КонтрольРасходной as DocCB (nolock) " +
+                    "ON DocCB.iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
+                    "LEFT JOIN DH\$Счет as Bill (nolock) " +
+                    "ON Bill.iddoc = DocCB.\$КонтрольРасходной.ДокументОснование " +
+                    "LEFT JOIN _1sjourn as journForBill (nolock) " +
+                    "ON journForBill.iddoc = Bill.iddoc " +
+                    "LEFT JOIN \$Спр.Секции as Section (nolock) " +
+                    "ON Section.id = DocCC.\$КонтрольНабора.Сектор " +
+                    "LEFT JOIN \$Спр.Клиенты as Clients (nolock) " +
+                    "ON Bill.\$Счет.Клиент = Clients.id " +
+                    "LEFT JOIN \$Спр.Секции as AdressBox (nolock) "+
+                    "ON AdressBox.id = DocCC.\$КонтрольНабора.Коробка " +
                     "WHERE " +
                     "journ.iddoc = :iddoc "
         textQuery = SS.QuerySetParam(textQuery, "iddoc", iddoc)
@@ -1434,8 +1472,5 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         releaseScanner()
         Log.d("IntentApiSample: ", "onPause")
     }
-
-
-
 
 }

@@ -19,13 +19,13 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.view.isVisible
 import com.intek.wpma.*
+import com.intek.wpma.ChoiseWork.Menu
 import com.intek.wpma.Model.Model
 import com.intek.wpma.Ref.RefSection
 import kotlinx.android.synthetic.main.activity_set.*
 import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
-import com.intek.wpma.ChoiseWork.Menu
 
 
 class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
@@ -54,8 +54,8 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        codeId = intent.getStringExtra("codeId")
+                        Barcode = intent.getStringExtra("data")!!
+                        codeId = intent.getStringExtra("codeId")!!
                         reactionBarcode(Barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
@@ -73,7 +73,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(com.intek.wpma.R.layout.activity_set)
+        setContentView(R.layout.activity_set)
         ParentForm = intent.extras!!.getString("ParentForm")!!
         SS.ANDROID_ID = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         title = SS.title
@@ -124,7 +124,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             }
         }
         if (SS.isMobile){
-            btnScanSetMode.visibility = View.VISIBLE
+            btnScanSetMode.visibility = VISIBLE
             btnScanSetMode!!.setOnClickListener {
                 val scanAct = Intent(this@SetInitialization, ScanActivity::class.java)
                 scanAct.putExtra("ParentForm","SetInitialization")
@@ -146,12 +146,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             }
         }
         mainView.setOnTouchListener(this)           //для запроса задания с телефона,чтобы кликали по этому полю
-        var oldx : Float = 0F                      //для свайпа, чтобы посмотреть накладную
+        var oldx = 0F                      //для свайпа, чтобы посмотреть накладную
         FExcStr.setOnTouchListener{ v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
-                true
-            } else if (event.action == MotionEvent.ACTION_MOVE) {
+            }
+            else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
                     FExcStr.text = "Подгружаю список..."
                     //перейдем на форму просмотра
@@ -176,8 +176,8 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     }
 
     fun ToModeSetInicialization(): Boolean {
-        SS.FEmployer.Refresh();    //Обновим данные сотрудника
-        SS.Const.Refresh();        //Обновим константы
+        SS.FEmployer.Refresh()    //Обновим данные сотрудника
+        SS.Const.Refresh()        //Обновим константы
 
         //PreviousAction = "";
 
@@ -459,8 +459,8 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         item.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
-                true
-            } else if (event.action == MotionEvent.ACTION_MOVE) {
+            }
+            else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
                     FExcStr.text = "Подгружаю список..."
                     //перейдем на форму просмотра
@@ -564,7 +564,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     }
 
     fun WhatUNeed(currAction: Global.ActionSet?): String {
-        var result: String = ""
+        var result = ""
         when (currAction) {
             Global.ActionSet.ScanAdress -> result = "Отсканируйте адрес!"
 
@@ -601,12 +601,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
     private fun reactionBarcode(Barcode: String) {
         var isObject: Boolean = true
-        var barcoderes: MutableMap<String, String> = SS.helper.DisassembleBarcode(Barcode)
+        val barcoderes: MutableMap<String, String> = SS.helper.DisassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         //если это не типовой справочник, то выходим
         val idd = barcoderes["IDD"].toString()
         if (SS.IsSC(idd, "Сотрудники")) {
-            var intent = Intent(this, MainActivity::class.java)
+            val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()
             return
@@ -625,7 +625,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 //        }
 
 
-        if (Barcode.substring(0, 2) == "25" && barcoderes["Type"] == "113") {
+        if (Barcode.substring(0, 2) == "25" && typeBarcode == "113") {
             if (barcoderes["IDD"]!! == "") {
                 FExcStr.text = "Не удалось преобразовать штрихкод!"
                 BadVoise()
@@ -665,29 +665,21 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 FExcStr.text = "Ожидание команды"
             }
 
-        }
-        else {
-            if (barcoderes["Type"] == "6" && (SS.CurrentMode == Global.Mode.Set)) {
+        } else {
+            if (typeBarcode == "6" && (SS.CurrentMode == Global.Mode.Set)) {
                 if (ReactionSC(barcoderes["ID"]!!, true)) {
                     if (SS.CurrentMode == Global.Mode.Set) {
                         GoodDone()
                         return
-                    } else {
-                        //View()
                     }
                 }
             }
-            //if (SS.ExcStr == null) {
-           //     FExcStr.text = "Ожидание команды"
-           // } else {
-                if (SS.CurrentMode == Global.Mode.Set) {
-                    BadVoise()
-                    return
-                }
-                FExcStr.text = SS.ExcStr
-          //  }
+            if (SS.CurrentMode == Global.Mode.Set) {
+                BadVoise()
+                return
+            }
+            FExcStr.text = SS.ExcStr
         }
-
     }
 
     fun ReactionBarcode(Barcode: String): Boolean {
@@ -731,12 +723,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             return false
         }
         var textQuery: String
-        var dt: Array<Array<String>>
+        val dt: Array<Array<String>>
 
 
         if (SS.CurrentAction == Global.ActionSet.ScanQRCode && codeId == BarcodeId){//заодно проверим DataMatrix ли пришедший код
             //найдем маркировку в справочнике МаркировкаТовара
-            var testBatcode = Barcode.replace("'","''")
+            val testBatcode = Barcode.replace("'","''")
             textQuery =
                 "SELECT \$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен" +
                         "FROM \$Спр.МаркировкаТовара (nolock) " +
@@ -834,7 +826,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                             DocCC!!.ID,
                             "КонтрольНабора"
                         )}' " +
-                        "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}'"
+                        "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}'" +
                 ") as Set_tabl "
                 textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
                 val dt_mark = SS.ExecuteWithReadNew(textQuery) ?: return false
@@ -863,7 +855,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                         "FROM \$Спр.ЕдиницыШК as Units (nolock) " +
                         "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
                         "ON Goods.id = Units.parentext " +
-                        "WHERE Units.\$Спр.ЕдиницыШК.Штрихкод = :Barcode ";
+                        "WHERE Units.\$Спр.ЕдиницыШК.Штрихкод = :Barcode "
             textQuery = SS.QuerySetParam(textQuery, "Barcode", Barcode)
             dt = SS.ExecuteWithRead(textQuery) ?: return false
 
@@ -930,7 +922,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
         if (!thisID) {
 
-            var textQuery: String
+            val textQuery: String
             if (SS.IsSC(IDD, "Секции")) {
                 if (SS.CurrentAction == Global.ActionSet.ScanAdress) {
                     val refSection = RefSection()
@@ -1085,7 +1077,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                         "select max(lineno_) as newline from DT\$КонтрольНабора where iddoc = :iddoc; " +
                         "if @@rowcount = 0 rollback tran else commit tran " +
                         "end " +
-                        "else rollback";
+                        "else rollback"
             textQuery = SS.QuerySetParam(textQuery, "count", CountFact)
             textQuery = SS.QuerySetParam(textQuery, "remaincount", CCItem!!.Count - CountFact)
             textQuery = SS.QuerySetParam(textQuery, "iddoc", DocSet!!.ID)
@@ -1165,11 +1157,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
             Global.Mode.Set -> {
                 if (!enterCount.isVisible) {
-                    RKSet(keyCode, event)
+                    RKSet(keyCode)
                 }
             }
 
-            else -> RKSetInicialization(keyCode, event)
+            else -> RKSetInicialization(keyCode)
         }
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
@@ -1180,7 +1172,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         }
     }
 
-    fun RKSet(keyCode: Int, event: KeyEvent?) {
+    fun RKSet(keyCode: Int) {
 
         if (keyCode == 22) //нажали вправо; просмотр табл. части
         {
@@ -1266,7 +1258,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
     }
 
-    fun RKSetInicialization(keyCode: Int, event: KeyEvent?) {
+    fun RKSetInicialization(keyCode: Int) {
         // нажали 1
         if (keyCode.toString() == "8") {
             CompleteSetInicialization()
@@ -1283,14 +1275,14 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 //        }
         // если коробка не указана. будем ставить ее по умолчанию
 
-        var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FEmployer.ID, "Спр.Сотрудники")
         //ставим ID коробки по умолчанию
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = SS.ExtendID("  1IKX   ", "Спр.Секции")
         var dataMapRead: MutableMap<String, Any> = mutableMapOf()
-        var fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
+        val fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
         try {
-            dataMapRead = ExecCommand("QuestPicing", dataMapWrite, fieldList, dataMapRead, "")
+            dataMapRead = ExecCommand("QuestPicing", dataMapWrite, fieldList, dataMapRead)
         }
         catch (e: Exception){
             val toast = Toast.makeText(applicationContext, "Не удалось получить задание!", Toast.LENGTH_SHORT)
@@ -1311,10 +1303,10 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
     fun ChekMarkProduct():Boolean {
 
-        if (DocsSet == null || DocsSet.isEmpty()) {
+        if (DocsSet.isEmpty()) {
             return true
         }
-        var textQuery = "SELECT " +
+        val textQuery = "SELECT " +
                 "SetTable.Item as Item , " +
                 "min(Item.\$Спр.Товары.ИнвКод ) as InvCode , " +
                 "SUM(SetTable.CountCC ) as CountCC, " +
@@ -1325,14 +1317,14 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 "DocCC.\$КонтрольНабора.Количество as CountCC , " +
                 "0 as CountMark " +
                 "from DT\$КонтрольНабора as DocCC (nolock) " +
-                "where iddoc = '${DocsSet[0].toString()}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate " +
+                "where iddoc = '${DocsSet[0]}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate " +
                 "union all " +
                 "select " +
                 "Mark.\$Спр.МаркировкаТовара.Товар ," +
                 "0, count(*) " +
                 "from \$Спр.МаркировкаТовара as Mark (nolock) " +
                 "where Mark.\$Спр.МаркировкаТовара.ФлагПоступления = 1 and Mark.\$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(
-                    DocsSet[0].toString(),"КонтрольНабора")}'" +
+                    DocsSet[0],"КонтрольНабора")}'" +
                 "and Mark.\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 " +
                 "group by Mark.\$Спр.МаркировкаТовара.Товар " +
                 ") as SetTable " +

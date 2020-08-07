@@ -11,6 +11,9 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.intek.wpma.ChoiseWork.Menu
+import com.intek.wpma.ChoiseWork.Shipping.Downing
+import com.intek.wpma.ChoiseWork.Shipping.FreeComplectation
+import com.intek.wpma.ChoiseWork.Shipping.NewComplectation
 import com.intek.wpma.Ref.RefEmployer
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -28,8 +31,8 @@ class MainActivity :  BarcodeDataReceiver() {
                 val version = intent.getIntExtra("version", 0)
                 if (version >= 1) {
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        codeId = intent.getStringExtra("codeId")
+                        Barcode = intent.getStringExtra("data")!!
+                        codeId = intent.getStringExtra("codeId")!!
                         reactionBarcode(Barcode)
                     }
                     catch (e: Exception){
@@ -99,7 +102,7 @@ class MainActivity :  BarcodeDataReceiver() {
         if (!UpdateProgram()) return
 
         //для начала запустим GetDataTime для обратной совместимости, ведь там он прописывает версию ТСД
-        var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.Vers
         if (!ExecCommandNoFeedback("GetDateTime", dataMapWrite)) {
             val toast = Toast.makeText(applicationContext, "Не удалось подключиться к базе!", Toast.LENGTH_SHORT)
@@ -169,13 +172,30 @@ class MainActivity :  BarcodeDataReceiver() {
         }
         actionLbl.text = SS.FEmployer.Name
         scanRes = null
-        val menu = Intent(this, Menu::class.java)
-        startActivity(menu)
+        //проверим может на нем уже что-то висит и нам надо срочно туда идти
+        var newMode = Intent(this, Menu::class.java)
+        when (CheckOrder()) {
+            "Menu" -> {
+                newMode = Intent(this, Menu::class.java)
+            }
+            //мы уже с заданием, и в процедуре уже вызвали нужную активити
+            "Down" -> {
+                newMode = Intent(this, Downing::class.java)
+            }
+            "FreeDownComplete" -> {
+                newMode = Intent(this, FreeComplectation::class.java)
+            }
+            "NewComplectation" -> {
+                newMode = Intent(this, NewComplectation::class.java)
+             }
+        }
+        startActivity(newMode)
         finish()
+
     }
     private fun UpdateProgram() :Boolean {
-        val textQuery = "select vers as vers from RT_Settings where terminal_id = '${SS.ANDROID_ID}'";
-        var  dataTable = SS.ExecuteWithReadNew(textQuery) ?:return false
+        val textQuery = "select vers as vers from RT_Settings where terminal_id = '${SS.ANDROID_ID}'"
+        val  dataTable = SS.ExecuteWithReadNew(textQuery) ?:return false
         if (dataTable.isEmpty()){
             val toast = Toast.makeText(applicationContext, "Версия программы в базе не указана!", Toast.LENGTH_SHORT)
             toast.show()

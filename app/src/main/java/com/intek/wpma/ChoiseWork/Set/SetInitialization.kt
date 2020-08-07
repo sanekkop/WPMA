@@ -216,8 +216,8 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         if (dataTable!!.isNotEmpty()) {
             //если есть незаконченные задания по отбору
 
-            for (i in 1 until dataTable.size) {
-                DocsSet.add(dataTable[i]["IDDOC"].toString())
+            for (DR in dataTable) {
+                DocsSet.add(DR["IDDOC"].toString())
             }
         }
     }

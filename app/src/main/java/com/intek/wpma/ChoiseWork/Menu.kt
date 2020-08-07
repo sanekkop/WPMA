@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.KeyEvent
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.ChoiseWork.Accept.AccMenu
 import com.intek.wpma.ChoiseWork.Set.SetInitialization
 import com.intek.wpma.ChoiseWork.Shipping.ChoiseWorkShipping
 import com.intek.wpma.Global
@@ -53,6 +54,10 @@ class Menu : BarcodeDataReceiver() {
         title = SS.title
         btnSet.setOnClickListener {
             startActivity(0)
+        }
+        btnTake.setOnClickListener {
+            startActivity(1)
+            return@setOnClickListener
         }
         btnShipping.setOnClickListener {
             startActivity(3)
@@ -106,20 +111,18 @@ class Menu : BarcodeDataReceiver() {
             startActivity(setInit)
             finish()
         }
-        else if (num == 1)
-        {
-            //приемка
-            /*val choiseWorkShipingInit = Intent(this, ChoiseWorkShipping::class.java)
-            choiseWorkShipingInit.putExtra("ParentForm","Menu")
-            startActivity(choiseWorkShipingInit)
-
-             */
-        }
         else if (num == 3)
         {
             val choiseWorkShipingInit = Intent(this, ChoiseWorkShipping::class.java)
             choiseWorkShipingInit.putExtra("ParentForm","Menu")
             startActivity(choiseWorkShipingInit)
+            finish()
+        }
+        else if (num == 1)
+        {
+            val accInit = Intent(this, AccMenu::class.java)
+            accInit.putExtra("ParentForm","Menu")
+            startActivity(accInit)
             finish()
         }
     }

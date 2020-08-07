@@ -77,7 +77,6 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
         setContentView(R.layout.activity_menu_shipping)
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
-        //terminalView.text = intent.extras!!.getString("terminalView")!!
         title = SS.title
 
         btnCancel.setOnClickListener {

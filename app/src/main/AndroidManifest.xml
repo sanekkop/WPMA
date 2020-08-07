@@ -39,6 +39,7 @@
         <activity android:name=".ChoiseWork.Accept.Search" />
         <activity android:name=".ChoiseWork.Menu" />
         <activity android:name=".ChoiseWork.Shipping.ShowInfoNewComp" />
+        <activity android:name=".ChoiseWork.Accept.AccMenu" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

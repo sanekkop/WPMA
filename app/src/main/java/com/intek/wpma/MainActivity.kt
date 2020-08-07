@@ -190,6 +190,7 @@ class MainActivity :  BarcodeDataReceiver() {
 
         }
     }
+
     private fun UpdateProgram()
     {
         val textQuery = "select vers as vers from RT_Settings where terminal_id = '${SS.ANDROID_ID}'";

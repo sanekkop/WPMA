@@ -1,5 +1,4 @@
-package com.intek.wpma.ChoiseWork.Shipping
-
+package com.intek.wpma.ChoiseWork.Accept
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -7,14 +6,16 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.KeyEvent
 import android.widget.Toast
 import com.intek.wpma.*
 import com.intek.wpma.ChoiseWork.Menu
-import kotlinx.android.synthetic.main.activity_menu_shipping.*
+import kotlinx.android.synthetic.main.activity_acc_menu.*
+import kotlinx.android.synthetic.main.activity_acc_menu.FExcStr
 
+class AccMenu : BarcodeDataReceiver() {
 
-class ChoiseWorkShipping: BarcodeDataReceiver() {
+    var ParentForm: String = ""
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var Barcode: String = ""
@@ -74,46 +75,25 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_menu_shipping)
+        setContentView(R.layout.activity_acc_menu)
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
         title = SS.title
 
-        btnCancel.setOnClickListener {
-            val shoiseWorkInit = Intent(this, Menu::class.java)
-            shoiseWorkInit.putExtra("ParentForm", "ChoiseWorkShipping")
-            startActivity(shoiseWorkInit)
-            finish()
+        btnBack.setOnClickListener {
+            startActivity(0)
         }
-        btnLoad.setOnClickListener {
-            val loadingInit = Intent(this, Loading::class.java)
-            loadingInit.putExtra("ParentForm", "ChoiseWorkShipping")
-            startActivity(loadingInit)
-            finish()
+        btnAcc.setOnClickListener {
+            startActivity(1)
         }
+  /*      btnCrossDoc.setOnClickListener {
+            startActivity(2)
+        } */
 
-        btnUnLoad.setOnClickListener {
-            val unLoadingInit = Intent(this, UnLoading::class.java)
-            unLoadingInit.putExtra("ParentForm", "ChoiseWorkShipping")
-            startActivity(unLoadingInit)
-            finish()
 
-        }
-        btnDown.setOnClickListener {
-            val downingInit = Intent(this, ChoiseDown::class.java)
-            downingInit.putExtra("ParentForm","ChoiseWorkShipping")
-            startActivity(downingInit)
-            finish()
-        }
-        btnFree.setOnClickListener {
-            val freeComplectationInit = Intent(this, FreeComplectation::class.java)
-            freeComplectationInit.putExtra("ParentForm", "ChoiseWorkShipping")
-            startActivity(freeComplectationInit)
-            finish()
-        }
     }
 
-    private fun reactionBarcode(Barcode: String) {
+    private fun reactionBarcode(Barcode: String){
         //выход из сессии
         if (SS.FEmployer.IDD == "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)) {
             if (!Logout(SS.FEmployer.ID)) {
@@ -146,22 +126,20 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
         return  false
     }
 
-    private fun startActivity(num: Int) {
-        var intent: Intent
-        intent = Intent(this, Menu::class.java)
-        when (num)
-        {
-            0 -> intent = Intent(this, Menu::class.java)
-            1 -> intent = Intent(this, Loading::class.java)
-            2 -> intent = Intent(this, UnLoading::class.java)
-            3 -> intent = Intent(this, ChoiseDown::class.java)
-            4 -> intent = Intent(this, FreeComplectation::class.java)
-        }
-        intent.putExtra("ParentForm", "ChoiseWorkShipping")
-        startActivity(intent)
-        finish()
-    }
+
+      private fun startActivity(num: Int) {
+          var intent: Intent
+          intent = Intent(this, Menu::class.java)
+          when (num)
+          {
+              0 -> intent = Intent(this, Menu::class.java)
+              1 -> intent = Intent(this, Search::class.java)
+            //  2 -> intent = Intent(this, CrossDoc::class.java)
+          }
+          intent.putExtra("ParentForm", "AccMenu")
+          startActivity(intent)
+          finish()
+      }
+
 
 }
-
-

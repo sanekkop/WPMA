@@ -88,6 +88,10 @@ class SetComplete : BarcodeDataReceiver() {
         //тут этот код дублирую, чтобы поймать нажатие на enter после ввода колва с уже установленным принтером
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                if (SS.isMobile){  //спрячем клаву
+                    val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
+                }
                 // сохраняем текст, введенный до нажатия Enter в переменную
                 try {
                     val count = enterCountPlace.text.toString().toInt()
@@ -97,10 +101,6 @@ class SetComplete : BarcodeDataReceiver() {
                     countPlace.visibility = View.VISIBLE
                     FExcStr.text = "Ожидание команды"
                 } catch (e: Exception) {
-                    if (SS.isMobile){  //спрячем клаву
-                        val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                        inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
-                    }
                 }
             }
             false
@@ -211,6 +211,10 @@ class SetComplete : BarcodeDataReceiver() {
 
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+                if (SS.isMobile){  //спрячем клаву
+                    val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
+                }
                 // сохраняем текст, введенный до нажатия Enter в переменную
                 try {
                     val count = enterCountPlace.text.toString().toInt()

@@ -158,7 +158,7 @@ class SetComplete : BarcodeDataReceiver() {
             FExcStr.text = "Отсканируйте адрес предкопмплектации!"
             return false
         }
-        var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = SS.ExtendID(DocSet, "КонтрольНабора")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FEmployer.ID, "Спр.Сотрудники")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = SS.ExtendID(addressID, "Спр.Секции")
@@ -166,9 +166,9 @@ class SetComplete : BarcodeDataReceiver() {
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = SS.FPrinter.Path
 
         var dataMapRead: MutableMap<String, Any> = mutableMapOf()
-        var fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
+        val fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
 
-        dataMapRead = ExecCommand("PicingComplete", dataMapWrite, fieldList, dataMapRead, "")
+        dataMapRead = ExecCommand("PicingComplete", dataMapWrite, fieldList, dataMapRead)
 
         if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
             FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()

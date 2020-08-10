@@ -4,10 +4,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.Camera
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.intek.wpma.SQL.SQL1S
@@ -15,7 +15,7 @@ import kotlinx.android.synthetic.main.activity_set.*
 import java.text.SimpleDateFormat
 import java.util.*
 
-open abstract class BarcodeDataReceiver: AppCompatActivity() {
+abstract class BarcodeDataReceiver: AppCompatActivity() {
 
     val TAG = "IntentApiSample"
     val ACTION_BARCODE_DATA = "com.honeywell.sample.action.BARCODE_DATA"
@@ -108,7 +108,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
     /// <param name="DataMap"></param>
     /// <returns></returns>
     fun ToSetString(DataMap: MutableMap<String, Any>): String {
-        var result: String = ""
+        var result = ""
         for (pair in DataMap) {
             result += SS.GetSynh(pair.key) + "=" + SS.ValueToQuery(pair.value) + ","
         }
@@ -136,7 +136,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
     /// <param name="DataMapWrite"></param>
     /// <returns></returns>
     fun ExecCommandNoFeedback(Command: String, DataMapWrite: MutableMap<String, Any>): Boolean {
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(11, 19))
         val query =
@@ -154,19 +154,13 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
         return true
     }
 
-    fun ExecCommand(
-        Command: String,
-        DataMapWrite: MutableMap<String, Any>,
-        FieldList: MutableList<String>,
-        DataMapRead: MutableMap<String, Any>,
-        commandID: String
-    ): MutableMap<String, Any> {
+    fun ExecCommand(Command: String,DataMapWrite: MutableMap<String, Any>,FieldList: MutableList<String>,DataMapRead: MutableMap<String, Any>): MutableMap<String, Any> {
         //тк в котлине нельзя переприсвоить значение переданному в фун параметру, создаю еще 1 перем
-        var commandID: String = ""
-        var beda: Int = 0
+        var commandID = ""
+        var beda = 0
 
         if (commandID == "") {
-            commandID = SendCommand(Command, DataMapWrite, FieldList)
+            commandID = SendCommand(Command, DataMapWrite)
         }
         //Ждем выполнения или отказа
         val query =
@@ -176,8 +170,8 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
                     " FROM " + SS.GetSynh("Спр.СинхронизацияДанных") + " (nolock)" +
                     " WHERE ID='" + commandID + "'"
 
-        var waitRobotWork: Boolean = false
-        val sdf = SimpleDateFormat("HH:mm:ss")
+        var waitRobotWork = false
+        val sdf = SimpleDateFormat("HH:mm:ss", Locale.US)
         var timeBegin: Int = timeStrToSeconds(sdf.format(Date()))
         while (kotlin.math.abs(timeBegin - timeStrToSeconds(sdf.format(Date()))) < ResponceTime) {
 
@@ -206,48 +200,46 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
                 beda++
                 continue   //Бред какой-то, попробуем еще раз
             }
+
             if (timeBegin + 1 < timeStrToSeconds(sdf.format(Date()))) {
                 //Пауза в 1, после первой секунды беспрерывной долбежки!
                 val tb: Int = timeStrToSeconds(sdf.format(Date()))
                 while (kotlin.math.abs(tb - timeStrToSeconds(sdf.format(Date()))) < 1) {
-
+                    //пустой цикл для паузы
                 }
             }
         }
-        FExcStr.text = "1C не ответила! " + (if (beda == 0) "" else " Испарений: $beda")
+        SS.ExcStr = "1C не ответила! " + (if (beda == 0) "" else " Испарений: $beda")
+        FExcStr.text = SS.ExcStr
         return DataMapRead
 
     }
 
-    fun SendCommand(
-        Command: String,
-        DataMapWrite: MutableMap<String, Any>,
-        FieldList: MutableList<String>
-    ): String {
-        var commandID: String
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    fun SendCommand(Command: String, DataMapWrite: MutableMap<String, Any> ): String {
+        val commandID: String
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(11, 19))
 
         val textQuery: String =
             "BEGIN TRAN; " +
                     "DECLARE @CommandID as varchar(9); " +
-                    "SELECT TOP 1 @CommandID = ID FROM " + SS.GetSynh("Спр.СинхронизацияДанных") + " (tablockx) " +
-                    "WHERE " + SS.GetSynh("Спр.СинхронизацияДанных.ФлагРезультата") + "=0; " +
-                    "UPDATE " + SS.GetSynh("Спр.СинхронизацияДанных") +
+                    "SELECT TOP 1 @CommandID = ID FROM \$Спр.СинхронизацияДанных (tablockx) " +
+                    "WHERE \$Спр.СинхронизацияДанных.ФлагРезультата = 0; " +
+                    "UPDATE \$Спр.СинхронизацияДанных " +
                     " SET DESCR='" + Command + "'," + ToSetString(DataMapWrite) + (if (DataMapWrite.isEmpty()) "" else ",") +
-                    SS.GetSynh("Спр.СинхронизацияДанных.Дата") + " = '" + currentDate + "', " +
-                    SS.GetSynh("Спр.СинхронизацияДанных.Время") + " = " + currentTime + ", " +
-                    SS.GetSynh("Спр.СинхронизацияДанных.ФлагРезультата") + " = 1," +
-                    SS.GetSynh("Спр.СинхронизацияДанных.ИДТерминала") + " = '${SS.ANDROID_ID}'" +
+                    "\$Спр.СинхронизацияДанных.Дата = '" + currentDate + "', " +
+                    "\$Спр.СинхронизацияДанных.Время  = " + currentTime + ", " +
+                    "\$Спр.СинхронизацияДанных.ФлагРезультата = 1," +
+                    "\$Спр.СинхронизацияДанных.ИДТерминала = '${SS.ANDROID_ID}'" +
                     " WHERE ID=@CommandID; " +
                     " SELECT @@rowcount as Rows, @CommandID as CommandID; " +
                     "COMMIT TRAN;"
-        val dataTable = SS.ExecuteWithRead(textQuery)
+        val dataTable = SS.ExecuteWithReadNew(textQuery)
         if (dataTable == null) {
             FExcStr.text = "Нет доступных команд! Ошибка робота!"
         }
-        commandID = dataTable!![1][1]
+        commandID = dataTable!![0]["CommandID"].toString()
         return commandID
     }
 
@@ -316,18 +308,24 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
             textQuery = SS.QuerySetParam(textQuery, "BlockText", BlockText)
             dataTable = SS.ExecuteWithRead(textQuery)
             if (dataTable!!.isNotEmpty()) {
-                FExcStr.text =
-                    "Объект заблокирован! " + dataTable[1][1] + ", " + dataTable[1][0] +
-                            ", в " + dataTable[1][3] + " (" + dataTable[1][2] + ")"
                 SS.ExcStr = "Объект заблокирован! " + dataTable[1][1] + ", " + dataTable[1][0] +
                         ", в " + dataTable[1][3] + " (" + dataTable[1][2] + ")"
+                FExcStr.text = SS.ExcStr
+
             }
             return false
         }
     }
 
     fun checkCameraHardware(context: Context): Boolean {
-        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+        } else {
+            @Suppress("DEPRECATION") val numCameras: Int = Camera.getNumberOfCameras()
+            numCameras > 0
+
+        }
     }
 
     fun Login(EmployerID: String): Boolean {
@@ -343,7 +341,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
             return false
         }
 
-        var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] =
             SS.ExtendID(EmployerID, "Спр.Сотрудники")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.ANDROID_ID
@@ -354,7 +352,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
     }
 
     fun Logout(EmployerID: String): Boolean {
-        var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] =
             SS.ExtendID(EmployerID, "Спр.Сотрудники")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.ANDROID_ID
@@ -366,7 +364,7 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
     }
 
     fun IsMarkProduct(ItemID: String): Boolean {
-        var textQuery =
+        val textQuery =
             "SELECT " +
                     "Product.\$Спр.Товары.ИнвКод as ИнвКод , Product.descr as Name , Product.\$Спр.Товары.Категория as Категория " +
                     "FROM " +
@@ -376,8 +374,77 @@ open abstract class BarcodeDataReceiver: AppCompatActivity() {
                     "WHERE " +
                     "Product.id = '${ItemID}' and Categories.\$Спр.КатегорииТоваров.Маркировка = 1 "
 
-        var dt = SS.ExecuteWithReadNew(textQuery) ?: return false
+        val dt = SS.ExecuteWithReadNew(textQuery) ?: return false
         return dt.isNotEmpty()
+    }
+
+    fun CheckOrder():String {
+        val result = "Menu"
+        //ЗАДАНИЕ СПУСКА
+        if (SS.FEmployer.CanDown) {
+            var textQuery =
+            "select top 1 " +
+                    "Ref.id " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "where " +
+                    "Ref.\$Спр.МестаПогрузки.Сотрудник4 = :Employer " +
+                    "and Ref.ismark = 0 " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата40 = :EmptyDate " +
+                    "and not Ref.\$Спр.МестаПогрузки.Адрес3 = :EmptyID " +
+                    "and Ref.\$Спр.МестаПогрузки.Дата5 = :EmptyDate "
+            textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
+            val DT  = SS.ExecuteWithRead(textQuery) ?: return result
+            if (DT.isNotEmpty())
+            {
+                return "Down"
+            }
+        }
+        //ЗАДАНИЕ СВОБОДНОГО СПУСКА/КОМПЛЕКТАЦИИ
+        if (SS.FEmployer.CanComplectation) {
+            var textQuery =
+            "select top 1 " +
+                    "Ref.id " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "where " +
+                    "Ref.ismark = 0 " +
+                    "and (" +
+                    "Ref.\$Спр.МестаПогрузки.Сотрудник4 = :Employer " +
+                    "and Ref.\$Спр.МестаПогрузки.Дата5 = :EmptyDate " +
+                    "and Ref.\$Спр.МестаПогрузки.Адрес3 = :EmptyID " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата40 = :EmptyDate" +
+                    " or " +
+                    "Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
+                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
+                    "and Ref.\$Спр.МестаПогрузки.Адрес7 = :EmptyID " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата80 = :EmptyDate)"
+            textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
+            val DT  = SS.ExecuteWithRead(textQuery) ?: return result
+            if (DT.isNotEmpty())
+            {
+                return "FreeDownComplete"
+            }
+        }
+        //ЗАДАНИЕ ОТБОРА КОМПЛЕКТАЦИИ
+        if (SS.FEmployer.CanComplectation) {
+            var textQuery =
+            "select top 1 " +
+                    "Ref.id " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "where " +
+                    "Ref.ismark = 0 " +
+                    "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
+                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
+                    "and not Ref.\$Спр.МестаПогрузки.Адрес7 = :EmptyID " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата80 = :EmptyDate"
+            textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
+            val DT  = SS.ExecuteWithRead(textQuery) ?: return result
+            if (DT.isNotEmpty())
+            {
+                return "NewComplectation"
+            }
+        }
+
+        return result
     }
 
 }

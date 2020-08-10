@@ -3,12 +3,14 @@ package com.intek.wpma
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.Result
-import com.intek.wpma.ChoiseWork.Set.*
+import com.intek.wpma.ChoiseWork.Set.Correct
+import com.intek.wpma.ChoiseWork.Set.SetComplete
+import com.intek.wpma.ChoiseWork.Set.SetInitialization
 import com.intek.wpma.ChoiseWork.Shipping.*
 import com.intek.wpma.SQL.SQL1S
 import me.dm7.barcodescanner.zxing.ZXingScannerView
 
-    var ParentForm: String = ""
+var ParentForm: String = ""
 
 class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
     private var mScannerView: ZXingScannerView? = null
@@ -27,6 +29,7 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
         // Register ourselves as a handler for scan results.
         mScannerView!!.setResultHandler(this)
         // Start camera on resume
+        mScannerView!!.flash = true
         mScannerView!!.startCamera()
 
     }
@@ -41,7 +44,7 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
         // Do something with the result here
         // Log.v("tag", rawResult.getText()); // Prints scan results
         // Log.v("tag", rawResult.getBarcodeFormat().toString()); // Prints the scan format (qrcode, pdf417 etc.)
-        var codeId: String = ""
+        var codeId = ""
         when (rawResult.barcodeFormat.toString()){
             "DATA_MATRIX"   -> codeId = "w"
             "CODE_128"      -> codeId = "j"

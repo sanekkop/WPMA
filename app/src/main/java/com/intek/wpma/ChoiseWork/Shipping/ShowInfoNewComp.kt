@@ -13,22 +13,17 @@ import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
 import com.intek.wpma.*
-import com.intek.wpma.Helpers.Helper
-import com.intek.wpma.Ref.RefEmployer
-import com.intek.wpma.Ref.RefSection
-import kotlinx.android.synthetic.main.activity_new_complectation.*
-import kotlinx.android.synthetic.main.activity_show_info.*
 import kotlinx.android.synthetic.main.activity_show_info_new_comp.*
 import kotlinx.android.synthetic.main.activity_show_info_new_comp.FExcStr
 import kotlinx.android.synthetic.main.activity_show_info_new_comp.table
 
 class ShowInfoNewComp: BarcodeDataReceiver() {
 
-    var CCRP: MutableList<MutableMap<String, String>> = mutableListOf()
-    var BadDoc: MutableMap<String, String> = mutableMapOf()
+    var ccrp: MutableList<MutableMap<String, String>> = mutableListOf()
+    var badDoc: MutableMap<String, String> = mutableMapOf()
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
-    var Barcode: String = ""
+    var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -38,8 +33,8 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        reactionBarcode(Barcode)
+                        barcode = intent.getStringExtra("data")
+                        reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
                             applicationContext,
@@ -61,9 +56,9 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onResume")
         if (scanRes != null) {
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             } catch (e: Exception) {
                 val toast = Toast.makeText(
                     applicationContext,
@@ -84,7 +79,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
     }
 
     companion object {
@@ -96,16 +91,16 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_show_info_new_comp)
-        title = SS.title
-        BadDoc.put("ID",intent.extras!!.getString("BadDocID")!!)
-        BadDoc.put("View",intent.extras!!.getString("BadDocView")!!)
+        title = ss.title
+        badDoc["ID"] = intent.extras!!.getString("BadDocID")!!
+        badDoc["View"] = intent.extras!!.getString("BadDocView")!!
 
-        RefreshRoute()
+        refreshRoute()
 
 
     }
 
-    fun RefreshRoute() {
+    private fun refreshRoute() {
         var textQuery =
             "select " +
                     "right(min(journForBill.docno), 5) as Bill, " +
@@ -149,19 +144,19 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                     "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
                     "group by DocCC.iddoc"
 
-        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         textQuery = "select * from WPM_fn_ViewBillStatus(:iddoc)"
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", BadDoc["ID"].toString())
-        textQuery =  SS.QuerySetParam(textQuery, "View", BadDoc["Veiw"].toString())
-        CCRP = SS.ExecuteWithReadNew(textQuery) ?: return
+        textQuery = ss.querySetParam(textQuery, "iddoc", badDoc["ID"].toString())
+        textQuery =  ss.querySetParam(textQuery, "View", badDoc["Veiw"].toString())
+        ccrp = ss.executeWithReadNew(textQuery) ?: return
 
-        var oldx : Float = 0F
+        var oldx = 0F
         var cvet = Color.rgb(192,192,192)
 
-        Shapka.text = "Комплектация в тележку (новая)" + "\n" + BadDoc["View"].toString() //SS.QueryParser("lblDocInfo")
+        Shapka.text = "Комплектация в тележку (новая)" + "\n" + badDoc["View"].toString() //SS.QueryParser("lblDocInfo")
 
-        FExcStr.setOnTouchListener { v, event ->
+        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
                 true
@@ -173,43 +168,43 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                     finish()
                 }
             }
-            true
-        }
+            return true
+        })
 
-        if(CCRP.isNotEmpty()){
+        if(ccrp.isNotEmpty()){
 
-            for (DR in CCRP){
+            for (DR in ccrp){
 
                 val row1 = TableRow(this)
                 val number = TextView(this)
                 val linearLayout1 = LinearLayout(this)
 
                 number.text = DR["sector"]
-                number.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.1).toInt(),
+                number.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.1).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 number.gravity = Gravity.CENTER_HORIZONTAL
                 number.textSize = 16F
 
                 val nmest = TextView(this)
                 nmest.text = DR["cond"]
-                nmest.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.05).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+                nmest.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.05).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
                 nmest.gravity = Gravity.CENTER_HORIZONTAL
                 nmest.textSize = 16F
                 nmest.setBackgroundColor(Color.GREEN)
 
                 val address = TextView(this)
-                address.text = " " + SS.helper.GetShortFIO(DR["employer"].toString())
-                address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.4).toInt(),
+                address.text = " " + ss.helper.getShortFIO(DR["employer"].toString())
+                address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.4).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                address.gravity = Gravity.LEFT
+                address.gravity = Gravity.START
                 address.textSize = 16F
 
                 val count = TextView(this)
                 count.text = DR["adress"]
                 if (DR["adress"] == "null") count.text = ""
-                count.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.45).toInt(),
+                count.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.45).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                count.gravity = Gravity.LEFT
+                count.gravity = Gravity.START
                 count.textSize = 16F
 
                 linearLayout1.setPadding(3,3,3,3)
@@ -226,43 +221,43 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
 
                 val mest = TextView(this)
                 mest.text = " -" + DR["number"]
-                mest.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.1).toInt(),
+                mest.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.1).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 mest.gravity = Gravity.CENTER
                 mest.textSize = 16F
 
                 val kmest = TextView(this)
                 kmest.text = " "
-                kmest.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.05).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+                kmest.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.05).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
                 kmest.gravity = Gravity.CENTER_HORIZONTAL
                 kmest.textSize = 16F
 
                 val code = TextView(this)
                 code.text =  " " +
-                        if (SS.IsVoidDate((DR["date2"].toString())) == true) SS.helper.ShortDate(DR["date1"].toString())
-                        else {SS.helper.ShortDate(DR["date2"].toString())} +
-                        " " + SS.helper.timeToString(DR["time1"].toString().toInt()) +
-                        " - " + if (DR["time2"] != "0") SS.helper.timeToString(DR["time2"].toString().toInt()) else "..."
-                code.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.4).toInt(),
+                        if (ss.isVoidDate((DR["date2"].toString()))) ss.helper.shortDate(DR["date1"].toString())
+                        else {ss.helper.shortDate(DR["date2"].toString())} +
+                        " " + ss.helper.timeToString(DR["time1"].toString().toInt()) +
+                        " - " + if (DR["time2"] != "0") ss.helper.timeToString(DR["time2"].toString().toInt()) else "..."
+                code.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.4).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                code.gravity = Gravity.LEFT
+                code.gravity = Gravity.START
                 code.textSize = 16F
 
                 val sum = TextView(this)
                 sum.text = " _ _ "
-                sum.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.25).toInt(),
+                sum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.25).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 sum.gravity = Gravity.CENTER_HORIZONTAL
                 sum.textSize = 16F
 
                 val nstrok = TextView(this)
                 nstrok.text =  DR["boxes"] + " "
-                nstrok.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.2).toInt(),
+                nstrok.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.2).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 nstrok.gravity = Gravity.CENTER_HORIZONTAL
                 nstrok.textSize = 16F
 
-                if (DR["iddoc"] == BadDoc["ID"]) {
+                if (DR["iddoc"] == badDoc["ID"]) {
                     number.setBackgroundColor(Color.rgb(128,128,128))
                     mest.setBackgroundColor(Color.rgb(128,128,128))
                 }
@@ -303,7 +298,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 table.addView(row1)
                 table.addView(row2)
 
-                if (cvet == Color.rgb(192,192,192)) cvet = Color.WHITE else cvet = Color.rgb(192,192,192)
+                cvet = if (cvet == Color.rgb(192,192,192)) Color.WHITE else Color.rgb(192,192,192)
             }
         }
         return
@@ -311,14 +306,14 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
 
     private fun reactionBarcode(Barcode: String): Boolean {
 
-                    RefreshActivity()
+                    refreshActivity()
                     return true
                 }
 
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?): Boolean {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
         // нажали назад, выйдем
-        if (keyCode == 4|| SS.helper.WhatDirection(keyCode) == "Right") {
+        if (keyCode == 4|| ss.helper.whatDirection(keyCode) == "Right") {
             val shoiseWorkInit = Intent(this, NewComplectation::class.java)
             shoiseWorkInit.putExtra("ParentForm", "ShowInfoNewComp")
             startActivity(shoiseWorkInit)
@@ -329,7 +324,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
 
     }
 
-    fun RefreshActivity() {
+    private fun refreshActivity() {
 
     }
 

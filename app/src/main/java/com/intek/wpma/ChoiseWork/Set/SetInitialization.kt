@@ -30,20 +30,20 @@ import java.util.*
 
 class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
-    val primordial = Model()
-    var ParentForm: String = "" // форма из которой пришли
-    var AllSetsRow: Int = 0
-    var DocSetSum: BigDecimal = "0.00".toBigDecimal()
-    val MainWarehouse = "     D   "
-    var DocSet: Model.StrictDoc? = null                     //текущий док набора
-    var DocsSet: MutableList<String> = mutableListOf()      //незавершенные доки на сотруднике
-    var DocCC: Model.DocCC? = null
-    var Section: Model.Section? = null
-    var CCItem: Model.StructItemSet? = null
-    var Barcode: String = ""
+    private val primordial = Model()
+    var parentForm: String = "" // форма из которой пришли
+    var allSetsRow: Int = 0
+    var docSetSum: BigDecimal = "0.00".toBigDecimal()
+    val mainWarehouse = "     D   "
+    var docSet: Model.StrictDoc? = null                     //текущий док набора
+    var docsSet: MutableList<String> = mutableListOf()      //незавершенные доки на сотруднике
+    var docCC: Model.DocCC? = null
+    var section: Model.Section? = null
+    var ccItem: Model.StructItemSet? = null
+    var barcode: String = ""
     // количество набираемой  позиции
-    var CountFact: Int = 0
-    var CurrLine: Int = 0
+    var countFact: Int = 0
+    var currLine: Int = 0
     var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
@@ -54,9 +54,9 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")!!
+                        barcode = intent.getStringExtra("data")!!
                         codeId = intent.getStringExtra("codeId")!!
-                        reactionBarcode(Barcode)
+                        this@SetInitialization.reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
                             applicationContext,
@@ -64,7 +64,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                             Toast.LENGTH_LONG
                         )
                         toast.show()
-                        BadVoise()
+                        badVoise()
                     }
                 }
             }
@@ -74,46 +74,46 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set)
-        ParentForm = intent.extras!!.getString("ParentForm")!!
-        SS.ANDROID_ID = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-        title = SS.title
+        parentForm = intent.extras!!.getString("ParentForm")!!
+        ss.ANDROID_ID = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+        title = ss.title
         scanRes = null //занулим повторно для перехода между формами
-        if (ParentForm == "Menu") {
-            if (!ToModeSetInicialization())
+        if (parentForm == "Menu") {
+            if (!toModeSetInicialization())
             {
-                BadVoise()
+                badVoise()
                 val menu = Intent(this, Menu::class.java)
                 startActivity(menu)
                 finish()
                 return
             }
         }
-        else if (ParentForm == "Correct" || ParentForm == "WatchTablePart") {
+        else if (parentForm == "Correct" || parentForm == "WatchTablePart") {
             try {
                 PreviousAction.text = intent.extras!!.getString("PreviousAction")!!
                 //получим незаконченные задания по отбору
-                GetDocsSet()
+                getDocsSet()
                 //сообразим с какими параметрами нужно вызвать ToModeSet
                 val docSetID = intent.extras!!.getString("DocSetID")!!
                 val addressID = intent.extras!!.getString("AddressID")!!
-                CountFact = intent.extras!!.getString("CountFact")!!.toInt()
+                countFact = intent.extras!!.getString("CountFact")!!.toInt()
                 if ((docSetID != "") && (addressID == "")) {
-                    ToModeSet(null, docSetID)
+                    toModeSet(null, docSetID)
                 } else if ((docSetID != "") && (addressID != "")) {
-                    ToModeSet(addressID, docSetID)
-                } else ToModeSet(null, null)
+                    toModeSet(addressID, docSetID)
+                } else toModeSet(null, null)
             } catch (e: Exception) {
                 val toast = Toast.makeText(applicationContext, e.toString(), Toast.LENGTH_LONG)
                 toast.show()
             }
         }
-        else if (ParentForm == "SetComplete") {
+        else if (parentForm == "SetComplete") {
             try {
-                GetDocsSet()
-                if (!ToModeSetInicialization())
+                getDocsSet()
+                if (!toModeSetInicialization())
                 {
                     //облом выходим обратно
-                    BadVoise()
+                    badVoise()
                     val menu = Intent(this, Menu::class.java)
                     startActivity(menu)
                     finish()
@@ -123,50 +123,49 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 toast.show()
             }
         }
-        if (SS.isMobile){
+        if (ss.isMobile){
             btnScanSetMode.visibility = VISIBLE
             btnScanSetMode!!.setOnClickListener {
                 val scanAct = Intent(this@SetInitialization, ScanActivity::class.java)
                 scanAct.putExtra("ParentForm","SetInitialization")
                 startActivity(scanAct)
             }
-            if (SS.CurrentMode == Global.Mode.SetInicialization && SS.CurrentAction == Global.ActionSet.Waiting){
+            if (ss.CurrentMode == Global.Mode.SetInicialization && ss.CurrentAction == Global.ActionSet.Waiting){
                 mainView.text = "Для получения задания нажмите на ЭТО поле!"
             }
         }
         correct.setOnClickListener {
-            if (SS.CurrentAction != Global.ActionSet.EnterCount && !DocSet!!.Special){
+            if (ss.CurrentAction != Global.ActionSet.EnterCount && !docSet!!.Special){
                 // перейдем на форму корректировки
                 val correct = Intent(this, Correct::class.java)
-                correct.putExtra("iddoc", DocSet!!.ID)
-                correct.putExtra("AddressID", CCItem!!.AdressID)
-                correct.putExtra("CountFact",CountFact.toString())
+                correct.putExtra("iddoc", docSet!!.id)
+                correct.putExtra("AddressID", ccItem!!.AdressID)
+                correct.putExtra("CountFact",countFact.toString())
                 startActivity(correct)
                 finish()
             }
         }
         mainView.setOnTouchListener(this)           //для запроса задания с телефона,чтобы кликали по этому полю
         var oldx = 0F                      //для свайпа, чтобы посмотреть накладную
-        FExcStr.setOnTouchListener{ v, event ->
+        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
-            }
-            else if (event.action == MotionEvent.ACTION_MOVE) {
+            } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
                     FExcStr.text = "Подгружаю список..."
                     //перейдем на форму просмотра
                     val watchForm = Intent(this, WatchTablePart::class.java)
-                    watchForm.putExtra("iddoc", DocSet!!.ID)
-                    watchForm.putExtra("ItemCode", CCItem!!.InvCode)
-                    watchForm.putExtra("addressID", CCItem!!.AdressID)
-                    watchForm.putExtra("DocView", DocSet!!.View)
-                    watchForm.putExtra("CountFact", CountFact.toString())
+                    watchForm.putExtra("iddoc", docSet!!.id)
+                    watchForm.putExtra("ItemCode", ccItem!!.InvCode)
+                    watchForm.putExtra("addressID", ccItem!!.AdressID)
+                    watchForm.putExtra("DocView", docSet!!.View)
+                    watchForm.putExtra("CountFact", countFact.toString())
                     startActivity(watchForm)
                     finish()
                 }
             }
-            true
-        }
+            return true
+        })
         PreviousAction.setOnTouchListener(this)     //для завершения набора маркировок при неполно набранной строке
     }
 
@@ -175,25 +174,25 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         var scanCodeId: String? = null
     }
 
-    fun ToModeSetInicialization(): Boolean {
-        SS.FEmployer.Refresh()    //Обновим данные сотрудника
-        SS.Const.Refresh()        //Обновим константы
+    private fun toModeSetInicialization(): Boolean {
+        ss.FEmployer.refresh()    //Обновим данные сотрудника
+        ss.Const.refresh()        //Обновим константы
 
         //PreviousAction = "";
 
         //получим незаконченные задания по отбору
-        GetDocsSet()
-        if (DocsSet.isNotEmpty()) {
-            return ToModeSet(null, null)
+        getDocsSet()
+        if (docsSet.isNotEmpty()) {
+            return toModeSet(null, null)
         }
-        SS.CurrentMode = Global.Mode.SetInicialization
-        SS.CurrentAction = Global.ActionSet.Waiting
+        ss.CurrentMode = Global.Mode.SetInicialization
+        ss.CurrentAction = Global.ActionSet.Waiting
         FExcStr.text = "Ожидание команды"
         return true
 
     } // ToModeSetInicialization
 
-    fun GetDocsSet() {
+    private fun getDocsSet() {
 
         var textQuery =
         "SELECT " +
@@ -209,22 +208,22 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 "and not DocCC.\$КонтрольНабора.Дата1 = :EmptyDate " +
                 "and journ.ismark = 0 "
 
-        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
-        val dataTable = SS.ExecuteWithReadNew(textQuery)
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        val dataTable = ss.executeWithReadNew(textQuery)
 
         if (dataTable!!.isNotEmpty()) {
             //если есть незаконченные задания по отбору
 
             for (DR in dataTable) {
-                DocsSet.add(DR["IDDOC"].toString())
+                docsSet.add(DR["IDDOC"].toString())
             }
         }
     }
 
-    fun ToModeSet(AdressID: String?, iddoc: String?): Boolean {
-        for (id in DocsSet) {
-            if (!LockDoc(id)) {
+    private fun toModeSet(AdressID: String?, iddoc: String?): Boolean {
+        for (id in docsSet) {
+            if (!lockDoc(id)) {
                 return false
             }
         }
@@ -303,31 +302,31 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     "order by " +
                     "DocCCHead.\$КонтрольНабора.Сектор , Sections.\$Спр.Секции.Маршрут , LINENO_"
 
-        textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID())
-        textQuery = textQuery.replace(":Docs", SS.helper.ListToStringWithQuotes(DocsSet))
-        textQuery = SS.QuerySetParam(textQuery, "Warehouse", MainWarehouse)
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
+        textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
+        textQuery = textQuery.replace(":Docs", ss.helper.listToStringWithQuotes(docsSet))
+        textQuery = ss.querySetParam(textQuery, "Warehouse", mainWarehouse)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         if (iddoc != null) {
-            textQuery = SS.QuerySetParam(textQuery, "iddoc", iddoc)
+            textQuery = ss.querySetParam(textQuery, "iddoc", iddoc)
         }
         if (AdressID != null) {
-            textQuery = SS.QuerySetParam(textQuery, "Adress", AdressID)
+            textQuery = ss.querySetParam(textQuery, "Adress", AdressID)
         }
 
-        val dataTable = SS.ExecuteWithRead(textQuery)
+        val dataTable = ss.executeWithRead(textQuery)
         //неотобранных строк больше нет
         if (dataTable!!.isEmpty()) {
-            if (AdressID == null) {
+            return if (AdressID == null) {
                 // завершение отбора
-                return ToModeSetComplete()
+                toModeSetComplete()
             } else {
                 FExcStr.text = "Нет такого адреса в сборочном!"
-                return false
+                false
             }
             //FExcStr.text = "Нет доступных команд! Ошибка робота!"
         }
 
-        RefreshRowSum()    //Подтянем циферки
+        refreshRowSum()    //Подтянем циферки
 
         //представление документа
         val docView = if (dataTable[1][18].toInt() == 1) "(C) " else {
@@ -335,7 +334,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         } + dataTable[1][15].trim() + "-" +
                 dataTable[1][17] + " Заявка " + dataTable[1][11] + " (" + dataTable[1][12] + ")"
 
-        CCItem = Model.StructItemSet(
+        ccItem = Model.StructItemSet(
             dataTable[1][0],                            //ID
             dataTable[1][3],                            //InvCode
             dataTable[1][2].trim(),                     //Name
@@ -351,12 +350,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             "шт",                                //OKEI2
             1                                 //OKEI2Coef
         )
-        CurrLine = dataTable[1][5].toBigDecimal().toInt()
+        currLine = dataTable[1][5].toBigDecimal().toInt()
 
-        CCItem = MultiplesOKEI2(CCItem!!)
+        ccItem = multiplesOKEI2(ccItem!!)
 
         //заявка
-        DocSet = Model.StrictDoc(
+        docSet = Model.StrictDoc(
             dataTable[1][10],                           //ID
             dataTable[1][18].toInt(),                   //SelfRemovel
             docView,                                    //View
@@ -369,7 +368,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             dataTable[1][21]                            //BoxID
         )
         //КонтрольНабора
-        DocCC = Model.DocCC(
+        docCC = Model.DocCC(
             dataTable[1][10],                           //ID
             dataTable[1][23],                           //Sector
             dataTable[1][24],                           //Rows
@@ -378,32 +377,32 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         )
 
         //проверим есть ли маркировка
-        if (IsMarkProduct(CCItem!!.ID)) {
+        if (isMarkProduct(ccItem!!.ID)) {
             //проверим колво занятых маркировок с набранным колвом текущей позиции
             textQuery =
                 "declare @count INT " +
                 "SET @count = " +
                             "(select count(*) " +
                             "from \$Спр.МаркировкаТовара (nolock) " +
-                            "where \$Спр.МаркировкаТовара.ФлагПоступления = 1 and \$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(DocCC!!.ID, "КонтрольНабора")}' " +
-                            "and \$Спр.МаркировкаТовара.ФлагОтгрузки = 1 and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}') " +
+                            "where \$Спр.МаркировкаТовара.ФлагПоступления = 1 and \$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(docCC!!.ID, "КонтрольНабора")}' " +
+                            "and \$Спр.МаркировкаТовара.ФлагОтгрузки = 1 and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}') " +
                 "select SUM( DocCC.\$КонтрольНабора.Количество ) as CountCC, @count as CountMark " +
                 "from DT\$КонтрольНабора as DocCC (nolock) " +
-                "where iddoc = '${DocCC!!.ID}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate and DocCC.\$КонтрольНабора.Товар = '${CCItem!!.ID}'"
-            textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
-            val dt = SS.ExecuteWithReadNew(textQuery)
+                "where iddoc = '${docCC!!.ID}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate and DocCC.\$КонтрольНабора.Товар = '${ccItem!!.ID}'"
+            textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+            val dt = ss.executeWithReadNew(textQuery)
             if(dt != null && dt.isNotEmpty()) {
 
 
                 if (dt[0]["CountCC"] == "null") {        //потерянные маркировки есть, а в доке нет ни одной отобранной позиции
                     if (dt[0]["CountMark"].toString().toInt() > 0) {
-                        CountFact = dt[0]["CountMark"].toString().toInt()
+                        countFact = dt[0]["CountMark"].toString().toInt()
                     }
                 } else {  //колво набранных маркировок не соответсвтует колву принятых в доке
                     if (dt[0]["CountMark"].toString().toInt() > dt[0]["CountCC"].toString()
                             .toInt()
                     ) {
-                        CountFact =
+                        countFact =
                             dt[0]["CountMark"].toString().toInt() - dt[0]["CountCC"].toString()
                                 .toInt()
                     }
@@ -411,28 +410,28 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             }
         }
 
-        if (CountFact ==0) {
-            SS.CurrentAction = Global.ActionSet.ScanAdress
-            FExcStr.text = WhatUNeed()
+        if (countFact ==0) {
+            ss.CurrentAction = Global.ActionSet.ScanAdress
+            FExcStr.text = whatUNeed()
         }
-        else if (CountFact > 0){
+        else if (countFact > 0){
             //вернулись из корректировки/просмотра, лиюо заново зашли в режим с уже набранными маркировками
-            SS.CurrentAction = Global.ActionSet.ScanQRCode
-            if (SS.isMobile){
+            ss.CurrentAction = Global.ActionSet.ScanQRCode
+            if (ss.isMobile){
                 PreviousAction.text = "Для завершения набора позиции с маркировкой нажмите ЗДЕСЬ!"
             }
             else PreviousAction.text = "Для завершения набора позиции с маркировкой нажмите 'ENTER'!"
 
             //набирали товар с маркировкой и не завершили набор
-            FExcStr.text = "Отобрано " + CCItem!!.InvCode.trim() + " - " + CountFact.toString() + " шт. (строка " + CCItem!!.CurrLine + ")" + WhatUNeed()
-            if (CCItem!!.Count == CountFact){
+            FExcStr.text = "Отобрано " + ccItem!!.InvCode.trim() + " - " + countFact.toString() + " шт. (строка " + ccItem!!.CurrLine + ")" + whatUNeed()
+            if (ccItem!!.Count == countFact){
                 //скорректировали последнюю, а предыдущие с маркировками висят
                 FExcStr.text = "Позиция набрана, нажмите ENTER!"
             }
         }
         else {
-            SS.CurrentAction = Global.ActionSet.ScanAdress
-            FExcStr.text = WhatUNeed()
+            ss.CurrentAction = Global.ActionSet.ScanAdress
+            FExcStr.text = whatUNeed()
         }
 
         // заполним форму
@@ -440,22 +439,22 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         price.text = "Цена: " + dataTable[1][7]
         price.visibility = VISIBLE
         val balance: TextView = findViewById(R.id.balance)
-        balance.text = "Ост-ок: " + CCItem!!.Balance
+        balance.text = "Ост-ок: " + ccItem!!.Balance
         balance.visibility = VISIBLE
         val address: TextView = findViewById(R.id.address)
-        address.text = CCItem!!.AdressName
+        address.text = ccItem!!.AdressName
         address.visibility = VISIBLE
         val invCode: TextView = findViewById(R.id.InvCode)
-        invCode.text = CCItem!!.InvCode
+        invCode.text = ccItem!!.InvCode
         invCode.visibility = VISIBLE
         val header: TextView = findViewById(R.id.header)
-        header.text = "Строка " + CCItem!!.CurrLine + " из " + DocSet!!.Rows + " (ост " + AllSetsRow + ")"
+        header.text = "Строка " + ccItem!!.CurrLine + " из " + docSet!!.Rows + " (ост " + allSetsRow + ")"
         header.visibility = VISIBLE
         val item: TextView = findViewById(R.id.item)
-        item.text = CCItem!!.Name
+        item.text = ccItem!!.Name
         item.visibility = VISIBLE
 
-        var oldx : Float = 0F
+        var oldx = 0F
         item.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
@@ -465,11 +464,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     FExcStr.text = "Подгружаю список..."
                     //перейдем на форму просмотра
                     val watchForm = Intent(this, WatchTablePart::class.java)
-                    watchForm.putExtra("iddoc", DocSet!!.ID)
-                    watchForm.putExtra("ItemCode", CCItem!!.InvCode)
-                    watchForm.putExtra("addressID", CCItem!!.AdressID)
-                    watchForm.putExtra("DocView", DocSet!!.View)
-                    watchForm.putExtra("CountFact", CountFact.toString())
+                    watchForm.putExtra("iddoc", docSet!!.id)
+                    watchForm.putExtra("ItemCode", ccItem!!.InvCode)
+                    watchForm.putExtra("addressID", ccItem!!.AdressID)
+                    watchForm.putExtra("DocView", docSet!!.View)
+                    watchForm.putExtra("CountFact", countFact.toString())
                     startActivity(watchForm)
                     finish()
                 }
@@ -478,22 +477,22 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         }
 
         val details: TextView = findViewById(R.id.details)
-        details.text = "Деталей: " + CCItem!!.Details
+        details.text = "Деталей: " + ccItem!!.Details
         details.visibility = VISIBLE
 
         val count: TextView = findViewById(R.id.count)
-        count.text = (CCItem!!.Count - CountFact).toString() + " шт по 1"
+        count.text = (ccItem!!.Count - countFact).toString() + " шт по 1"
         count.visibility = VISIBLE
 
         correct.visibility = VISIBLE
         correct.isFocusable = false
-        mainView.text = DocSet!!.View
+        mainView.text = docSet!!.View
 
-        SS.CurrentMode = Global.Mode.Set
+        ss.CurrentMode = Global.Mode.Set
         return true
     }
 
-    private fun RefreshRowSum(): Boolean {
+    private fun refreshRowSum(): Boolean {
         var textQuery =
             "select " +
                     "sum(DocCC.\$КонтрольНабора.Сумма ) as Sum, " +
@@ -505,20 +504,20 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     "and DocCC.\$КонтрольНабора.Дата5 = :EmptyDate " +
                     "and DocCC.\$КонтрольНабора.Корректировка = 0 " +
                     "and DocCC.\$КонтрольНабора.Количество > 0 "
-        textQuery = textQuery.replace(":Docs", SS.helper.ListToStringWithQuotes(DocsSet))
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
-        val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return false
+        textQuery = textQuery.replace(":Docs", ss.helper.listToStringWithQuotes(docsSet))
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        val dataTable = ss.executeWithReadNew(textQuery) ?: return false
         if (dataTable.isNotEmpty()) {
-            DocSetSum = dataTable[0]["Sum"].toString().toBigDecimal()
-            AllSetsRow = dataTable[0]["Amount"].toString().toInt()
+            docSetSum = dataTable[0]["Sum"].toString().toBigDecimal()
+            allSetsRow = dataTable[0]["Amount"].toString().toInt()
         } else {
-            DocSetSum = "0.00".toBigDecimal()
-            AllSetsRow = 0
+            docSetSum = "0.00".toBigDecimal()
+            allSetsRow = 0
         }
         return true
     }
 
-    private fun MultiplesOKEI2(CCItem: Model.StructItemSet): Model.StructItemSet {
+    private fun multiplesOKEI2(CCItem: Model.StructItemSet): Model.StructItemSet {
 
         var item: Model.StructItemSet = CCItem
         var textQuery = "SELECT " +
@@ -537,11 +536,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 "and Units.ismark = 0 " +
                 "and ceiling(:amount/\$Спр.ЕдиницыШК.Коэффициент )*\$Спр.ЕдиницыШК.Коэффициент = :amount " +
                 "order by AmountOKEI2"
-        textQuery = SS.QuerySetParam(textQuery, "CurrentItem", CCItem.ID)
-        textQuery = SS.QuerySetParam(textQuery, "amount", CCItem.Count)
-        textQuery = SS.QuerySetParam(textQuery, "OKEIKit", primordial.OKEIKit)
+        textQuery = ss.querySetParam(textQuery, "CurrentItem", CCItem.ID)
+        textQuery = ss.querySetParam(textQuery, "amount", CCItem.Count)
+        textQuery = ss.querySetParam(textQuery, "OKEIKit", primordial.okeiKit)
 
-        val dataTable = SS.ExecuteWithRead(textQuery)
+        val dataTable = ss.executeWithRead(textQuery)
         if (dataTable!!.isNotEmpty()) {
             item = Model.StructItemSet(
                 CCItem.ID,
@@ -563,7 +562,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         return item
     }
 
-    fun WhatUNeed(currAction: Global.ActionSet?): String {
+    private fun whatUNeed(currAction: Global.ActionSet?): String {
         var result = ""
         when (currAction) {
             Global.ActionSet.ScanAdress -> result = "Отсканируйте адрес!"
@@ -573,8 +572,8 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             Global.ActionSet.EnterCount -> result = "Введите количество! (подтверждать - 'enter')"
 
             Global.ActionSet.ScanPart -> result =
-                "Отсканируйте спец. ШК деталей! " + CCItem!!.InvCode.trim() +
-                        (if (CCItem!!.Details == 99) " (особая)" else " (деталей: " + CCItem!!.Details.toString() + ")")
+                "Отсканируйте спец. ШК деталей! " + ccItem!!.InvCode.trim() +
+                        (if (ccItem!!.Details == 99) " (особая)" else " (деталей: " + ccItem!!.Details.toString() + ")")
 
             Global.ActionSet.ScanBox -> result = "Отсканируйте коробку!"
 
@@ -585,14 +584,14 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         return result
     }
 
-    private fun WhatUNeed(): String {
-        return WhatUNeed(SS.CurrentAction)
+    private fun whatUNeed(): String {
+        return whatUNeed(ss.CurrentAction)
     }  // WhatUNeed
 
 
-    fun QuitModesSet(): Boolean {
-        for (id in DocsSet) {
-            if (!LockoutDoc(id)) {
+    private fun quitModesSet(): Boolean {
+        for (id in docsSet) {
+            if (!lockoutDoc(id)) {
                 return false
             }
         }
@@ -600,12 +599,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     } // QuitModesSet
 
     private fun reactionBarcode(Barcode: String) {
-        var isObject: Boolean = true
-        val barcoderes: MutableMap<String, String> = SS.helper.DisassembleBarcode(Barcode)
+        var isObject = true
+        val barcoderes: MutableMap<String, String> = ss.helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         //если это не типовой справочник, то выходим
         val idd = barcoderes["IDD"].toString()
-        if (SS.IsSC(idd, "Сотрудники")) {
+        if (ss.isSC(idd, "Сотрудники")) {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()
@@ -628,225 +627,224 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         if (Barcode.substring(0, 2) == "25" && typeBarcode == "113") {
             if (barcoderes["IDD"]!! == "") {
                 FExcStr.text = "Не удалось преобразовать штрихкод!"
-                BadVoise()
+                badVoise()
                 return
             }
 
-            if (!SS.IsSC(barcoderes["IDD"]!!, "Сотрудники")) {
-                if (!SS.IsSC(barcoderes["IDD"]!!, "Секции")) {
+            if (!ss.isSC(barcoderes["IDD"]!!, "Сотрудники")) {
+                if (!ss.isSC(barcoderes["IDD"]!!, "Секции")) {
                     // вместо !SS.IsSC(dicBarcode["IDD"]!!, "Принтеры")
-                    if (!SS.IsSC(barcoderes["IDD"]!!, "Принтеры")) {
+                    if (!ss.isSC(barcoderes["IDD"]!!, "Принтеры")) {
                         isObject = false
                     }
                 }
             }
             if (isObject) {
-                if (ReactionSC(barcoderes["IDD"]!!)) {
+                if (reactionSC(barcoderes["IDD"]!!)) {
 
-                    if (SS.CurrentMode == Global.Mode.Set) {
-                        GoodDone()
+                    if (ss.CurrentMode == Global.Mode.Set) {
+                        goodDone()
                         return
                     }
                 }
                 return
             }
         }
-        if (barcoderes["Type"] == "part" && (SS.CurrentMode == Global.Mode.Set)) {
-            ScanPartBarcode(barcoderes["count"]!!.toInt())
+        if (barcoderes["Type"] == "part" && (ss.CurrentMode == Global.Mode.Set)) {
+            scanPartBarcode(barcoderes["count"]!!.toInt())
 
             return
         }
-        if (ReactionBarcode(Barcode)) {
+        if (this.rbSet(Barcode)) {
 
-            if (SS.CurrentMode == Global.Mode.Set) {
-                GoodDone()
+            if (ss.CurrentMode == Global.Mode.Set) {
+                goodDone()
                 return
             } else {
                 FExcStr.text = "Ожидание команды"
             }
 
         } else {
-            if (typeBarcode == "6" && (SS.CurrentMode == Global.Mode.Set)) {
-                if (ReactionSC(barcoderes["ID"]!!, true)) {
-                    if (SS.CurrentMode == Global.Mode.Set) {
-                        GoodDone()
+            if (typeBarcode == "6" && (ss.CurrentMode == Global.Mode.Set)) {
+                if (reactionSC(barcoderes["ID"]!!, true)) {
+                    if (ss.CurrentMode == Global.Mode.Set) {
+                        goodDone()
                         return
                     }
                 }
             }
-            if (SS.CurrentMode == Global.Mode.Set) {
-                BadVoise()
+            if (ss.CurrentMode == Global.Mode.Set) {
+                badVoise()
                 return
             }
-            FExcStr.text = SS.ExcStr
+            FExcStr.text = ss.excStr
         }
     }
 
-    fun ReactionBarcode(Barcode: String): Boolean {
-        when (SS.CurrentMode) {
-            Global.Mode.Set -> return RBSet(Barcode)
+    private fun rbSet(Barcode: String): Boolean {
+        return when (ss.CurrentMode) {
+            Global.Mode.Set -> rBSet(Barcode)
             else -> {
                 FExcStr.text = "Нет действий с этим штирхкодом в данном режиме!"
-                BadVoise()
-                return false
+                badVoise()
+                false
             }
         }
     }
 
-    fun ReactionSC(IDD: String): Boolean {
-        return ReactionSC(IDD, false)
+    private fun reactionSC(IDD: String): Boolean {
+        return reactionSC(IDD, false)
     }
 
-    fun ReactionSC(IDD: String, thisID: Boolean): Boolean {
+    private fun reactionSC(IDD: String, thisID: Boolean): Boolean {
         //FExcStr = null;
-        return when (SS.CurrentMode) {
+        return when (ss.CurrentMode) {
 
-            Global.Mode.SetInicialization -> RSCSetInicialization(IDD)
+            Global.Mode.SetInicialization -> rSCSetInicialization(IDD)
 
-            Global.Mode.Set -> RSCSet(IDD, thisID)
+            Global.Mode.Set -> rSCSet(IDD, thisID)
 
             //Global.Mode.SetComplete -> RSCSetComplete(IDD)
 
 
             else -> {
                 FExcStr.text = "Нет действий с данным справочником в данном режиме!"
-                BadVoise()
+                badVoise()
                 false
             }
         }
     }
 
-    private fun RBSet(Barcode: String): Boolean {
-        if (SS.CurrentAction != Global.ActionSet.ScanItem && SS.CurrentAction != Global.ActionSet.ScanQRCode) {
-            FExcStr.text = "Неверно! " + WhatUNeed()
-            BadVoise()
+    private fun rBSet(Barcode: String): Boolean {
+        if (ss.CurrentAction != Global.ActionSet.ScanItem && ss.CurrentAction != Global.ActionSet.ScanQRCode) {
+            FExcStr.text = "Неверно! " + whatUNeed()
+            badVoise()
             return false
         }
         var textQuery: String
         val dt: Array<Array<String>>
 
 
-        if (SS.CurrentAction == Global.ActionSet.ScanQRCode && codeId == BarcodeId){//заодно проверим DataMatrix ли пришедший код
+        if (ss.CurrentAction == Global.ActionSet.ScanQRCode && codeId == barcodeId){//заодно проверим DataMatrix ли пришедший код
             //найдем маркировку в справочнике МаркировкаТовара
             val testBatcode = Barcode.replace("'","''")
             textQuery =
                 "SELECT \$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен" +
                         "FROM \$Спр.МаркировкаТовара (nolock) " +
                         "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                        "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' " +
+                        "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' " +
                         "and \$Спр.МаркировкаТовара.ФлагПоступления = 1 " +
                         "and ((\$Спр.МаркировкаТовара.ФлагОтгрузки = 0 and \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' )" +
-                        "or (\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 and \$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(DocCC!!.ID,"КонтрольНабора")}'))"
-            val dt_mark = SS.ExecuteWithReadNew(textQuery) ?: return false
-            if (dt_mark.isEmpty()){
-                FExcStr.text = "Маркировка не найдена, либо товар уже отгружен!" + WhatUNeed()
-                return false
-            }
-            else if (dt_mark[0]["Отгружен"].toString() == "0"){
-                //взведем фдаг отгрузки + проставим док отгрузки
-                textQuery =
-                    "UPDATE \$Спр.МаркировкаТовара " +
-                            "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(DocCC!!.ID,"КонтрольНабора")}', \$Спр.МаркировкаТовара.ФлагОтгрузки = 1 " +
-                    "WHERE " +
-                            "\$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                            "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' "
-                if (!SS.ExecuteWithoutRead(textQuery)) {
-                    FExcStr.text = "QR - code не распознан! Заново " + WhatUNeed()
-                    BadVoise()
+                        "or (\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 and \$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(docCC!!.ID,"КонтрольНабора")}'))"
+            val dtMark = ss.executeWithReadNew(textQuery) ?: return false
+            when {
+                dtMark.isEmpty() -> {
+                    FExcStr.text = "Маркировка не найдена, либо товар уже отгружен!" + whatUNeed()
                     return false
                 }
+                dtMark[0]["Отгружен"].toString() == "0" -> {
+                    //взведем фдаг отгрузки + проставим док отгрузки
+                    textQuery =
+                        "UPDATE \$Спр.МаркировкаТовара " +
+                                "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(docCC!!.ID,"КонтрольНабора")}', \$Спр.МаркировкаТовара.ФлагОтгрузки = 1 " +
+                                "WHERE " +
+                                "\$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
+                                "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' "
+                    if (!ss.executeWithoutRead(textQuery)) {
+                        FExcStr.text = "QR - code не распознан! Заново " + whatUNeed()
+                        badVoise()
+                        return false
+                    }
 
-                if (CCItem!!.Count > 1){
-                    CountFact += 1
-                    //набрали все позиции с маркировкой
-                    if (CountFact == CCItem!!.Count){
-                        if (EnterCountSet(CountFact)){
-                            //Если все норм, то выходим
-                            return true
+                    if (ccItem!!.Count > 1){
+                        countFact += 1
+                        //набрали все позиции с маркировкой
+                        if (countFact == ccItem!!.Count){
+                            if (enterCountSet(countFact)){
+                                //Если все норм, то выходим
+                                return true
+                            } else{
+                                //не прошло что-то отменим маркировку
+                                textQuery =
+                                    "UPDATE \$Спр.МаркировкаТовара " +
+                                            "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' , \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 " +
+                                            "WHERE " +
+                                            "\$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
+                                            "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' "
+                                if (!ss.executeWithoutRead(textQuery)) {
+                                    FExcStr.text = "QR - code не распознан! Заново " + whatUNeed()
+                                    return false
+                                }
+                            }
+
                         }
-                        else{
+
+                        if (ss.isMobile){
+                            PreviousAction.text = "Для завершения набора позиции с маркировкой нажмите ЗДЕСЬ!"
+                        } else PreviousAction.text = "Для завершения набора позиции с маркировкой нажмите 'ENTER'!"
+                    } else {
+                        countFact = 1
+                        if (!enterCountSet(countFact)){
                             //не прошло что-то отменим маркировку
                             textQuery =
                                 "UPDATE \$Спр.МаркировкаТовара " +
                                         "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' , \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 " +
                                         "WHERE " +
                                         "\$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                                        "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' "
-                            if (!SS.ExecuteWithoutRead(textQuery)) {
-                                FExcStr.text = "QR - code не распознан! Заново " + WhatUNeed()
+                                        "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' "
+                            if (!ss.executeWithoutRead(textQuery)) {
+                                FExcStr.text = "QR - code не распознан! Заново " + whatUNeed()
                                 return false
                             }
                         }
-
                     }
-
-                    if (SS.isMobile){
-                        PreviousAction.text = "Для завершения набора позиции с маркировкой нажмите ЗДЕСЬ!"
+                    FExcStr.text = "Отобрано " + ccItem!!.InvCode.trim() + " - " + countFact.toString() + " шт. (строка " + ccItem!!.CurrLine + ") " + whatUNeed() + " - СЛЕДУЮЩИЙ!"
+                    count.text = (ccItem!!.Count - countFact).toString() + " шт по 1"
+                }
+                else -> {
+                    //маркировка уже есть, надо сверить количество которео уже собрали и которое отсканировали по Qr кодам
+                    //проверим колво занятых маркировок с набранным колвом текущей позиции
+                    textQuery =
+                        "select SUM(Set_tabl.CountCC) as CountCC, " +
+                                "SUM(Set_tabl.CountMark) as CountMark " +
+                                "from ( select SUM(DocCC.\$КонтрольНабора.Количество ) as CountCC, " +
+                                "0 as CountMark " +
+                                "from DT\$КонтрольНабора as DocCC (nolock) " +
+                                "where " +
+                                "iddoc = '${docCC!!.ID}' " +
+                                "and DocCC.\$КонтрольНабора.Корректировка = 0 " +
+                                "and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate "
+                    "and DocCC.\$КонтрольНабора.Товар = '${ccItem!!.ID}'" +
+                            "union all " +
+                            "select 0 , count(*) " +
+                            "from \$Спр.МаркировкаТовара (nolock) " +
+                            "where \$Спр.МаркировкаТовара.ФлагПоступления = 1 " +
+                            "and \$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(
+                                docCC!!.ID,
+                                "КонтрольНабора"
+                            )}' " +
+                            "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}'" +
+                            ") as Set_tabl "
+                    textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+                    val dtmark = ss.executeWithReadNew(textQuery) ?: return false
+                    if (dtmark.isEmpty()) {
+                        //не может быть
+                        return false
                     }
-                    else PreviousAction.text = "Для завершения набора позиции с маркировкой нажмите 'ENTER'!"
+                    //надо чтобы маркировок было не больше чем набранных строк
+                    countFact += dtmark[0]["CountMark"].toString()
+                        .toInt() - dtmark[0]["CountCC"].toString().toInt()
                 }
-                else {
-                    CountFact = 1
-                    if (!EnterCountSet(CountFact)){
-                        //не прошло что-то отменим маркировку
-                        textQuery =
-                            "UPDATE \$Спр.МаркировкаТовара " +
-                                    "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' , \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 " +
-                                    "WHERE " +
-                                    "\$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                                    "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' "
-                        if (!SS.ExecuteWithoutRead(textQuery)) {
-                            FExcStr.text = "QR - code не распознан! Заново " + WhatUNeed()
-                            return false
-                        }
-                    }
-                }
-                FExcStr.text = "Отобрано " + CCItem!!.InvCode.trim() + " - " + CountFact.toString() + " шт. (строка " + CCItem!!.CurrLine + ") " + WhatUNeed() + " - СЛЕДУЮЩИЙ!"
-                count.text = (CCItem!!.Count - CountFact).toString() + " шт по 1"
-            }
-            else {
-                //маркировка уже есть, надо сверить количество которео уже собрали и которое отсканировали по Qr кодам
-                //проверим колво занятых маркировок с набранным колвом текущей позиции
-                textQuery =
-                    "select SUM(Set_tabl.CountCC) as CountCC, " +
-                            "SUM(Set_tabl.CountMark) as CountMark " +
-                            "from ( select SUM(DocCC.\$КонтрольНабора.Количество ) as CountCC, " +
-                            "0 as CountMark " +
-                            "from DT\$КонтрольНабора as DocCC (nolock) " +
-                            "where " +
-                            "iddoc = '${DocCC!!.ID}' " +
-                            "and DocCC.\$КонтрольНабора.Корректировка = 0 " +
-                            "and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate "
-                "and DocCC.\$КонтрольНабора.Товар = '${CCItem!!.ID}'" +
-                        "union all " +
-                        "select 0 , count(*) " +
-                        "from \$Спр.МаркировкаТовара (nolock) " +
-                        "where \$Спр.МаркировкаТовара.ФлагПоступления = 1 " +
-                        "and \$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(
-                            DocCC!!.ID,
-                            "КонтрольНабора"
-                        )}' " +
-                        "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}'" +
-                ") as Set_tabl "
-                textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
-                val dt_mark = SS.ExecuteWithReadNew(textQuery) ?: return false
-                if (dt_mark.isEmpty()) {
-                    //не может быть
-                    return false
-                }
-                //надо чтобы маркировок было не больше чем набранных строк
-                CountFact += dt_mark[0]["CountMark"].toString()
-                    .toInt() - dt_mark[0]["CountCC"].toString().toInt()
             }
             return true
         }
         //нужно сканировать маркировку, а сканиуруют что-то другое
-        if (SS.CurrentAction == Global.ActionSet.ScanQRCode && codeId != BarcodeId){
-            FExcStr.text = "Неверно! " + WhatUNeed()
-            BadVoise()
+        if (ss.CurrentAction == Global.ActionSet.ScanQRCode && codeId != barcodeId){
+            FExcStr.text = "Неверно! " + whatUNeed()
+            badVoise()
             return false
         }
-        if (SS.CurrentAction == Global.ActionSet.ScanItem) {
+        if (ss.CurrentAction == Global.ActionSet.ScanItem) {
             textQuery =
                 "SELECT " +
                         "Units.parentext as ItemID, " +
@@ -856,38 +854,38 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                         "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
                         "ON Goods.id = Units.parentext " +
                         "WHERE Units.\$Спр.ЕдиницыШК.Штрихкод = :Barcode "
-            textQuery = SS.QuerySetParam(textQuery, "Barcode", Barcode)
-            dt = SS.ExecuteWithRead(textQuery) ?: return false
+            textQuery = ss.querySetParam(textQuery, "Barcode", Barcode)
+            dt = ss.executeWithRead(textQuery) ?: return false
 
             if (dt.isEmpty()) {
-                FExcStr.text = "С таким штрихкодом товар не найден! " + WhatUNeed()
+                FExcStr.text = "С таким штрихкодом товар не найден! " + whatUNeed()
                 return false
             }
-            if (dt[1][0] != CCItem!!.ID) {
+            if (dt[1][0] != ccItem!!.ID) {
                 FExcStr.text =
-                    "Не тот товар! (отсканирован " + dt[1][1].trim() + ") " + WhatUNeed()
+                    "Не тот товар! (отсканирован " + dt[1][1].trim() + ") " + whatUNeed()
                 return false
             }
             //проверим есть ли маркировка
-           if (IsMarkProduct(CCItem!!.ID)) {
+           if (isMarkProduct(ccItem!!.ID)) {
                //есть маркировка, пусть сканируют QR-code
-               SS.CurrentAction = Global.ActionSet.ScanQRCode
-               FExcStr.text = WhatUNeed()
+               ss.CurrentAction = Global.ActionSet.ScanQRCode
+               FExcStr.text = whatUNeed()
                return false
            }
         }
 
-        SS.CurrentAction = Global.ActionSet.EnterCount
+        ss.CurrentAction = Global.ActionSet.EnterCount
         val enterCount: EditText = findViewById(R.id.enterCount)
         enterCount.visibility = VISIBLE
-        enterCount?.setText("")
+        enterCount.setText("")
         enterCount.setOnKeyListener { v: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                 // сохраняем текст, введенный до нажатия Enter в переменную
                 try {
                     val count = enterCount.text.toString().toInt()
-                    CountFact = count
-                    EnterCountSet(CountFact)
+                    countFact = count
+                    enterCountSet(countFact)
                 } catch (e: Exception) {
 
                 }
@@ -895,97 +893,97 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             false
         }
 
-        FExcStr.text = WhatUNeed()
+        FExcStr.text = whatUNeed()
         return true
     }
 
-    fun RSCSetInicialization(IDD: String): Boolean {
+    private fun rSCSetInicialization(IDD: String): Boolean {
 
         val refSection = RefSection()
-        if (!refSection.FoundIDD(IDD)) return false
-        Section = Model.Section(
-            refSection.ID,
+        if (!refSection.foundIDD(IDD)) return false
+        section = Model.Section(
+            refSection.id,
             IDD,
-            refSection.Type.toString(),
-            refSection.Name.trim()
+            refSection.type.toString(),
+            refSection.name.trim()
         )
-        if (Section!!.Type != "12") {
+        if (section!!.Type != "12") {
             FExcStr.text = "Неверный тип адреса! Отсканируйте коробку!"
             return false
         } else {
-            PreviousAction.text = Section!!.Descr
+            PreviousAction.text = section!!.Descr
         }
         return true
     }
 
-    fun RSCSet(IDD: String, thisID: Boolean): Boolean {
+    private fun rSCSet(IDD: String, thisID: Boolean): Boolean {
 
         if (!thisID) {
 
             val textQuery: String
-            if (SS.IsSC(IDD, "Секции")) {
-                if (SS.CurrentAction == Global.ActionSet.ScanAdress) {
+            if (ss.isSC(IDD, "Секции")) {
+                if (ss.CurrentAction == Global.ActionSet.ScanAdress) {
                     val refSection = RefSection()
-                    if (!refSection.FoundIDD(IDD)) return false
-                    Section = Model.Section(
-                        refSection.ID,
+                    if (!refSection.foundIDD(IDD)) return false
+                    section = Model.Section(
+                        refSection.id,
                         IDD,
-                        refSection.Type.toString(),
-                        refSection.Name.trim()
+                        refSection.type.toString(),
+                        refSection.name.trim()
                     )
 
-                    if (Section!!.Type == "12") {
-                        FExcStr.text = "Неверно! " + WhatUNeed()
+                    if (section!!.Type == "12") {
+                        FExcStr.text = "Неверно! " + whatUNeed()
                         return false
                     }
-                    if (Section!!.ID != CCItem!!.AdressID) {
+                    if (section!!.ID != ccItem!!.AdressID) {
                         //Переход на другую строку
-                        return ToModeSet(Section!!.ID, null)
+                        return toModeSet(section!!.ID, null)
                     }
                     //&& Const.ImageOn
-                    if (CCItem!!.Details > 0) {
-                        SS.CurrentAction = Global.ActionSet.ScanPart
+                    if (ccItem!!.Details > 0) {
+                        ss.CurrentAction = Global.ActionSet.ScanPart
                     } else {
                         //проверим есть ли маркировка
                         textQuery =
                             "SELECT \$Спр.МаркировкаТовара.Товар " +
                             "FROM \$Спр.МаркировкаТовара (nolock) " +
                             "WHERE " +
-                                    "\$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' " +
+                                    "\$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' " +
                                     "and \$Спр.МаркировкаТовара.ФлагПоступления = 1 and \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 and \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' "
-                        val dt = SS.ExecuteWithRead(textQuery) ?: return false
+                        val dt = ss.executeWithRead(textQuery) ?: return false
                         if (dt.isEmpty()){
-                            SS.CurrentAction = Global.ActionSet.ScanItem
+                            ss.CurrentAction = Global.ActionSet.ScanItem
                         }
-                        else SS.CurrentAction = Global.ActionSet.ScanQRCode
+                        else ss.CurrentAction = Global.ActionSet.ScanQRCode
                     }
-                    FExcStr.text = WhatUNeed()
+                    FExcStr.text = whatUNeed()
                     return true
-                } else if (SS.CurrentAction == Global.ActionSet.ScanBox) {
+                } else if (ss.CurrentAction == Global.ActionSet.ScanBox) {
                     //СКАНИРОВАНИЕ КОРОБКИ
-                    if (Section!!.Type.toInt() != 12) {
-                        FExcStr.text = "Неверно! " + WhatUNeed()
+                    if (section!!.Type.toInt() != 12) {
+                        FExcStr.text = "Неверно! " + whatUNeed()
                         return false
                     }
-                    if (Section!!.ID != DocSet!!.BoxID) {
-                        FExcStr.text = "Неверная коробка! " + WhatUNeed()
+                    if (section!!.ID != docSet!!.BoxID) {
+                        FExcStr.text = "Неверная коробка! " + whatUNeed()
                         return false
                     }
 
                 } else {
                     //Какой-то другой режим вероятно?
-                    FExcStr.text = "Неверно! " + WhatUNeed()
+                    FExcStr.text = "Неверно! " + whatUNeed()
                     return false
                 }
             }
-            else if (SS.IsSC(IDD, "Принтеры")) {
+            else if (ss.isSC(IDD, "Принтеры")) {
                 //получим путь принтера
-                SS.FPrinter.FoundIDD(IDD)
-                if (!SS.FPrinter.Selected) return false
-                FExcStr.text = "Отсканирован принтер " + SS.FPrinter.Path.trim() + "\n" + WhatUNeed()
+                ss.FPrinter.foundIDD(IDD)
+                if (!ss.FPrinter.selected) return false
+                FExcStr.text = "Отсканирован принтер " + ss.FPrinter.path.trim() + "\n" + whatUNeed()
                 return true
             } else {
-                FExcStr.text = "Неверно! " + WhatUNeed()
+                FExcStr.text = "Неверно! " + whatUNeed()
                 return false
             }
             return true
@@ -996,10 +994,10 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         }
     }
 
-    fun EnterCountSet(Count: Int): Boolean {
+    private fun enterCountSet(Count: Int): Boolean {
 
         //надо через попытку иначе если вылетет тут то будет косяк с маркировкой
-        if (SS.isMobile){  //спрячем клаву
+        if (ss.isMobile){  //спрячем клаву
             //только если поле ввода количества активно
             if (enterCount.isFocused) {
                 val inputManager: InputMethodManager =
@@ -1011,33 +1009,33 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             }
         }
 
-        if (SS.CurrentAction != Global.ActionSet.EnterCount && SS.CurrentAction != Global.ActionSet.ScanQRCode) {
-            FExcStr.text = "Неверно! " + WhatUNeed()
+        if (ss.CurrentAction != Global.ActionSet.EnterCount && ss.CurrentAction != Global.ActionSet.ScanQRCode) {
+            FExcStr.text = "Неверно! " + whatUNeed()
             return false
         }
-        if (Count <= 0 || (CCItem!!.Count < Count)) {
+        if (Count <= 0 || (ccItem!!.Count < Count)) {
             FExcStr.text =
-                "Количество указано неверно! (максимум " + CCItem!!.Count.toString() + ")"
+                "Количество указано неверно! (максимум " + ccItem!!.Count.toString() + ")"
             return false
         }
 
-        return CompleteLineSet()
+        return completeLineSet()
     }
 
-    fun ScanPartBarcode(CountPart: Int): Boolean {
-        if (SS.CurrentAction != Global.ActionSet.ScanPart) {
-            FExcStr.text = "Неверно! " + WhatUNeed()
+    private fun scanPartBarcode(CountPart: Int): Boolean {
+        if (ss.CurrentAction != Global.ActionSet.ScanPart) {
+            FExcStr.text = "Неверно! " + whatUNeed()
             return false
-        } else if (CountPart != CCItem!!.Details) {
-            FExcStr.text = "Количество деталей неверно! " + WhatUNeed()
+        } else if (CountPart != ccItem!!.Details) {
+            FExcStr.text = "Количество деталей неверно! " + whatUNeed()
             return false
         }
-        SS.CurrentAction = Global.ActionSet.ScanItem
-        FExcStr.text = WhatUNeed()
+        ss.CurrentAction = Global.ActionSet.ScanItem
+        FExcStr.text = whatUNeed()
         return true
     } // ScanPartBarcode
 
-    fun CompleteLineSet(): Boolean {
+    private fun completeLineSet(): Boolean {
         //Заглушка, рефрешим позицию, чтобы не было проблем, если оборвется связь
 //        if (!ToModeSet(CCItem!!.AdressID, DocSet!!.ID))
 //        {
@@ -1047,7 +1045,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 //        }
 //        CurrentAction = Global.ActionSet.ScanAdress   //Отключение по константе
         //конец заглушки
-        if (CCItem!!.Count > CountFact) {
+        if (ccItem!!.Count > countFact) {
 //            if (Const.StopCorrect)
 //            {
 //                FExcStr = "Возможность дробить строку отключена!";
@@ -1078,14 +1076,14 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                         "if @@rowcount = 0 rollback tran else commit tran " +
                         "end " +
                         "else rollback"
-            textQuery = SS.QuerySetParam(textQuery, "count", CountFact)
-            textQuery = SS.QuerySetParam(textQuery, "remaincount", CCItem!!.Count - CountFact)
-            textQuery = SS.QuerySetParam(textQuery, "iddoc", DocSet!!.ID)
-            textQuery = SS.QuerySetParam(textQuery, "currline", CCItem!!.CurrLine)
+            textQuery = ss.querySetParam(textQuery, "count", countFact)
+            textQuery = ss.querySetParam(textQuery, "remaincount", ccItem!!.Count - countFact)
+            textQuery = ss.querySetParam(textQuery, "iddoc", docSet!!.id)
+            textQuery = ss.querySetParam(textQuery, "currline", ccItem!!.CurrLine)
 
-            val dt = SS.ExecuteWithRead(textQuery) ?: return false
+            val dt = ss.executeWithRead(textQuery) ?: return false
             //Писать будем в добавленную, так лучше! Поэтому обновляем корректную строчку
-            CurrLine = dt[1][0].toInt()
+            currLine = dt[1][0].toInt()
         }
         //фиксируем строку
         var textQuery =
@@ -1095,35 +1093,35 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     "\$КонтрольНабора.Контейнер = :id " +
                     "WHERE DT\$КонтрольНабора .iddoc = :DocCC and DT\$КонтрольНабора .lineno_ = :lineno_; "
 
-        val sdf = SimpleDateFormat("yyyyMMdd HH:mm:ss")
+        val sdf = SimpleDateFormat("yyyyMMdd HH:mm:ss", Locale.US)
         val currentDate = sdf.format(Date()).substring(0, 8) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(9, 17))
 
-        textQuery = SS.QuerySetParam(textQuery, "id", SS.GetVoidID())
-        textQuery = SS.QuerySetParam(textQuery, "DocCC", DocSet!!.ID)
-        textQuery = SS.QuerySetParam(textQuery, "Date5", currentDate)
-        textQuery = SS.QuerySetParam(textQuery, "Time5", currentTime)
-        textQuery = SS.QuerySetParam(textQuery, "lineno_", CCItem!!.CurrLine)
+        textQuery = ss.querySetParam(textQuery, "id", ss.getVoidID())
+        textQuery = ss.querySetParam(textQuery, "DocCC", docSet!!.id)
+        textQuery = ss.querySetParam(textQuery, "Date5", currentDate)
+        textQuery = ss.querySetParam(textQuery, "Time5", currentTime)
+        textQuery = ss.querySetParam(textQuery, "lineno_", ccItem!!.CurrLine)
 
-        if (!SS.ExecuteWithoutRead(textQuery)) {
+        if (!ss.executeWithoutRead(textQuery)) {
             return false
         }
         //Запись прошла успешно
-        SS.CurrentAction =
+        ss.CurrentAction =
             Global.ActionSet.ScanAdress   //на всякий случай, если там что-нибудь накроется, то во вьюхе по крайней мере нельзя будет повторно ввести количество
 
         PreviousAction.text =
-            "Отобрано " + CCItem!!.InvCode.trim() + " - " + CountFact.toString() + " шт. (строка " + CCItem!!.CurrLine + ")"
+            "Отобрано " + ccItem!!.InvCode.trim() + " - " + countFact.toString() + " шт. (строка " + ccItem!!.CurrLine + ")"
         //занулим,дабы не было ошибки с колвом
-        CountFact = 0
+        countFact = 0
 
         enterCount.visibility = INVISIBLE
-        return ToModeSet(null, null)
+        return toModeSet(null, null)
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        ReactionKey(keyCode, event)
+        reactionKey(keyCode, event)
         return super.onKeyDown(keyCode, event)
     }
 
@@ -1133,15 +1131,15 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             // нажатие
             MotionEvent.ACTION_DOWN -> {
                 //нажали на mainView для запроса задания
-                if (SS.CurrentMode == Global.Mode.SetInicialization && SS.CurrentAction == Global.ActionSet.Waiting){
-                    CompleteSetInicialization()
+                if (ss.CurrentMode == Global.Mode.SetInicialization && ss.CurrentAction == Global.ActionSet.Waiting){
+                    completeSetInicialization()
                     return true
                 }
                 //
-                if (SS.CurrentMode == Global.Mode.Set && SS.CurrentAction == Global.ActionSet.ScanQRCode) {
-                    if(CountFact != 0){
+                if (ss.CurrentMode == Global.Mode.Set && ss.CurrentAction == Global.ActionSet.ScanQRCode) {
+                    if(countFact != 0){
                         //пытаются завершить набор позиции, не набрав всю строку с маркировкой
-                        EnterCountSet(CountFact)
+                        enterCountSet(countFact)
                     }
                     return true
                 }
@@ -1151,28 +1149,28 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         return true
     }
 
-    fun ReactionKey(keyCode: Int, event: KeyEvent?) {
+    fun reactionKey(keyCode: Int, event: KeyEvent?) {
 
-        when (SS.CurrentMode) {
+        when (ss.CurrentMode) {
 
             Global.Mode.Set -> {
                 if (!enterCount.isVisible) {
-                    RKSet(keyCode)
+                    rKSet(keyCode)
                 }
             }
 
-            else -> RKSetInicialization(keyCode)
+            else -> rKSetInicialization(keyCode)
         }
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
-            QuitModesSet()
+            quitModesSet()
             val menu = Intent(this, Menu::class.java)
             startActivity(menu)
             finish()
         }
     }
 
-    fun RKSet(keyCode: Int) {
+    private fun rKSet(keyCode: Int) {
 
         if (keyCode == 22) //нажали вправо; просмотр табл. части
         {
@@ -1189,17 +1187,17 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             FExcStr.text = "Подгружаю список..."
             //перейдем на форму просмотра
             val watchForm = Intent(this, WatchTablePart::class.java)
-            watchForm.putExtra("iddoc", DocSet!!.ID)
-            watchForm.putExtra("ItemCode", CCItem!!.InvCode)
-            watchForm.putExtra("addressID", CCItem!!.AdressID)
-            watchForm.putExtra("DocView", DocSet!!.View)
-            watchForm.putExtra("CountFact",CountFact.toString())
+            watchForm.putExtra("iddoc", docSet!!.id)
+            watchForm.putExtra("ItemCode", ccItem!!.InvCode)
+            watchForm.putExtra("addressID", ccItem!!.AdressID)
+            watchForm.putExtra("DocView", docSet!!.View)
+            watchForm.putExtra("CountFact",countFact.toString())
             startActivity(watchForm)
             finish()
 
         }
 
-        if (keyCode == 16 && SS.CurrentAction != Global.ActionSet.EnterCount && !DocSet!!.Special) {
+        if (keyCode == 16 && ss.CurrentAction != Global.ActionSet.EnterCount && !docSet!!.Special) {
 //            if (SS.Const.StopCorrect)
 //            {
 //                //StopCorrect - ВРЕМЕНННАЯ ЗАГЛУШКА
@@ -1208,18 +1206,18 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 //            }
             // перейдем на форму корректировки
             val correct = Intent(this, Correct::class.java)
-            correct.putExtra("iddoc", DocSet!!.ID)
-            correct.putExtra("AddressID", CCItem!!.AdressID)
-            correct.putExtra("CountFact",CountFact.toString())
+            correct.putExtra("iddoc", docSet!!.id)
+            correct.putExtra("AddressID", ccItem!!.AdressID)
+            correct.putExtra("CountFact",countFact.toString())
             startActivity(correct)
             finish()
         }
         //нажали ENTER
         if (keyCode == 66){
-            if (SS.CurrentAction == Global.ActionSet.ScanQRCode){
-                if(CountFact != 0){
+            if (ss.CurrentAction == Global.ActionSet.ScanQRCode){
+                if(countFact != 0){
                     //пытаются завершить набор позиции, не набрав всю строку с маркировкой
-                    EnterCountSet(CountFact)
+                    enterCountSet(countFact)
                 }
             }
         }
@@ -1258,14 +1256,14 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
     }
 
-    fun RKSetInicialization(keyCode: Int) {
+    private fun rKSetInicialization(keyCode: Int) {
         // нажали 1
         if (keyCode.toString() == "8") {
-            CompleteSetInicialization()
+            completeSetInicialization()
         }
     }
 
-    fun CompleteSetInicialization(): Boolean {
+    private fun completeSetInicialization(): Boolean {
         // решили отказаться
 //        if ( BoxSetView.text != "99-00-00-01")
 //        {
@@ -1276,13 +1274,13 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         // если коробка не указана. будем ставить ее по умолчанию
 
         val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FEmployer.ID, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(ss.FEmployer.id, "Спр.Сотрудники")
         //ставим ID коробки по умолчанию
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = SS.ExtendID("  1IKX   ", "Спр.Секции")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = ss.extendID("  1IKX   ", "Спр.Секции")
         var dataMapRead: MutableMap<String, Any> = mutableMapOf()
         val fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
         try {
-            dataMapRead = ExecCommand("QuestPicing", dataMapWrite, fieldList, dataMapRead)
+            dataMapRead = execCommand("QuestPicing", dataMapWrite, fieldList, dataMapRead)
         }
         catch (e: Exception){
             val toast = Toast.makeText(applicationContext, "Не удалось получить задание!", Toast.LENGTH_SHORT)
@@ -1298,12 +1296,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             return false
         }
         FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
-        return ToModeSetInicialization()
+        return toModeSetInicialization()
     }
 
-    fun ChekMarkProduct():Boolean {
+    private fun chekMarkProduct():Boolean {
 
-        if (DocsSet.isEmpty()) {
+        if (docsSet.isEmpty()) {
             return true
         }
         val textQuery = "SELECT " +
@@ -1317,14 +1315,14 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 "DocCC.\$КонтрольНабора.Количество as CountCC , " +
                 "0 as CountMark " +
                 "from DT\$КонтрольНабора as DocCC (nolock) " +
-                "where iddoc = '${DocsSet[0]}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate " +
+                "where iddoc = '${docsSet[0]}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate " +
                 "union all " +
                 "select " +
                 "Mark.\$Спр.МаркировкаТовара.Товар ," +
                 "0, count(*) " +
                 "from \$Спр.МаркировкаТовара as Mark (nolock) " +
-                "where Mark.\$Спр.МаркировкаТовара.ФлагПоступления = 1 and Mark.\$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(
-                    DocsSet[0],"КонтрольНабора")}'" +
+                "where Mark.\$Спр.МаркировкаТовара.ФлагПоступления = 1 and Mark.\$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(
+                    docsSet[0],"КонтрольНабора")}'" +
                 "and Mark.\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 " +
                 "group by Mark.\$Спр.МаркировкаТовара.Товар " +
                 ") as SetTable " +
@@ -1335,16 +1333,16 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 "where Category.\$Спр.КатегорииТоваров.Маркировка = 1 " +
                 "group by SetTable.Item " +
                 "having not SUM(SetTable.CountCC ) = SUM(SetTable.CountMark ) "
-        val dt = SS.ExecuteWithReadNew(textQuery) ?: return true
+        val dt = ss.executeWithReadNew(textQuery) ?: return true
         if (dt.isEmpty()) return true
         //не сходится маркировка
         FExcStr.text =
             "Не сходится маркировка " + dt[0]["InvCode"].toString().trim() + "! Обратитесь к администратору!"
-        SS.ExcStr = FExcStr.text.toString().trim()
+        ss.excStr = FExcStr.text.toString().trim()
         return false
     }
 
-    private fun ToModeSetComplete(): Boolean {
+    private fun toModeSetComplete(): Boolean {
         //var empbtyBox = false
         //Проверим нет ли сборочного с пустой коробкой, его в первую очередь будем закрывать
         var textQuery = "SELECT " +
@@ -1360,10 +1358,10 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 "and not DocCC.\$КонтрольНабора.Дата1 = :EmptyDate " +
                 "and DocCC.\$КонтрольНабора.Коробка = :EmptyID " +
                 "and journ.ismark = 0 "
-        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
-        textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID())
-        SS.ExecuteWithRead(textQuery) ?: return false
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
+        ss.executeWithRead(textQuery) ?: return false
         // Пока закомментирую, тк как делаю отбор в ускоренном режиме без проверки коробки и тд
 //        if (DT.Rows.Count > 0)
 //        {
@@ -1381,15 +1379,15 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 //        return true;
 
         //нужно сверить маркировку если она есть
-        if (!ChekMarkProduct()){
+        if (!chekMarkProduct()){
             return false
         }
 
-        SS.CurrentMode = Global.Mode.SetComplete
+        ss.CurrentMode = Global.Mode.SetComplete
         //перейдем на форму завершения набора
         val setComplete = Intent(this, SetComplete::class.java)
         //закроем доки, висящие на сотруднике с уже набранными строчками
-        for (id in DocsSet) {
+        for (id in docsSet) {
             setComplete.putExtra("iddoc", id)
             startActivity(setComplete)
         }
@@ -1397,7 +1395,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         return true
     }
 
-    private fun LoadDocSet(iddoc: String): Boolean {
+    private fun loadDocSet(iddoc: String): Boolean {
         var textQuery =
                 "SELECT top 1 " +
                     "journ.iddoc as IDDOC, " +
@@ -1426,11 +1424,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     "ON AdressBox.id = DocCC.\$КонтрольНабора.Коробка " +
                     "WHERE " +
                     "journ.iddoc = :iddoc "
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", iddoc)
-        val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
+        textQuery = ss.querySetParam(textQuery, "iddoc", iddoc)
+        val dataTable = ss.executeWithRead(textQuery) ?: return false
 
         if (dataTable.isNotEmpty()) {
-            DocSet = Model.StrictDoc(
+            docSet = Model.StrictDoc(
                 dataTable[1][0],
                 dataTable[1][1].toInt(),
                 "",
@@ -1456,9 +1454,9 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                this.reactionBarcode(barcode)
             }
             catch (e: Exception){
                 val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)

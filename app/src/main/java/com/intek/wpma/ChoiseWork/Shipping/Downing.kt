@@ -20,15 +20,15 @@ import kotlinx.android.synthetic.main.activity_downing.*
 
 class Downing : BarcodeDataReceiver() {
 
-    var DocDown:MutableMap<String,String> = mutableMapOf()
-    var remain = 0
+    private var docDown:MutableMap<String,String> = mutableMapOf()
+    private var remain = 0
     enum class Action {Down,DownComplete}
-    var CurentAction:Action = Action.Down
-    var DownSituation:MutableList<MutableMap<String,String>> = mutableListOf()
-    var FlagPrintPallete:Boolean = false
+    private var curentAction:Action = Action.Down
+    private var downSituation:MutableList<MutableMap<String,String>> = mutableListOf()
+    private var flagPrintPallete:Boolean = false
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
-    var Barcode: String = ""
+    var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -38,8 +38,8 @@ class Downing : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        reactionBarcode(Barcode)
+                        barcode = intent.getStringExtra("data")
+                        reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
                         val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
@@ -57,9 +57,9 @@ class Downing : BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             }
             catch (e: Exception){
                 val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
@@ -75,7 +75,7 @@ class Downing : BarcodeDataReceiver() {
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
     }
     companion object {
         var scanRes: String? = null
@@ -87,9 +87,9 @@ class Downing : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_downing)
 
-        title = SS.title
+        title = ss.title
 
-        if (SS.isMobile){
+        if (ss.isMobile){
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@Downing, ScanActivity::class.java)
@@ -98,66 +98,66 @@ class Downing : BarcodeDataReceiver() {
             }
         }
         btnCansel.setOnClickListener {
-            RepealDown()
+            repealDown()
         }
         btnKey1.setOnClickListener {
-            if (CurentAction == Action.DownComplete) {
-                if (!FlagPrintPallete) {
-                    PrintPallete();
-                    RefreshActivity()
+            if (curentAction == Action.DownComplete) {
+                if (!flagPrintPallete) {
+                    printPallete()
+                    refreshActivity()
                 }
             }
             else
             {
-                remain = DocDown["AllBoxes"].toString().toInt() - DocDown["Boxes"].toString().toInt()
-                if (DocDown["MaxStub"].toString().toInt() <= remain) {
+                remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
+                if (docDown["MaxStub"].toString().toInt() <= remain) {
                     //Можно завершить
-                    FExcStr.text = "Закрываю остальные " + remain.toString().toString() + " места..."
-                    EndCC()
+                    FExcStr.text = "Закрываю остальные $remain места..."
+                    endCC()
                 }
             }
         }
 
-        ToModeDown()
+        toModeDown()
     }
-    fun ToModeDown() {
+    private fun toModeDown() {
 
-        CurentAction = Action.Down
-        DocDown = mutableMapOf()
+        curentAction = Action.Down
+        docDown = mutableMapOf()
         var textQuery = "select * from dbo.WPM_fn_ToModeDown(:Employer)"
-        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
-        val DT = SS.ExecuteWithReadNew(textQuery) ?: return
-        if (DT.isEmpty()) {
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        val dt = ss.executeWithReadNew(textQuery) ?: return
+        if (dt.isEmpty()) {
             //Собирать - нечего,
-            ToModeDownComplete()
+            toModeDownComplete()
             return
         }
         //проверим полученный сектор
-        SS.FEmployer.Refresh()
-        val SectorPriory = RefSection()
-        if (SectorPriory.FoundID(SS.FEmployer.GetAttribute("ПосланныйСектор").toString())) {
-            if (DT[0]["ParentSector"].toString().trim() != SectorPriory.Name.trim()) {
-                FExcStr.text = "Нельзя! Можно только " + SectorPriory.Name.trim() + " сектор!"
-                ToModeDownComplete()
+        ss.FEmployer.refresh()
+        val sectorPriory = RefSection()
+        if (sectorPriory.foundID(ss.FEmployer.getAttribute("ПосланныйСектор").toString())) {
+            if (dt[0]["ParentSector"].toString().trim() != sectorPriory.name.trim()) {
+                FExcStr.text = "Нельзя! Можно только " + sectorPriory.name.trim() + " сектор!"
+                toModeDownComplete()
                 return
             }
         }
-        DocDown.put("ID", DT[0]["iddoc"].toString())
-        DocDown.put("Boxes", DT[0]["CountBox"].toString())
-        DocDown.put("View", DT[0]["Sector"].toString().trim() + "-" + DT[0]["Number"].toString() + " Заявка " + DT[0]["docno"].toString() + " (" + DT[0]["DateDoc"].toString() + ")")
-        DocDown.put("AdressCollect", DT[0]["AdressCollect"].toString())
-        DocDown.put("Sector", DT[0]["ParentSector"].toString())
-        DocDown.put("MaxStub", DT[0]["MaxStub"].toString())
-        DocDown.put("AllBoxes", DT[0]["CountAllBox"].toString())
-        DocDown.put("NumberBill", DT[0]["docno"].toString().trim())
-        DocDown.put("NumberCC", DT[0]["Number"].toString())
-        DocDown.put("MainSectorName", DT[0]["Sector"].toString())
-        DocDown.put("SetterName", DT[0]["SetterName"].toString())
+        docDown["ID"] = dt[0]["iddoc"].toString()
+        docDown["Boxes"] = dt[0]["CountBox"].toString()
+        docDown["View"] = dt[0]["Sector"].toString().trim() + "-" + dt[0]["Number"].toString() + " Заявка " + dt[0]["docno"].toString() + " (" + dt[0]["DateDoc"].toString() + ")"
+        docDown["AdressCollect"] = dt[0]["AdressCollect"].toString()
+        docDown["Sector"] = dt[0]["ParentSector"].toString()
+        docDown["MaxStub"] = dt[0]["MaxStub"].toString()
+        docDown["AllBoxes"] = dt[0]["CountAllBox"].toString()
+        docDown["NumberBill"] = dt[0]["docno"].toString().trim()
+        docDown["NumberCC"] = dt[0]["Number"].toString()
+        docDown["MainSectorName"] = dt[0]["Sector"].toString()
+        docDown["SetterName"] = dt[0]["SetterName"].toString()
         FExcStr.text = "Сканируйте места"
-        RefreshActivity()
+        refreshActivity()
     }
 
-    fun ToModeDownComplete() {
+    private fun toModeDownComplete() {
 
         //В этот режим попадает только если нечего собирать по Дате4, так что если и тут нет ничего - то уходит на режим ChoiseDown
         var textQuery =
@@ -169,12 +169,12 @@ class Downing : BarcodeDataReceiver() {
                 "Ref.ismark = 0 " +
                 "and Ref.\$Спр.МестаПогрузки.Сотрудник4 = :Employer " +
                 "and not Ref.\$Спр.МестаПогрузки.Дата4 = :EmptyDate " +
-                "and Ref.\$Спр.МестаПогрузки.Дата5 = :EmptyDate ";
-        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
-        DownSituation = SS.ExecuteWithReadNew(textQuery) ?:return
+                "and Ref.\$Спр.МестаПогрузки.Дата5 = :EmptyDate "
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        downSituation = ss.executeWithReadNew(textQuery) ?:return
 
-        if (DownSituation[0]["AllBox"] == "0")
+        if (downSituation[0]["AllBox"] == "0")
         {
             //Нету ничего!
             val shoiseDown = Intent(this, ChoiseDown::class.java)
@@ -183,103 +183,103 @@ class Downing : BarcodeDataReceiver() {
             finish()
             return
         }
-        FExcStr.text = "Напечатать этикетку, отсканировать адрес паллеты";
+        FExcStr.text = "Напечатать этикетку, отсканировать адрес паллеты"
         //тут надо переходить в режим downComplete
-        CurentAction = Action.DownComplete
-        RefreshActivity()
+        curentAction = Action.DownComplete
+        refreshActivity()
     }
 
-    fun RefreshActivity(){
+    private fun refreshActivity(){
 
-        lblPrinter.text = SS.FPrinter.Description
-        if (CurentAction == Action.Down){
-            lblState.text = DocDown["View"].toString()
+        lblPrinter.text = ss.FPrinter.description
+        if (curentAction == Action.Down){
+            lblState.text = docDown["View"].toString()
             lblInfo1.text =
-                "Отобрано " + remain.toString() + " из " + DocDown["AllBoxes"].toString()
-            lblNumber.text = DocDown["NumberBill"].toString().substring(
-                DocDown["NumberBill"].toString().length - 5,
-                DocDown["NumberBill"].toString().length - 3
+                "Отобрано " + remain.toString() + " из " + docDown["AllBoxes"].toString()
+            lblNumber.text = docDown["NumberBill"].toString().substring(
+                docDown["NumberBill"].toString().length - 5,
+                docDown["NumberBill"].toString().length - 3
             ) + " " +
-                    DocDown["NumberBill"].toString()
-                        .substring(DocDown["NumberBill"].toString().length - 3) +
-                    " сектор: " + DocDown["MainSectorName"].toString()
-                .trim() + "-" + DocDown["NumberCC"].toString()
-            lblAdress.text = DocDown["AdressCollect"].toString()
-            lblSetter.text = "отборщик: " + SS.helper.GetShortFIO(DocDown["SetterName"].toString())
+                    docDown["NumberBill"].toString()
+                        .substring(docDown["NumberBill"].toString().length - 3) +
+                    " сектор: " + docDown["MainSectorName"].toString()
+                .trim() + "-" + docDown["NumberCC"].toString()
+            lblAdress.text = docDown["AdressCollect"].toString()
+            lblSetter.text = "отборщик: " + ss.helper.getShortFIO(docDown["SetterName"].toString())
             lblAdress.visibility = View.VISIBLE
             lblSetter.visibility = View.VISIBLE
-            btnKey1.visibility = if (DocDown["MaxStub"].toString()
+            btnKey1.visibility = if (docDown["MaxStub"].toString()
                     .toInt() <= remain
             ) View.VISIBLE else View.INVISIBLE
             btnKey1.text = "Все"
         }
-        else if (CurentAction == Action.DownComplete) {
-            btnKey1.visibility = if (FlagPrintPallete) View.INVISIBLE else View.VISIBLE
+        else if (curentAction == Action.DownComplete) {
+            btnKey1.visibility = if (flagPrintPallete) View.INVISIBLE else View.VISIBLE
             btnKey1.text = "Печать"
-            if (DownSituation[0]["NumberOfOrder"].toString() != "0") {
-                val Number: String = DownSituation[0]["NumberOfOrder"].toString()
-                lblNumber.text = Number.substring(if (Number.length > 4) Number.length - 4 else 0)
+            if (downSituation[0]["NumberOfOrder"].toString() != "0") {
+                val number: String = downSituation[0]["NumberOfOrder"].toString()
+                lblNumber.text = number.substring(if (number.length > 4) number.length - 4 else 0)
             }
-            lblInfo1.text = "Всего " + DownSituation[0]["AllBox"].toString() + " мест"
+            lblInfo1.text = "Всего " + downSituation[0]["AllBox"].toString() + " мест"
             lblAdress.visibility = View.INVISIBLE
             lblSetter.visibility = View.INVISIBLE
 
         }
     }
 
-    fun RepealDown() {
+    private fun repealDown() {
         var textQuery =
         "declare @res int; exec WPM_RepealSetDown :iddoc, @res output; " +
                 "select @res as result" +
-                "";
-        textQuery = SS.QuerySetParam(textQuery, "iddoc",    DocDown["ID"].toString())
-        if (!SS.ExecuteWithoutRead(textQuery)) return
-        ToModeDown()
+                ""
+        textQuery = ss.querySetParam(textQuery, "iddoc",    docDown["ID"].toString())
+        if (!ss.executeWithoutRead(textQuery)) return
+        toModeDown()
     }
 
-    fun PrintPallete():Boolean    {
-        if (!SS.FPrinter.Selected)
+    private fun printPallete():Boolean    {
+        if (!ss.FPrinter.selected)
         {
             FExcStr.text = "Принтер не выбран!"
             return false
         }
-        if (DownSituation[0]["NumberOfOrder"].toString() == "0")
+        if (downSituation[0]["NumberOfOrder"].toString() == "0")
         {
             var textQuery =
             "declare @res int; exec WPM_GetNumberOfOrder :employer, @res output; " +
                     "select @res as result" +
-                    "";
-            textQuery = SS.QuerySetParam(textQuery, "employer",    SS.FEmployer.ID)
-            if (!SS.ExecuteWithoutRead(textQuery))
+                    ""
+            textQuery = ss.querySetParam(textQuery, "employer",    ss.FEmployer.id)
+            if (!ss.executeWithoutRead(textQuery))
             {
                 return false
             }
-            ToModeDownComplete()
+            toModeDownComplete()
             //Повторно проверим, должно было присвоится!
-            if (DownSituation[0]["NumberOfOrder"].toString() == "0")
+            if (downSituation[0]["NumberOfOrder"].toString() == "0")
             {
-                FExcStr.text = "Не удается присвоить номер задания!";
+                FExcStr.text = "Не удается присвоить номер задания!"
                 return false
             }
         }
-        FExcStr.text = "Отсканируйте адрес палетты!";
-        if (!FlagPrintPallete)
+        FExcStr.text = "Отсканируйте адрес палетты!"
+        if (!flagPrintPallete)
         {
-            val no = DownSituation[0]["NumberOfOrder"].toString()
-            var dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-            dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FPrinter.ID, "Спр.Принтеры")
+            val no = downSituation[0]["NumberOfOrder"].toString()
+            val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(ss.FPrinter.id, "Спр.Принтеры")
             dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = "LabelRT.ert"
             dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = no.substring(if(no.length < 4) 0 else no.length - 4)
-            if (!ExecCommandNoFeedback("Print", dataMapWrite))
+            if (!execCommandNoFeedback("Print", dataMapWrite))
             {
                 return false
             }
-            FlagPrintPallete = true
+            flagPrintPallete = true
         }
         return true
     }
 
-    fun EndCC():Boolean{
+    private fun endCC():Boolean{
         var textQuery =
         "begin tran; " +
                 "UPDATE \$Спр.МестаПогрузки " +
@@ -294,48 +294,48 @@ class Downing : BarcodeDataReceiver() {
                 "exec WPM_GetOrderDown :Employer, :NameParent, @res OUTPUT; " +
                 "if @res = 0 rollback tran " +
                 "else commit tran " +
-                "end ";
+                "end "
 
-        textQuery = SS.QuerySetParam(textQuery, "Employer",    SS.FEmployer.ID)
-        textQuery = SS.QuerySetParam(textQuery, "iddoc",       DocDown["ID"].toString())
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate",   SS.GetVoidDate())
-        textQuery = SS.QuerySetParam(textQuery, "NameParent",  DocDown["Sector"].toString().trim())
-        if (!SS.ExecuteWithoutRead(textQuery))
+        textQuery = ss.querySetParam(textQuery, "Employer",    ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "iddoc",       docDown["ID"].toString())
+        textQuery = ss.querySetParam(textQuery, "EmptyDate",   ss.getVoidDate())
+        textQuery = ss.querySetParam(textQuery, "NameParent",  docDown["Sector"].toString().trim())
+        if (!ss.executeWithoutRead(textQuery))
         {
-            return false;
+            return false
         }
-        ToModeDown()
+        toModeDown()
         return true
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
 
-        val barcoderes = SS.helper.DisassembleBarcode(Barcode)
+        val barcoderes = ss.helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
-        if (typeBarcode == "6" && CurentAction == Action.Down) {
+        if (typeBarcode == "6" && curentAction == Action.Down) {
             val id = barcoderes["ID"].toString()
-            if (SS.IsSC(id, "МестаПогрузки")) {
+            if (ss.isSC(id, "МестаПогрузки")) {
 
                 var textQuery =
                     "Select " +
                             "\$Спр.МестаПогрузки.Дата4 as Date, " +
                             "\$Спр.МестаПогрузки.КонтрольНабора as Doc " +
-                            "from \$Спр.МестаПогрузки (nolock) where id = :id";
-                textQuery = SS.QuerySetParam(textQuery, "id", id)
-                val DT = SS.ExecuteWithReadNew(textQuery) ?: return false
-                if (DT.isEmpty()) {
+                            "from \$Спр.МестаПогрузки (nolock) where id = :id"
+                textQuery = ss.querySetParam(textQuery, "id", id)
+                val dt = ss.executeWithReadNew(textQuery) ?: return false
+                if (dt.isEmpty()) {
                     FExcStr.text = "Нет действий с данным штрихкодом!"
-                    BadVoise()
+                    badVoise()
                     return false
                 }
-                if (DT[0]["Doc"].toString() != DocDown["ID"]) {
+                if (dt[0]["Doc"].toString() != docDown["ID"]) {
                     FExcStr.text = "Место от другого сборочного!"
-                    BadVoise()
+                    badVoise()
                     return false
                 }
-                if (!SS.IsVoidDate(DT[0]["Date"].toString())) {
+                if (!ss.isVoidDate(dt[0]["Date"].toString())) {
                     FExcStr.text = "Место уже отобрано!"
-                    BadVoise()
+                    badVoise()
                     return false
                 }
 
@@ -361,24 +361,24 @@ class Downing : BarcodeDataReceiver() {
                             "exec WPM_GetOrderDown :Employer, :NameParent, @res OUTPUT; " +
                             "if @res = 0 rollback tran else commit tran " +
                             "end " +
-                            "end ";
+                            "end "
 
-                textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
-                textQuery = SS.QuerySetParam(textQuery, "itemid", id);
-                textQuery = SS.QuerySetParam(textQuery, "iddoc", DocDown["ID"].toString())
-                textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
+                textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+                textQuery = ss.querySetParam(textQuery, "itemid", id)
+                textQuery = ss.querySetParam(textQuery, "iddoc", docDown["ID"].toString())
+                textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
                 textQuery =
-                    SS.QuerySetParam(textQuery, "NameParent", DocDown["Sector"].toString().trim())
+                    ss.querySetParam(textQuery, "NameParent", docDown["Sector"].toString().trim())
 
-                if (!SS.ExecuteWithoutRead(textQuery)) {
-                    BadVoise()
+                if (!ss.executeWithoutRead(textQuery)) {
+                    badVoise()
                     return false
                 }
-                ToModeDown()
+                toModeDown()
                 return true
             } else {
                 FExcStr.text = "Нет действий с данным ШК в данном режиме!"
-                BadVoise()
+                badVoise()
                 return false
             }
 
@@ -386,48 +386,48 @@ class Downing : BarcodeDataReceiver() {
         else if (typeBarcode == "113") {
             //справочники типовые
             val idd = barcoderes["IDD"].toString()
-            if (SS.IsSC(idd, "Сотрудники")) {
-                SS.FEmployer = RefEmployer()
+            if (ss.isSC(idd, "Сотрудники")) {
+                ss.FEmployer = RefEmployer()
                 val mainInit = Intent(this, MainActivity::class.java)
                 mainInit.putExtra("ParentForm", "ChoiseDown")
                 startActivity(mainInit)
                 finish()
             }
-            else if (SS.IsSC(idd, "Принтеры")) {
-                if (SS.FPrinter.Selected) {
-                    SS.FPrinter = RefPrinter()
+            else if (ss.isSC(idd, "Принтеры")) {
+                if (ss.FPrinter.selected) {
+                    ss.FPrinter = RefPrinter()
                 }
-                else SS.FPrinter.FoundIDD(idd)
-                RefreshActivity()
+                else ss.FPrinter.foundIDD(idd)
+                refreshActivity()
             }
-            else if (CurentAction == Action.DownComplete && SS.IsSC(idd, "Секции")) {
+            else if (curentAction == Action.DownComplete && ss.isSC(idd, "Секции")) {
                 val id = barcoderes["ID"].toString()
-                if (DownSituation[0]["NumberOfOrder"].toString() == "0") {
+                if (downSituation[0]["NumberOfOrder"].toString() == "0") {
                     FExcStr.text = "Не присвоен номер задания! Напечатайте этикетку!"
                     return false
                 }
                 var textQuery =
-                    "declare @res int; exec WPM_CompletePallete :employer, :adress, @res output; ";
-                textQuery = SS.QuerySetParam(textQuery, "employer", SS.FEmployer.ID);
-                textQuery = SS.QuerySetParam(textQuery, "adress", id);
-                if (!SS.ExecuteWithoutRead(textQuery)) {
-                    return false;
+                    "declare @res int; exec WPM_CompletePallete :employer, :adress, @res output; "
+                textQuery = ss.querySetParam(textQuery, "employer", ss.FEmployer.id)
+                textQuery = ss.querySetParam(textQuery, "adress", id)
+                if (!ss.executeWithoutRead(textQuery)) {
+                    return false
                 }
-                FlagPrintPallete = false;
-                ToModeDown()
+                flagPrintPallete = false
+                toModeDown()
                 return true
             }
         }
         else {
             FExcStr.text = "Нет действий с данным ШК в данном режиме!"
-            BadVoise()
+            badVoise()
             return false
         }
         return true
     }
 
 
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?):Boolean {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){

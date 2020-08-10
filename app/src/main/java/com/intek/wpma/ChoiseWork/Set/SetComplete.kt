@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -19,10 +18,10 @@ import kotlinx.android.synthetic.main.activity_set_complete.terminalView
 
 class SetComplete : BarcodeDataReceiver() {
 
-    var DocSet: String = ""
-    var Barcode: String = ""
+    private var docSet: String = ""
+    var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
-    var Places: Int? = null
+    private var places: Int? = null
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -32,8 +31,8 @@ class SetComplete : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")!!
-                        reactionBarcode(Barcode)
+                        barcode = intent.getStringExtra("data")!!
+                        reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
                         val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
@@ -49,15 +48,15 @@ class SetComplete : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set_complete)
 
-        terminalView.text = SS.terminal
-        title = SS.title
+        terminalView.text = ss.terminal
+        title = ss.title
 
-        if (SS.FPrinter.Selected) {
-            printer.text = SS.FPrinter.Path
+        if (ss.FPrinter.selected) {
+            printer.text = ss.FPrinter.path
             FExcStr.text = "Введите колво мест"
             enterCountPlace.visibility = View.VISIBLE
         }
-        DocSet = intent.extras!!.getString("iddoc")!!
+        docSet = intent.extras!!.getString("iddoc")!!
         val textQuery =
             "SELECT " +
                     "journForBill.docno as DocNo, " +
@@ -76,8 +75,8 @@ class SetComplete : BarcodeDataReceiver() {
                     "ON Bill.iddoc = DocCB.SP2759 " +
                     "LEFT JOIN _1sjourn as journForBill (nolock) " +
                     "ON journForBill.iddoc = Bill.iddoc " +
-                    "WHERE DocCCHead.iddoc = '$DocSet'"
-        val dataTable = SS.ExecuteWithRead(textQuery)
+                    "WHERE DocCCHead.iddoc = '$docSet'"
+        val dataTable = ss.executeWithRead(textQuery)
         previousAction.text = if (dataTable!![1][5].toInt() == 1) "(C) " else {
             ""
         } + dataTable[1][3].trim() + "-" +
@@ -90,9 +89,9 @@ class SetComplete : BarcodeDataReceiver() {
                 // сохраняем текст, введенный до нажатия Enter в переменную
                 try {
                     val count = enterCountPlace.text.toString().toInt()
-                    Places = count
+                    places = count
                     enterCountPlace.visibility = View.INVISIBLE
-                    countPlace.text = "Колво мест: $Places"
+                    countPlace.text = "Колво мест: $places"
                     countPlace.visibility = View.VISIBLE
                     FExcStr.text = "Ожидание команды"
                 } catch (e: Exception) {
@@ -102,7 +101,7 @@ class SetComplete : BarcodeDataReceiver() {
             false
         }
 
-        if (SS.isMobile){
+        if (ss.isMobile){
             btnScanSetComplete.visibility = View.VISIBLE
             btnScanSetComplete!!.setOnClickListener {
                 val scanAct = Intent(this@SetComplete, ScanActivity::class.java)
@@ -121,33 +120,33 @@ class SetComplete : BarcodeDataReceiver() {
         val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
 
-        if (SS.IsSC(idd, "Принтеры")) {
+        if (ss.isSC(idd, "Принтеры")) {
             //получим путь принтера
-            if(!SS.FPrinter.FoundIDD(idd))
+            if(!ss.FPrinter.foundIDD(idd))
             {
                 return false
             }
-            printer.text = SS.FPrinter.Path
+            printer.text = ss.FPrinter.path
             FExcStr.text = "Введите колво мест"
             enterCountPlace.visibility = View.VISIBLE
 
             return true
-        } else if (!SS.IsSC(idd, "Секции")) {
+        } else if (!ss.isSC(idd, "Секции")) {
             FExcStr.text = "Нужен принтер и адрес предкомплектации, а не это!"
             return false
         }
-        if (!SS.FPrinter.Selected) {
+        if (!ss.FPrinter.selected) {
             FExcStr.text = "Не выбран принтер!"
             return false
         }
-        if (Places == null){
+        if (places == null){
             FExcStr.text = "Количество мест не указано!"
             return false
         }
         //подтянем адрес комплектации
         val textQuery =
             "SELECT ID, SP3964, descr FROM SC1141 (nolock) WHERE SP1935= '$idd'"
-        val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
+        val dataTable = ss.executeWithRead(textQuery) ?: return false
         val addressType = dataTable[1][1]
         val addressID = dataTable[1][0]
         if (addressType == "12") {
@@ -155,16 +154,16 @@ class SetComplete : BarcodeDataReceiver() {
             return false
         }
         val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = SS.ExtendID(DocSet, "КонтрольНабора")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = SS.ExtendID(SS.FEmployer.ID, "Спр.Сотрудники")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = SS.ExtendID(addressID, "Спр.Секции")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = Places!!
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = SS.FPrinter.Path
+        dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(docSet, "КонтрольНабора")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(ss.FEmployer.id, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = ss.extendID(addressID, "Спр.Секции")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = places!!
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = ss.FPrinter.path
 
         var dataMapRead: MutableMap<String, Any> = mutableMapOf()
         val fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
 
-        dataMapRead = ExecCommand("PicingComplete", dataMapWrite, fieldList, dataMapRead)
+        dataMapRead = execCommand("PicingComplete", dataMapWrite, fieldList, dataMapRead)
 
         if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
             FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
@@ -181,7 +180,7 @@ class SetComplete : BarcodeDataReceiver() {
         }
         FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
 
-        LockoutDoc(DocSet)      //разблокируем доки
+        lockoutDoc(docSet)      //разблокируем доки
 
         //вернемся обратно в SetInitialization
         val setInitialization = Intent(this, SetInitialization::class.java)
@@ -194,11 +193,11 @@ class SetComplete : BarcodeDataReceiver() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        ReactionKey(keyCode, event)
+        reactionKey(keyCode, event)
         return super.onKeyDown(keyCode, event)
     }
 
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?) {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?) {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
@@ -210,9 +209,9 @@ class SetComplete : BarcodeDataReceiver() {
                 // сохраняем текст, введенный до нажатия Enter в переменную
                 try {
                     val count = enterCountPlace.text.toString().toInt()
-                    Places = count
+                    places = count
                     enterCountPlace.visibility = View.INVISIBLE
-                    countPlace.text = "Колво мест: $Places"
+                    countPlace.text = "Колво мест: $places"
                     countPlace.visibility = View.VISIBLE
                     FExcStr.text = "Ожидание команды"
                 } catch (e: Exception) {
@@ -231,9 +230,9 @@ class SetComplete : BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             }
             catch (e: Exception){
                 val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)

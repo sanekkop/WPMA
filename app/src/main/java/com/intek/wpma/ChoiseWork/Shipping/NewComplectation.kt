@@ -1,6 +1,5 @@
 package com.intek.wpma.ChoiseWork.Shipping
 
-import android.R.string
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -15,30 +14,29 @@ import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.MainActivity
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
-import com.intek.wpma.Ref.RefPrinter
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_new_complectation.*
 
 
 class NewComplectation : BarcodeDataReceiver() {
 
-    var DocDown: MutableMap<String, String> = mutableMapOf()
-    var BadDoc: MutableMap<String, String> = mutableMapOf()
+    private var docDown: MutableMap<String, String> = mutableMapOf()
+    private var badDoc: MutableMap<String, String> = mutableMapOf()
 
     enum class Action { Complectation, ComplectationComplete }
 
-    var CurentAction: Action = Action.Complectation
-    var DownSituation: MutableList<MutableMap<String, String>> = mutableListOf()
-    var ScaningBox = ""
-    var ScaningBoxIddoc = ""
-    var NeedAdressComplete = ""
+    private var curentAction: Action = Action.Complectation
+    private var downSituation: MutableList<MutableMap<String, String>> = mutableListOf()
+    private var scaningBox = ""
+    private var scaningBoxIddoc = ""
+    private var needAdressComplete = ""
 
-    var remain = 0
-    var LastGoodAdress = ""
-    var NameLastGoodAdress = ""
+    private var remain = 0
+    private var lastGoodAdress = ""
+    private var nameLastGoodAdress = ""
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
-    var Barcode: String = ""
+    var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -48,8 +46,8 @@ class NewComplectation : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        reactionBarcode(Barcode)
+                        barcode = intent.getStringExtra("data")
+                        reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
                             applicationContext,
@@ -71,9 +69,9 @@ class NewComplectation : BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onResume")
         if (scanRes != null) {
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             } catch (e: Exception) {
                 val toast = Toast.makeText(
                     applicationContext,
@@ -94,7 +92,7 @@ class NewComplectation : BarcodeDataReceiver() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
     }
 
     companion object {
@@ -108,9 +106,9 @@ class NewComplectation : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_complectation)
 
-        title = SS.title
+        title = ss.title
 
-        if (SS.isMobile) {
+        if (ss.isMobile) {
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@NewComplectation, ScanActivity::class.java)
@@ -119,11 +117,11 @@ class NewComplectation : BarcodeDataReceiver() {
             }
         }
         btnCansel.setOnClickListener {
-            RepealNewComplectation()
+            repealNewComplectation()
         }
-        NewComplectationGetFirstOrder()
-        var oldx : Float = 0F
-        FExcStr.setOnTouchListener { v, event ->
+        newComplectationGetFirstOrder()
+        var oldx = 0F
+        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
                 true
@@ -131,86 +129,83 @@ class NewComplectation : BarcodeDataReceiver() {
                 if (event.x < oldx) {
                     val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
                     shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
-                    shoiseWorkInit.putExtra("BadDocID", BadDoc["ID"])
-                    shoiseWorkInit.putExtra("BadDocView", BadDoc["View"])
+                    shoiseWorkInit.putExtra("BadDocID", badDoc["ID"])
+                    shoiseWorkInit.putExtra("BadDocView", badDoc["View"])
                     startActivity(shoiseWorkInit)
                     finish()
                 }
             }
-            true
-        }
+            return true
+        })
 
     }
 
-    fun NewComplectationGetFirstOrder() {
+    private fun newComplectationGetFirstOrder() {
         var textQuery =
         "declare @res int " +
                 "begin tran " +
                 "exec WPM_GetFirstOrderComplectationNew :Employer, @res output " +
                 "if @res = 0 rollback tran else commit tran " +
-                "";
-        textQuery = SS.QuerySetParam(textQuery, "Employer",    SS.FEmployer.ID);
+                ""
+        textQuery = ss.querySetParam(textQuery, "Employer",    ss.FEmployer.id)
 
-        if (!SS.ExecuteWithoutRead(textQuery))
+        if (!ss.executeWithoutRead(textQuery))
         {
-            BadVoise()
+            badVoise()
             return
         }
-        ToModeNewComplectation()
+        toModeNewComplectation()
     }
 
-    fun RepealNewComplectation() {
-        if (DocDown["IsFirstOrder"] == "1") {
-            FExcStr.text = "Нельзя отказаться от этого задания!";
-            BadVoise()
+    private fun repealNewComplectation() {
+        if (docDown["IsFirstOrder"] == "1") {
+            FExcStr.text = "Нельзя отказаться от этого задания!"
+            badVoise()
             return
         }
 
         var textQuery =
             "declare @res int; exec WPM_RepealNewComplectation :iddoc, @res output; " +
-                    "";
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", DocDown["ID"].toString())
-        if (!SS.ExecuteWithoutRead(textQuery)) return
-        ToModeNewComplectation()
+                    ""
+        textQuery = ss.querySetParam(textQuery, "iddoc", docDown["ID"].toString())
+        if (!ss.executeWithoutRead(textQuery)) return
+        toModeNewComplectation()
     }
 
-    fun ToModeNewComplectation() {
+    private fun toModeNewComplectation() {
 
-        CurentAction = Action.Complectation
-        DocDown = mutableMapOf()
-        var textQuery = "select * from dbo.WPM_fn_ToModeNewComplectation(:Employer)";
-        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
-        val DT = SS.ExecuteWithReadNew(textQuery) ?: return
-        if (DT.isEmpty()) {
+        curentAction = Action.Complectation
+        docDown = mutableMapOf()
+        var textQuery = "select * from dbo.WPM_fn_ToModeNewComplectation(:Employer)"
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        val dt = ss.executeWithReadNew(textQuery) ?: return
+        if (dt.isEmpty()) {
             //Собирать - нечего,
-            ToModeNewComplectationComplete()
+            toModeNewComplectationComplete()
             return
         }
 
-        if (BadDoc["ID"] == null) {
-            LoadBadDoc(DT[0]["RefID"].toString())
+        if (badDoc["ID"] == null) {
+            loadBadDoc(dt[0]["RefID"].toString())
         }
-        DocDown.put("ID", DT[0]["iddoc"].toString())
-        DocDown.put("Boxes", DT[0]["CountBox"].toString())
-        DocDown.put(
-            "View",
-            DT[0]["Sector"].toString()
-                .trim() + "-" + DT[0]["Number"].toString() + " Заявка " + DT[0]["docno"].toString() + " (" + DT[0]["DateDoc"].toString() + ")"
-        )
-        DocDown.put("AdressCollect", DT[0]["AdressCollect"].toString())
-        DocDown.put("Sector", DT[0]["ParentSector"].toString())
-        DocDown.put("MaxStub", DT[0]["MaxStub"].toString())
-        DocDown.put("AllBoxes", DT[0]["CountAllBox"].toString())
-        DocDown.put("NumberBill", DT[0]["docno"].toString().trim())
-        DocDown.put("NumberCC", DT[0]["Number"].toString())
-        DocDown.put("MainSectorName", DT[0]["Sector"].toString())
-        DocDown.put("SetterName", DT[0]["SetterName"].toString())
-        DocDown.put("IsFirstOrder", DT[0]["FlagFirstOrder"].toString())
+        docDown["ID"] = dt[0]["iddoc"].toString()
+        docDown["Boxes"] = dt[0]["CountBox"].toString()
+        docDown["View"] = dt[0]["Sector"].toString()
+            .trim() + "-" + dt[0]["Number"].toString() + " Заявка " + dt[0]["docno"].toString() + " (" + dt[0]["DateDoc"].toString() + ")"
+        docDown["AdressCollect"] = dt[0]["AdressCollect"].toString()
+        docDown["Sector"] = dt[0]["ParentSector"].toString()
+        docDown["MaxStub"] = dt[0]["MaxStub"].toString()
+        docDown["AllBoxes"] = dt[0]["CountAllBox"].toString()
+        docDown["NumberBill"] = dt[0]["docno"].toString().trim()
+        docDown["NumberCC"] = dt[0]["Number"].toString()
+        docDown["MainSectorName"] = dt[0]["Sector"].toString()
+        docDown["SetterName"] = dt[0]["SetterName"].toString()
+        docDown["IsFirstOrder"] = dt[0]["FlagFirstOrder"].toString()
         FExcStr.text = "Сканируйте место"
-        RefreshActivity()
+        refreshActivity()
     }
 
-    fun ToModeNewComplectationComplete() {
+    private fun toModeNewComplectationComplete() {
         var textQuery =
             "select " +
                     "min(Ref.\$Спр.МестаПогрузки.НомерЗадания7 ) as NumberOfOrder, " +
@@ -220,12 +215,12 @@ class NewComplectation : BarcodeDataReceiver() {
                     "Ref.ismark = 0 " +
                     "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
                     "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
-                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate ";
-        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
-        DownSituation = SS.ExecuteWithReadNew(textQuery) ?: return
+                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate "
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        downSituation = ss.executeWithReadNew(textQuery) ?: return
 
-        if (DownSituation[0]["AllBox"] == "0") {
+        if (downSituation[0]["AllBox"] == "0") {
             //Нету ничего!
             val shoiseDown = Intent(this, ChoiseDown::class.java)
             shoiseDown.putExtra("ParentForm", "ChoiseDown")
@@ -233,13 +228,13 @@ class NewComplectation : BarcodeDataReceiver() {
             finish()
             return
         }
-        FExcStr.text = "Сканируйте коробки и адрес комплектации!";
-        ScaningBox = ""
-        CurentAction = Action.ComplectationComplete
-        RefreshActivity()
+        FExcStr.text = "Сканируйте коробки и адрес комплектации!"
+        scaningBox = ""
+        curentAction = Action.ComplectationComplete
+        refreshActivity()
     }
 
-    fun LoadBadDoc(ID: String) {
+    private fun loadBadDoc(ID: String) {
         var textQuery =
             "Select " +
                     "isnull(Sections.descr, 'Пу') as Sector, " +
@@ -275,52 +270,49 @@ class NewComplectation : BarcodeDataReceiver() {
                     "Ref.ismark = 0 " +
                     "group by DocCB.iddoc ) as TabBox " +
                     "on TabBox.iddoc = DocCB.iddoc " +
-                    "where Ref.id = :id";
-        textQuery = SS.QuerySetParam(textQuery, "id", ID);
-        val DT = SS.ExecuteWithReadNew(textQuery) ?: return
-        if (DT.isEmpty()) {
+                    "where Ref.id = :id"
+        textQuery = ss.querySetParam(textQuery, "id", ID)
+        val dt = ss.executeWithReadNew(textQuery) ?: return
+        if (dt.isEmpty()) {
             return
         }
-        BadDoc.put("ID", DT[0]["Doc"].toString())
-        BadDoc.put(
-            "View",
-            DT[0]["Sector"].toString()
-                .trim() + "-" + DT[0]["Number"].toString() + " " + DT[0]["DocNo"].toString() + " (" + DT[0]["DateDoc"].toString() + ") мест " + DT[0]["CountBox"].toString()
-        )
+        badDoc["ID"] = dt[0]["Doc"].toString()
+        badDoc["View"] = dt[0]["Sector"].toString()
+            .trim() + "-" + dt[0]["Number"].toString() + " " + dt[0]["DocNo"].toString() + " (" + dt[0]["DateDoc"].toString() + ") мест " + dt[0]["CountBox"].toString()
     } // LoadBadDoc()
 
-    fun RefreshActivity() {
+    private fun refreshActivity() {
 
-        lblPrinter.text = SS.FPrinter.Description
-        if (CurentAction == Action.Complectation) {
+        lblPrinter.text = ss.FPrinter.description
+        if (curentAction == Action.Complectation) {
 
-            remain = DocDown["AllBoxes"].toString().toInt() - DocDown["Boxes"].toString().toInt()
+            remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
 
             lblInfo1.text =
-                "Отобрано " + remain.toString() + " из " + DocDown["AllBoxes"].toString()
+                "Отобрано " + remain.toString() + " из " + docDown["AllBoxes"].toString()
             /* if (Screan === 1) {
                 ShowInfoNewComp()
             }
 
            */
-            lblState.text = DocDown["View"].toString()
-            lblNumber.text = DocDown["NumberBill"].toString().substring(
-                DocDown["NumberBill"].toString().length - 5,
-                DocDown["NumberBill"].toString().length - 3
+            lblState.text = docDown["View"].toString()
+            lblNumber.text = docDown["NumberBill"].toString().substring(
+                docDown["NumberBill"].toString().length - 5,
+                docDown["NumberBill"].toString().length - 3
             ) + " " +
-                    DocDown["NumberBill"].toString()
-                        .substring(DocDown["NumberBill"].toString().length - 3) +
-                    " сектор: " + DocDown["MainSectorName"].toString()
-                .trim() + "-" + DocDown["NumberCC"].toString()
-            lblAdress.text = DocDown["AdressCollect"].toString()
-            lblSetter.text = "отборщик: " + SS.helper.GetShortFIO(DocDown["SetterName"].toString())
+                    docDown["NumberBill"].toString()
+                        .substring(docDown["NumberBill"].toString().length - 3) +
+                    " сектор: " + docDown["MainSectorName"].toString()
+                .trim() + "-" + docDown["NumberCC"].toString()
+            lblAdress.text = docDown["AdressCollect"].toString()
+            lblSetter.text = "отборщик: " + ss.helper.getShortFIO(docDown["SetterName"].toString())
             lblAdress.visibility = View.VISIBLE
             lblSetter.visibility = View.VISIBLE
-            btnKey1.visibility = if (DocDown["MaxStub"].toString()
+            btnKey1.visibility = if (docDown["MaxStub"].toString()
                     .toInt() <= remain
             ) View.VISIBLE else View.INVISIBLE
             btnKey1.text = "Все"
-        } else if (CurentAction == Downing.Action.DownComplete) {
+        } else if (curentAction == Downing.Action.DownComplete) {
 
 
             /*
@@ -330,20 +322,18 @@ class NewComplectation : BarcodeDataReceiver() {
 
              */
 
-            btnKey1.visibility = if (LastGoodAdress != "") View.INVISIBLE else View.VISIBLE
+            btnKey1.visibility = if (lastGoodAdress != "") View.INVISIBLE else View.VISIBLE
             btnKey1.text = "Печать"
-            if (DownSituation[0]["NumberOfOrder"].toString() != "0") {
-                val Number: String = DownSituation[0]["NumberOfOrder"].toString()
-                lblNumber.text = Number.substring(if (Number.length > 4) Number.length - 4 else 0)
+            if (downSituation[0]["NumberOfOrder"].toString() != "0") {
+                val number: String = downSituation[0]["NumberOfOrder"].toString()
+                lblNumber.text = number.substring(if (number.length > 4) number.length - 4 else 0)
             }
-            lblInfo1.text = "Всего " + DownSituation[0]["AllBox"].toString() + " мест"
+            lblInfo1.text = "Всего " + downSituation[0]["AllBox"].toString() + " мест"
             lblAdress.visibility = View.INVISIBLE
             lblSetter.visibility = View.VISIBLE
-            if (LastGoodAdress != "0") {
+            if (lastGoodAdress != "0") {
                 //lblSetter.ForeColor = Color.DarkGray
-                lblSetter.text = "'все' --> " + NameLastGoodAdress
-            } else {
-                // lblSetter.ForeColor = Color.Black
+                lblSetter.text = "'все' -->$nameLastGoodAdress"
             }
             btnCansel.visibility = View.INVISIBLE
             btnCansel.isEnabled = false
@@ -353,38 +343,38 @@ class NewComplectation : BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
-        val barcoderes = SS.helper.DisassembleBarcode(Barcode)
+        val barcoderes = ss.helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         if (typeBarcode == "6") {
             val id = barcoderes["ID"].toString()
-            if (SS.IsSC(id, "МестаПогрузки")) {
-                if (CurentAction == Action.Complectation) {
+            if (ss.isSC(id, "МестаПогрузки")) {
+                if (curentAction == Action.Complectation) {
 
                     var textQuery =
                         "Select " +
                                 "\$Спр.МестаПогрузки.Дата8 as Date, " +
                                 "\$Спр.МестаПогрузки.КонтрольНабора as Doc, " +
                                 "\$Спр.МестаПогрузки.Сотрудник8 as Employer " +
-                                "from \$Спр.МестаПогрузки (nolock) where id = :id";
-                    textQuery = SS.QuerySetParam(textQuery, "id", id)
-                    val DT = SS.ExecuteWithReadNew(textQuery) ?: return false
-                    if (DT.isEmpty()) {
+                                "from \$Спр.МестаПогрузки (nolock) where id = :id"
+                    textQuery = ss.querySetParam(textQuery, "id", id)
+                    val dt = ss.executeWithReadNew(textQuery) ?: return false
+                    if (dt.isEmpty()) {
                         FExcStr.text = "Нет действий с данным штрихкодом!"
-                        BadVoise()
+                        badVoise()
                         return false
                     }
-                    LoadBadDoc(id);//Подсосем данные по документу для просмотра состояния
-                    if (DT[0]["Doc"].toString() != DocDown["ID"]) {
+                    loadBadDoc(id)//Подсосем данные по документу для просмотра состояния
+                    if (dt[0]["Doc"].toString() != docDown["ID"]) {
                         FExcStr.text = "Место от другого сборочного!"
-                        BadVoise()
+                        badVoise()
                         return false
                     }
-                    if (!SS.IsVoidDate(DT[0]["Date"].toString())) {
+                    if (!ss.isVoidDate(dt[0]["Date"].toString())) {
                         FExcStr.text = "Место уже отобрано!"
-                        BadVoise()
+                        badVoise()
                         return false
                     }
-                    if (DT[0]["Employer"].toString() != SS.FEmployer.ID) {
+                    if (dt[0]["Employer"].toString() != ss.FEmployer.id) {
                         FExcStr.text = "Этого места нет в задании!"
                         return false
                     }
@@ -418,22 +408,22 @@ class NewComplectation : BarcodeDataReceiver() {
                                 "exec WPM_GetOrderComplectationNew :Employer, :NameParent, 0, @res OUTPUT; " +
                                 "if @res = 0 rollback tran else commit tran " +
                                 "end " +
-                                "end ";
+                                "end "
 
-                    textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
-                    textQuery = SS.QuerySetParam(textQuery, "itemid", id);
-                    textQuery = SS.QuerySetParam(textQuery, "iddoc", DocDown["ID"].toString())
-                    textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
-                    textQuery = SS.QuerySetParam(
+                    textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+                    textQuery = ss.querySetParam(textQuery, "itemid", id)
+                    textQuery = ss.querySetParam(textQuery, "iddoc", docDown["ID"].toString())
+                    textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+                    textQuery = ss.querySetParam(
                         textQuery,
                         "NameParent",
-                        DocDown["Sector"].toString().trim()
+                        docDown["Sector"].toString().trim()
                     )
 
-                    if (!SS.ExecuteWithoutRead(textQuery)) {
+                    if (!ss.executeWithoutRead(textQuery)) {
                         return false
                     }
-                    ToModeNewComplectation()
+                    toModeNewComplectation()
                     return true
 
                 }
@@ -480,44 +470,41 @@ class NewComplectation : BarcodeDataReceiver() {
                                 "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
                                 "group by DocCC.iddoc ) as AllTab " +
                                 "on AllTab.iddoc = DocCC.iddoc " +
-                                "where Ref.id = :id";
-                    textQuery = SS.QuerySetParam(textQuery, "id", id)
-                    textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID())
-                    textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
-                    textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
+                                "where Ref.id = :id"
+                    textQuery = ss.querySetParam(textQuery, "id", id)
+                    textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
+                    textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+                    textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
 
-                    LoadBadDoc(id);//Подсосем данные по документу для просмотра состояния
+                    loadBadDoc(id)//Подсосем данные по документу для просмотра состояния
 
-                    val DT = SS.ExecuteWithReadNew(textQuery) ?: return false
-                    if (DT.isEmpty()) {
+                    val dt = ss.executeWithReadNew(textQuery) ?: return false
+                    if (dt.isEmpty()) {
                         FExcStr.text = "Нет действий с данным штрихкодом!"
                         return false
                     }
-                    if (!SS.IsVoidDate(DT[0]["Date"].toString())) {
+                    if (!ss.isVoidDate(dt[0]["Date"].toString())) {
                         FExcStr.text = "Место уже скомплектовано!"
                         return false
                     }
-                    if (DT[0]["Employer"].toString() != SS.FEmployer.ID) {
+                    if (dt[0]["Employer"].toString() != ss.FEmployer.id) {
                         FExcStr.text = "Этого места нет в задании!"
                         return false
                     }
 
-                    DocDown.put("ID", DT[0]["Doc"].toString())
-                    DocDown.put("Boxes", DT[0]["CountBox"].toString())
-                    DocDown.put(
-                        "View",
-                        DT[0]["Sector"].toString()
-                            .trim() + "-" + DT[0]["Number"].toString() + " Заявка " + DT[0]["docno"].toString() + " (" + DT[0]["datedoc"].toString() + ")"
-                    )
-                    DocDown.put("AdressCollect", DT[0]["Adress"].toString())
-                    DocDown.put("Sector", DT[0]["Gate"].toString().trim())
-                    DocDown.put("NumberBill", DT[0]["docno"].toString().trim())
-                    DocDown.put("NumberCC", DT[0]["Number"].toString())
-                    DocDown.put("MainSectorName", DT[0]["Sector"].toString())
+                    docDown["ID"] = dt[0]["Doc"].toString()
+                    docDown["Boxes"] = dt[0]["CountBox"].toString()
+                    docDown["View"] = dt[0]["Sector"].toString()
+                        .trim() + "-" + dt[0]["Number"].toString() + " Заявка " + dt[0]["docno"].toString() + " (" + dt[0]["datedoc"].toString() + ")"
+                    docDown["AdressCollect"] = dt[0]["Adress"].toString()
+                    docDown["Sector"] = dt[0]["Gate"].toString().trim()
+                    docDown["NumberBill"] = dt[0]["docno"].toString().trim()
+                    docDown["NumberCC"] = dt[0]["Number"].toString()
+                    docDown["MainSectorName"] = dt[0]["Sector"].toString()
 
-                    ScaningBox = id;
-                    ScaningBoxIddoc = DT[0]["Doc"].toString();
-                    NeedAdressComplete = DT[0]["Adress9"].toString()
+                    scaningBox = id
+                    scaningBoxIddoc = dt[0]["Doc"].toString()
+                    needAdressComplete = dt[0]["Adress9"].toString()
                     FExcStr.text = "Отсканируйте адрес!"
                     //OnScanBox()
                     return true
@@ -526,7 +513,7 @@ class NewComplectation : BarcodeDataReceiver() {
             }
             else {
                 FExcStr.text = "Нет действий с данным ШК в данном режиме!"
-                BadVoise()
+                badVoise()
                 return false
             }
 
@@ -534,25 +521,25 @@ class NewComplectation : BarcodeDataReceiver() {
         else if (typeBarcode == "113") {
             //справочники типовые
             val idd = barcoderes["IDD"].toString()
-            if (SS.IsSC(idd, "Сотрудники")) {
-                SS.FEmployer = RefEmployer()
+            if (ss.isSC(idd, "Сотрудники")) {
+                ss.FEmployer = RefEmployer()
                 val mainInit = Intent(this, MainActivity::class.java)
                 mainInit.putExtra("ParentForm", "NewComplectation")
                 startActivity(mainInit)
                 finish()
             }
-            else if (CurentAction == Action.ComplectationComplete && SS.IsSC(idd, "Секции")) {
+            else if (curentAction == Action.ComplectationComplete && ss.isSC(idd, "Секции")) {
                 val id = barcoderes["ID"].toString()
-                if (DownSituation[0]["NumberOfOrder"].toString() == "0") {
+                if (downSituation[0]["NumberOfOrder"].toString() == "0") {
                     FExcStr.text = "Не присвоен номер задания! Напечатайте этикетку!"
                     return false
                 }
                 var textQuery =
-                    "declare @res int; exec WPM_CompletePallete :employer, :adress, @res output; ";
-                textQuery = SS.QuerySetParam(textQuery, "employer", SS.FEmployer.ID);
-                textQuery = SS.QuerySetParam(textQuery, "adress", id);
-                if (!SS.ExecuteWithoutRead(textQuery)) {
-                    return false;
+                    "declare @res int; exec WPM_CompletePallete :employer, :adress, @res output; "
+                textQuery = ss.querySetParam(textQuery, "employer", ss.FEmployer.id)
+                textQuery = ss.querySetParam(textQuery, "adress", id)
+                if (!ss.executeWithoutRead(textQuery)) {
+                    return false
                 }
                 // FlagPrintPallete = false;
                 // ToModeDown()
@@ -561,23 +548,23 @@ class NewComplectation : BarcodeDataReceiver() {
         }
         else {
             FExcStr.text = "Нет действий с данным ШК в данном режиме!"
-            BadVoise()
+            badVoise()
             return false
         }
         return true
     }
 
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?): Boolean {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4) {
             return true
         }
-        if (SS.helper.WhatDirection(keyCode) == "Left") {
+        if (ss.helper.whatDirection(keyCode) == "Left") {
             val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
             shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
-            shoiseWorkInit.putExtra("BadDocID", BadDoc["ID"])
-            shoiseWorkInit.putExtra("BadDocView", BadDoc["View"])
+            shoiseWorkInit.putExtra("BadDocID", badDoc["ID"])
+            shoiseWorkInit.putExtra("BadDocView", badDoc["View"])
 
             startActivity(shoiseWorkInit)
             finish()

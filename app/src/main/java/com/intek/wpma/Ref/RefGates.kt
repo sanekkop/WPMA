@@ -1,52 +1,45 @@
 package com.intek.wpma.Ref
 
-class RefGates (): ARef() {
-    override val TypeObj: String get() = "Ворота"
+class RefGates : ARef() {
+    override val typeObj: String get() = "Ворота"
 
-    val FirstAdress: RefSection get() {
+    val firstAdress: RefSection get() {
 
-            if (!Selected) {
+            if (!selected) {
                 return RefSection()
             }
             var textQuery = "select dbo.fn_GetFirstAdressZone(:zona) as id"
-            textQuery = SS.QuerySetParam(textQuery, "zona", ID);
-            val DT = SS.ExecuteWithReadNew(textQuery)
-            if (DT == null)
-            {
-                return RefSection()
-            }
-            if (DT.isEmpty()) {
+            textQuery = ss.querySetParam(textQuery, "zona", id)
+        val dt = ss.executeWithReadNew(textQuery) ?: return RefSection()
+        if (dt.isEmpty()) {
                 //Нет строк, ну и что, бывает. Значит нет ни одного адреса с этой зоной
                 return RefSection()
             }
             val result = RefSection()
-            result.FoundID(DT[0]["id"].toString())
+            result.foundID(dt[0]["id"].toString())
             return result
 
         } // FirstAdress
-    val LastAdress: RefSection get() {
-        if (!Selected) {
-            return RefSection();
-        }
-        var textQuery = "select dbo.fn_GetLastAdressZone(:zona) as id"
-        textQuery = SS.QuerySetParam(textQuery, "zona", ID);
-        val DT = SS.ExecuteWithReadNew(textQuery)
-        if (DT == null) {
+    val lastAdress: RefSection get() {
+        if (!selected) {
             return RefSection()
         }
-        if (DT.isEmpty()) {
+        var textQuery = "select dbo.fn_GetLastAdressZone(:zona) as id"
+        textQuery = ss.querySetParam(textQuery, "zona", id)
+        val dt = ss.executeWithReadNew(textQuery) ?: return RefSection()
+        if (dt.isEmpty()) {
             //Нет строк, ну и что, бывает. Значит нет ни одного адреса с этой зоной
             return RefSection()
         }
         val result = RefSection()
-        result.FoundID(DT[0]["id"].toString())
+        result.foundID(dt[0]["id"].toString())
         return result
     } // LastAdress
-    val Ranges:MutableList<MutableMap<String,String>> get() {
+    val ranges:MutableList<MutableMap<String,String>> get() {
 
-        var Result: MutableList<MutableMap<String, String>> = mutableListOf()
-        if (!Selected) {
-            return Result
+        val result: MutableList<MutableMap<String, String>> = mutableListOf()
+        if (!selected) {
+            return result
         }
         var textQuery =
             "select " +
@@ -57,36 +50,36 @@ class RefGates (): ARef() {
                     "where " +
                     "ref.ismark = 0 " +
                     "and ref.\$Спр.Секции.ЗонаАдресов = :zone " +
-                    "order by ref.descr";
-        textQuery = SS.QuerySetParam(textQuery, "zone", ID)
-        val DT = SS.ExecuteWithReadNew(textQuery)
-        if (DT == null || DT.isEmpty()) {
-            return Result
+                    "order by ref.descr"
+        textQuery = ss.querySetParam(textQuery, "zone", id)
+        val dt = ss.executeWithReadNew(textQuery)
+        if (dt == null || dt.isEmpty()) {
+            return result
         }
 
         var inside = false
-        var row: MutableMap<String, String> = mutableMapOf()
-        for (i in 0..DT.count()) {
+        val row: MutableMap<String, String> = mutableMapOf()
+        for (i in 0..dt.count()) {
             if (!inside) {
                 //начало диапазона
-                row.put("First", DT[i]["name"].toString())
+                row["First"] = dt[i]["name"].toString()
                 inside = true
             }
 
-            val nextZonde = DT[i]["nextZone"].toString()
-            if (nextZonde != ID) {
+            val nextZonde = dt[i]["nextZone"].toString()
+            if (nextZonde != id) {
                 //Конец диапазона
-                row.put("Last", DT[i]["name"].toString())
-                Result.add(row)
+                row["Last"] = dt[i]["name"].toString()
+                result.add(row)
                 var row: MutableMap<String, String> = mutableMapOf()
-                inside = false;
+                inside = false
             }
         }
-        return Result
+        return result
     }  // Ranges
     init {
-        HaveName    = true
-        HaveCode    = true
+        haveName    = true
+        haveCode    = true
     }
 
 }

@@ -20,7 +20,7 @@ import kotlinx.android.synthetic.main.activity_menu.*
 
 class Menu : BarcodeDataReceiver() {
 
-    var Barcode: String = ""
+    var barcode: String = ""
     var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
@@ -30,9 +30,9 @@ class Menu : BarcodeDataReceiver() {
                 val version = intent.getIntExtra("version", 0)
                 if (version >= 1) {
                     try {
-                        Barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")
                         codeId = intent.getStringExtra("codeId")
-                        reactionBarcode(Barcode)
+                        reactionBarcode(barcode)
                     }
                     catch (e: Exception){
                         val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
@@ -47,10 +47,10 @@ class Menu : BarcodeDataReceiver() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
-        title = SS.title
-        if (SS.ExcStr != null && SS.ExcStr != "" &&  SS.ExcStr != "null" )
+        title = ss.title
+        if (ss.excStr != null && ss.excStr != "" &&  ss.excStr != "null" )
         {
-            FExcStr.text = SS.ExcStr
+            FExcStr.text = ss.excStr
         }
         btnSet.setOnClickListener {
             startActivity(0)
@@ -66,7 +66,7 @@ class Menu : BarcodeDataReceiver() {
 
     private fun reactionBarcode(Barcode: String){
         //выход из сессии
-        val barcoderes =  SS.helper.DisassembleBarcode(Barcode)
+        val barcoderes =  ss.helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         //если это не типовой справочник, то выходим
         if (typeBarcode != "113")   {
@@ -74,11 +74,11 @@ class Menu : BarcodeDataReceiver() {
         }
         val idd = barcoderes["IDD"].toString()
         //если это не сотрудник выходим
-        if (!SS.IsSC(idd, "Сотрудники")) {
+        if (!ss.isSC(idd, "Сотрудники")) {
             FExcStr.text = "Нет действий с этим ШК в данном режиме"
         }
-        if(SS.FEmployer.IDD == idd){
-            if(!Logout(SS.FEmployer.ID)){
+        if(ss.FEmployer.idd == idd){
+            if(!logout(ss.FEmployer.id)){
                 FExcStr.text = "Ошибка выхода из системы!"
                 return
             }
@@ -100,7 +100,7 @@ class Menu : BarcodeDataReceiver() {
             startActivity(main)
             finish()
         }
-        val key = SS.helper.WhatInt(keyCode)
+        val key = ss.helper.whatInt(keyCode)
         if (key in 0..9) {
             //нажали цифру
             startActivity(key)
@@ -110,27 +110,27 @@ class Menu : BarcodeDataReceiver() {
 
     private fun startActivity(num: Int) {
 
-        if (num == 0) {     // режим отбора
-            SS.CurrentMode = Global.Mode.SetInicialization
-            SS.CurrentAction = Global.ActionSet.Waiting
-            val setInit = Intent(this, SetInitialization::class.java)
-            setInit.putExtra("ParentForm","Menu")
-            startActivity(setInit)
-            finish()
-        }
-        else if (num == 3)
-        {
-            val choiseWorkShipingInit = Intent(this, ChoiseWorkShipping::class.java)
-            choiseWorkShipingInit.putExtra("ParentForm","Menu")
-            startActivity(choiseWorkShipingInit)
-            finish()
-        }
-        else if (num == 1)
-        {
-            val accInit = Intent(this, AccMenu::class.java)
-            accInit.putExtra("ParentForm","Menu")
-            startActivity(accInit)
-            finish()
+        when (num) {
+            0 -> {     // режим отбора
+                ss.CurrentMode = Global.Mode.SetInicialization
+                ss.CurrentAction = Global.ActionSet.Waiting
+                val setInit = Intent(this, SetInitialization::class.java)
+                setInit.putExtra("ParentForm","Menu")
+                startActivity(setInit)
+                finish()
+            }
+            3 -> {
+                val choiseWorkShipingInit = Intent(this, ChoiseWorkShipping::class.java)
+                choiseWorkShipingInit.putExtra("ParentForm","Menu")
+                startActivity(choiseWorkShipingInit)
+                finish()
+            }
+            1 -> {
+                val accInit = Intent(this, AccMenu::class.java)
+                accInit.putExtra("ParentForm","Menu")
+                startActivity(accInit)
+                finish()
+            }
         }
     }
 

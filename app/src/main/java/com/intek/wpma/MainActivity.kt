@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.View
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -20,7 +19,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity :  BarcodeDataReceiver() {
 
-    var Barcode: String = ""
+    var barcode: String = ""
     var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
@@ -31,9 +30,9 @@ class MainActivity :  BarcodeDataReceiver() {
                 val version = intent.getIntExtra("version", 0)
                 if (version >= 1) {
                     try {
-                        Barcode = intent.getStringExtra("data")!!
+                        barcode = intent.getStringExtra("data")!!
                         codeId = intent.getStringExtra("codeId")!!
-                        reactionBarcode(Barcode)
+                        reactionBarcode(barcode)
                     }
                     catch (e: Exception){
                         val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
@@ -51,9 +50,9 @@ class MainActivity :  BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             }
             catch (e: Exception){
                 val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
@@ -84,10 +83,10 @@ class MainActivity :  BarcodeDataReceiver() {
         {
             ActivityCompat.requestPermissions(this,arrayOf(Manifest.permission.CAMERA,Manifest.permission.INTERNET,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE),0)
         }
-        SS.CurrentMode = Global.Mode.Main
-        SS.isMobile = checkCameraHardware(this)
-        SS.FEmployer = RefEmployer()
-        if(SS.isMobile) {
+        ss.CurrentMode = Global.Mode.Main
+        ss.isMobile = checkCameraHardware(this)
+        ss.FEmployer = RefEmployer()
+        if(ss.isMobile) {
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@MainActivity, ScanActivity::class.java)
@@ -95,34 +94,34 @@ class MainActivity :  BarcodeDataReceiver() {
                 startActivity(scanAct)
             }
         }
-        SS.ANDROID_ID = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-        SS.widthDisplay = windowManager.defaultDisplay.width
-        SS.heightDisplay = windowManager.defaultDisplay.height
+        ss.ANDROID_ID = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+        ss.widthDisplay = windowManager.defaultDisplay.width
+        ss.heightDisplay = windowManager.defaultDisplay.height
 
-        if (!UpdateProgram()) return
+        if (!updateProgram()) return
 
         //для начала запустим GetDataTime для обратной совместимости, ведь там он прописывает версию ТСД
         val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.Vers
-        if (!ExecCommandNoFeedback("GetDateTime", dataMapWrite)) {
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = ss.vers
+        if (!execCommandNoFeedback("GetDateTime", dataMapWrite)) {
             val toast = Toast.makeText(applicationContext, "Не удалось подключиться к базе!", Toast.LENGTH_SHORT)
             toast.show()
             return
         }
 
         // получим номер терминала
-        val textQuery = "SELECT code as code FROM \$Спр.Терминалы (nolock) WHERE descr = '${SS.ANDROID_ID}'"
-        val dataTable = SS.ExecuteWithReadNew(textQuery) ?:return
+        val textQuery = "SELECT code as code FROM \$Спр.Терминалы (nolock) WHERE descr = '${ss.ANDROID_ID}'"
+        val dataTable = ss.executeWithReadNew(textQuery) ?:return
         if (dataTable.isEmpty()){
             val toast = Toast.makeText(applicationContext, "Терминал не опознан!", Toast.LENGTH_SHORT)
             toast.show()
             return
         }
-        SS.terminal = dataTable[0]["code"].toString()
+        ss.terminal = dataTable[0]["code"].toString()
         //Подтянем настройку обмена МОД
-        SS.Const.Refresh()
-        SS.title = SS.Vers + " " + SS.terminal.trim()
-        title = SS.title
+        ss.Const.refresh()
+        ss.title = ss.vers + " " + ss.terminal.trim()
+        title = ss.title
     }
 
     private fun reactionBarcode(Barcode: String) {
@@ -130,7 +129,7 @@ class MainActivity :  BarcodeDataReceiver() {
         //ИДД = "99990" + СокрЛП(Сред(ШК,3,2)) + "00" + Сред(ШК,5,8);
         //99990010010982023
         //Это перелогин или первый логин
-        val barcoderes =  SS.helper.DisassembleBarcode(Barcode)
+        val barcoderes =  ss.helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         //если это не типовой справочник, то выходим
         if (typeBarcode != "113")   {
@@ -139,15 +138,15 @@ class MainActivity :  BarcodeDataReceiver() {
         }
         val idd = barcoderes["IDD"].toString()
         //если это не сотрудник выходим
-        if (!SS.IsSC(idd, "Сотрудники")) {
+        if (!ss.isSC(idd, "Сотрудники")) {
             actionLbl.text = "Нет действий с этим ШК в данном режиме"
             return
         }
         //по идее тут всегда он должен попадать не логированный, так как при создании он создает новый объект
         //все, то что нужно, проверяем а логирован сотрудник или нет
-        if (SS.FEmployer.Selected) {
+        if (ss.FEmployer.selected) {
             //а вот и не угадали, он логирован, разлогиним нашего сотрудника
-            if (!Logout(SS.FEmployer.ID)) {
+            if (!logout(ss.FEmployer.id)) {
                 resLbl.text = "Ошибка выхода из системы!"
                 return
             }
@@ -159,22 +158,22 @@ class MainActivity :  BarcodeDataReceiver() {
         }
         else {
             //не логирован
-           if (!SS.FEmployer.FoundIDD(idd)) {
+           if (!ss.FEmployer.foundIDD(idd)) {
                 actionLbl.text = "Нет действий с ШК в данном режиме!"
                 return
             }
-            SS.title = SS.Vers + " " + SS.terminal.trim() + " " + SS.helper.GetShortFIO(SS.FEmployer.Name)
+            ss.title = ss.vers + " " + ss.terminal.trim() + " " + ss.helper.getShortFIO(ss.FEmployer.name)
             //инициализация входа
-            if (!Login(SS.FEmployer.ID)) {
+            if (!login(ss.FEmployer.id)) {
                 actionLbl.text = "Ошибка входа в систему!"
                 return
             }
         }
-        actionLbl.text = SS.FEmployer.Name
+        actionLbl.text = ss.FEmployer.name
         scanRes = null
         //проверим может на нем уже что-то висит и нам надо срочно туда идти
         var newMode = Intent(this, Menu::class.java)
-        when (CheckOrder()) {
+        when (checkOrder()) {
             "Menu" -> {
                 newMode = Intent(this, Menu::class.java)
             }
@@ -193,9 +192,9 @@ class MainActivity :  BarcodeDataReceiver() {
         finish()
 
     }
-    private fun UpdateProgram() :Boolean {
-        val textQuery = "select vers as vers from RT_Settings where terminal_id = '${SS.ANDROID_ID}'"
-        val  dataTable = SS.ExecuteWithReadNew(textQuery) ?:return false
+    private fun updateProgram() :Boolean {
+        val textQuery = "select vers as vers from RT_Settings where terminal_id = '${ss.ANDROID_ID}'"
+        val  dataTable = ss.executeWithReadNew(textQuery) ?:return false
         if (dataTable.isEmpty()){
             val toast = Toast.makeText(applicationContext, "Версия программы в базе не указана!", Toast.LENGTH_SHORT)
             toast.show()
@@ -203,7 +202,7 @@ class MainActivity :  BarcodeDataReceiver() {
             return true
         }
         val newVers = dataTable[0]["vers"].toString()
-        if (SS.Vers == newVers)
+        if (ss.vers == newVers)
        {
             //Все ок, не нуждается в обновлении
             return true

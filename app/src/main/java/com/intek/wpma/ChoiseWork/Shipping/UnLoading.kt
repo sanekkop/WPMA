@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -14,8 +13,6 @@ import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.Global
 import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.R
-import com.intek.wpma.Ref.ARef
-import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_unloading.*
@@ -23,13 +20,13 @@ import kotlinx.android.synthetic.main.activity_unloading.*
 
 class UnLoading : BarcodeDataReceiver() {
 
-    var CurrentAction:Global.ActionSet = Global.ActionSet.ScanBox
-    var AdressUnLoad:String = ""
-    var BoxUnLoad:String = ""
+    var currentAction:Global.ActionSet = Global.ActionSet.ScanBox
+    var adressUnLoad:String = ""
+    var boxUnLoad:String = ""
 
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
-    var Barcode: String = ""
+    var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -39,8 +36,8 @@ class UnLoading : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        reactionBarcode(Barcode)
+                        barcode = intent.getStringExtra("data")
+                        reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
                         val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
@@ -58,9 +55,9 @@ class UnLoading : BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             }
             catch (e: Exception){
                 val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
@@ -76,7 +73,7 @@ class UnLoading : BarcodeDataReceiver() {
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
     }
     companion object {
         var scanRes: String? = null
@@ -88,11 +85,11 @@ class UnLoading : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_unloading)
 
-        title = SS.title
+        title = ss.title
         header.text  = "Свободная разргузка"
-        CurrentAction = Global.ActionSet.ScanBox
+        currentAction = Global.ActionSet.ScanBox
 
-        if (SS.isMobile){
+        if (ss.isMobile){
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@UnLoading, ScanActivity::class.java)
@@ -104,26 +101,26 @@ class UnLoading : BarcodeDataReceiver() {
 
 
     private fun reactionBarcode(Barcode: String): Boolean {
-        val helper:Helper = Helper()
-        val barcoderes = helper.DisassembleBarcode(Barcode)
+        val helper = Helper()
+        val barcoderes = helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         if (typeBarcode == "113")
         {
             //это справочник типовой
             val idd = barcoderes["IDD"].toString()
-            if (SS.IsSC(idd, "Секции")) {
+            if (ss.isSC(idd, "Секции")) {
 
-                if ( CurrentAction != Global.ActionSet.ScanAdress)
+                if ( currentAction != Global.ActionSet.ScanAdress)
                 {
                     FExcStr.text = "Неверно! Отсканируйте адрес."
-                    BadVoise()
+                    badVoise()
                     return false
                 }
 
                 //получим данные адреса
-                var adressScan:RefSection = RefSection()
-                adressScan.FoundIDD(idd)
-                AdressUnLoad = adressScan.ID
+                val adressScan = RefSection()
+                adressScan.foundIDD(idd)
+                adressUnLoad = adressScan.id
                 var textQuery =
                 "UPDATE \$Спр.МестаПогрузки " +
                         "SET " +
@@ -131,59 +128,59 @@ class UnLoading : BarcodeDataReceiver() {
                         "\$Спр.МестаПогрузки.Сотрудник8 = :EmployerID ," +
                         "\$Спр.МестаПогрузки.Дата9 = :NowDate ," +
                         "\$Спр.МестаПогрузки.Время9 = :NowTime " +
-                        "WHERE \$Спр.МестаПогрузки .id = :ID ";
-                textQuery = SS.QuerySetParam(textQuery, "ID", BoxUnLoad);
-                textQuery = SS.QuerySetParam(textQuery, "AdressID",      AdressUnLoad);
-                textQuery = SS.QuerySetParam(textQuery, "EmployerID",    SS.FEmployer.ID);
-                if (!SS.ExecuteWithoutRead(textQuery))
+                        "WHERE \$Спр.МестаПогрузки .id = :ID "
+                textQuery = ss.querySetParam(textQuery, "ID", boxUnLoad)
+                textQuery = ss.querySetParam(textQuery, "AdressID",      adressUnLoad)
+                textQuery = ss.querySetParam(textQuery, "EmployerID",    ss.FEmployer.id)
+                if (!ss.executeWithoutRead(textQuery))
                 {
                     FExcStr.text = "Не удалось зафиксировать! Отсканируйте адрес."
-                    BadVoise()
+                    badVoise()
                     return false
                 }
 
-                CurrentAction =  Global.ActionSet.ScanBox
+                currentAction =  Global.ActionSet.ScanBox
              }
             else
             {
-                FExcStr.text = "Неверно! " + if(CurrentAction ==  Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
-                BadVoise()
+                FExcStr.text = "Неверно! " + if(currentAction ==  Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
+                badVoise()
                 return false
             }
         }
         else if(typeBarcode == "6")
         {
             val id = barcoderes["ID"].toString()
-            if (SS.IsSC(id, "МестаПогрузки")) {
-                if ( CurrentAction !=  Global.ActionSet.ScanBox)
+            if (ss.isSC(id, "МестаПогрузки")) {
+                if ( currentAction !=  Global.ActionSet.ScanBox)
                 {
                     FExcStr.text = "Неверно! Отсканируйте адрес."
-                    BadVoise()
+                    badVoise()
                     return false
                 }
 
-                CurrentAction =  Global.ActionSet.ScanAdress
-                AdressUnLoad = ""
-                BoxUnLoad = id
+                currentAction =  Global.ActionSet.ScanAdress
+                adressUnLoad = ""
+                boxUnLoad = id
 
             }
             else {
                 FExcStr.text = "Неверно! Отсканируйте коробку."
-                BadVoise()
+                badVoise()
                 return false
             }
         }
         else {
-            FExcStr.text = "Нет действий с данным ШК! " + if(CurrentAction ==  Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
-            BadVoise()
+            FExcStr.text = "Нет действий с данным ШК! " + if(currentAction ==  Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
+            badVoise()
             return false
         }
-        GoodVoise()
-        RefreshActivity()
+        goodVoise()
+        refreshActivity()
         return true
     }
 
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?):Boolean {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
         // нажали назад, выйдем
         if (keyCode == 4){
@@ -197,12 +194,12 @@ class UnLoading : BarcodeDataReceiver() {
 
     }
 
-    fun RefreshActivity()    {
+    private fun refreshActivity()    {
         //пока не отсканировали место обновлять нечего
-        if (BoxUnLoad == "")
+        if (boxUnLoad == "")
         {
-            lblInfo1.text = "";
-            lblInfo2.text = "";
+            lblInfo1.text = ""
+            lblInfo2.text = ""
             return
         }
         var textQuery ="Select " +
@@ -243,25 +240,25 @@ class UnLoading : BarcodeDataReceiver() {
                 "group by DocCB.iddoc ) as TabBox " +
                 "on TabBox.iddoc = DocCB.iddoc " +
                 "where Ref.id = :id"
-        textQuery = SS.QuerySetParam(textQuery, "id", BoxUnLoad)
-        val dataTable = SS.ExecuteWithRead(textQuery)
+        textQuery = ss.querySetParam(textQuery, "id", boxUnLoad)
+        val dataTable = ss.executeWithRead(textQuery)
         if (dataTable!!.isEmpty()) {
             FExcStr.text = "Не найдено место! Отсканируйте коробку."
         }
 
-        lblInfo1.text = dataTable[1][2].toString().substring(dataTable[1][2].toString().trim().length - 5, dataTable[1][2].toString().trim().length - 3) + " " +
-        dataTable[1][2].toString().substring( dataTable[1][2].toString().trim().length - 3) +
-        " сектор: " + dataTable[1][0].toString().trim() + "-" + dataTable[1][3].toString().trim() +
-        " ворота: " + dataTable[1][7].toString().trim() + " адрес: " + dataTable[1][4].toString().trim()
-        lblInfo2.text = "место № " + dataTable[1][6].toString().trim() + " из " + dataTable[1][5].toString().trim()
-        if (AdressUnLoad != "")
+        lblInfo1.text = dataTable[1][2].substring(dataTable[1][2].trim().length - 5, dataTable[1][2].trim().length - 3) + " " +
+        dataTable[1][2].substring( dataTable[1][2].trim().length - 3) +
+        " сектор: " + dataTable[1][0].trim() + "-" + dataTable[1][3].trim() +
+        " ворота: " + dataTable[1][7].trim() + " адрес: " + dataTable[1][4].trim()
+        lblInfo2.text = "место № " + dataTable[1][6].trim() + " из " + dataTable[1][5].trim()
+        if (adressUnLoad != "")
         {
 
-            var adressScan:RefSection = RefSection()
-            adressScan.FoundID(AdressUnLoad)
-            lblDocInfo.text = "Новый адрес: " + adressScan.Name;
+            val adressScan = RefSection()
+            adressScan.foundID(adressUnLoad)
+            lblDocInfo.text = "Новый адрес: " + adressScan.name
         }
-        FExcStr.text = if(CurrentAction ==  Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
+        FExcStr.text = if(currentAction ==  Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
 
     }
 

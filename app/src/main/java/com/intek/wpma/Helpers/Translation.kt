@@ -61,7 +61,7 @@ class Translation {
     }
 */
 
-    fun DecTo2(Number: Long): String
+    fun decTo2(Number: Long): String
     {
         var result = ""
         var num = Number
@@ -76,14 +76,11 @@ class Translation {
         //преобразование
         while (div > 0)
         {
-            var d: Long = (num / div)    //целая часть от деления
-            if (d < 10)
-            {
-                result += d.toString()
-            }
-            else
-            {
-                result += (d as Char).toString()
+            val d: Long = (num / div)    //целая часть от деления
+            result += if (d < 10) {
+                d.toString()
+            } else {
+                (d as Char).toString()
             }
             num %= div  //остаток от деления
             div /= 2      //уменьшаем делитель
@@ -93,13 +90,13 @@ class Translation {
 
 
 
-    fun DecTo36(Number:Long):String
+    private fun decTo36(Number:Long):String
     {
         var result = ""
         var num = Number
         //определим наибольший делитель (с чего начать)
         var div:Long = 1
-        while ((num / div).toLong() >= 36)
+        while ((num / div) >= 36)
         {
             div *= 36
         }
@@ -107,14 +104,11 @@ class Translation {
         //преобразование
         while (div > 0)
         {
-            var d:Long = (num / div).toLong();    //целая часть от деления
-            if (d < 10)
-            {
-                result += d.toString()
-            }
-            else
-            {
-                result += ((d + 55).toChar()).toString()
+            val d:Long = (num / div)    //целая часть от деления
+            result += if (d < 10) {
+                d.toString()
+            } else {
+                ((d + 55).toChar()).toString()
             }
             num %= div  //остаток от деления
             div /= 36      //уменьшаем делитель
@@ -122,9 +116,9 @@ class Translation {
         return result
     }
 
-    fun DecTo36(Number:String):String
+    fun decTo36(Number:String):String
     {
-        return DecTo36(Number.toLong());
+        return decTo36(Number.toLong())
     }
 
 

@@ -1,11 +1,11 @@
 package com.intek.wpma.Ref
 
-class RefWarehouse(): ARef() {
-    override val TypeObj: String get() = "Склады"
+class RefWarehouse : ARef() {
+    override val typeObj: String get() = "Склады"
 
     init {
-        HaveName    = true
-        HaveCode    = true
+        haveName    = true
+        haveCode    = true
     }
 
 }

@@ -23,20 +23,20 @@ import kotlinx.android.synthetic.main.activity_correct.*
 class Correct : BarcodeDataReceiver() {
 
     var iddoc: String = ""
-    var AddressID: String = ""
-    val MainWarehouse = "     D   "
-    var CCItem: Model.StructItemSet? = null
-    var DocSet: Model.StrictDoc? = null
-    var Barcode: String = ""
-    var ChoiseCorrect: Int = 0          //тип корректировки
-    var CountFact: Int = 0              //при наборе маркировок, чтобы не сбились уже отсканированные QR-коды
-    var EnterCount: Int = 0             //колво позиций для корректировки (вводится вручную)
-    var EnterCountWithoutQRCode = 0     //колво позиций без QR - кода (вводится вручную)
-    var countWithoutQRCode: Int = 0     //колво уже скорректированных позиций без QR - кода
-    var countCorrect: Int = 0           //общее колво уже скорректированных позиций (с QR - кодом и без)
+    private var addressID: String = ""
+    private val mainWarehouse = "     D   "
+    private var ccItem: Model.StructItemSet? = null
+    private var docSet: Model.StrictDoc? = null
+    var barcode: String = ""
+    private var choiseCorrect: Int = 0          //тип корректировки
+    private var countFact: Int = 0              //при наборе маркировок, чтобы не сбились уже отсканированные QR-коды
+    private var enterCount: Int = 0             //колво позиций для корректировки (вводится вручную)
+    private var enterCountWithoutQRCode = 0     //колво позиций без QR - кода (вводится вручную)
+    private var countWithoutQRCode: Int = 0     //колво уже скорректированных позиций без QR - кода
+    private var countCorrect: Int = 0           //общее колво уже скорректированных позиций (с QR - кодом и без)
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
-    var flagBtn = 0
-    var flagMark = 0                    //флаг маркировки
+    private var flagBtn = 0
+    private var flagMark = 0                    //флаг маркировки
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     val barcodeDataReceiver = object : BroadcastReceiver() {
@@ -47,9 +47,9 @@ class Correct : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")!!
+                        barcode = intent.getStringExtra("data")!!
                         codeId = intent.getStringExtra("codeId")!!
-                        reactionBarcode(Barcode)
+                        reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
                             applicationContext,
@@ -74,9 +74,9 @@ class Correct : BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             }
             catch (e: Exception){
                 val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
@@ -92,7 +92,7 @@ class Correct : BarcodeDataReceiver() {
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        ReactionKey(keyCode, event)
+        reactionKey(keyCode, event)
         return super.onKeyDown(keyCode, event)
     }
     //endregion
@@ -102,18 +102,18 @@ class Correct : BarcodeDataReceiver() {
         setContentView(R.layout.activity_correct)
 
         iddoc = intent.extras!!.getString("iddoc")!!
-        AddressID = intent.extras!!.getString("AddressID")!!
-        title = SS.title
-        CountFact = intent.extras!!.getString("CountFact")!!.toInt()
+        addressID = intent.extras!!.getString("AddressID")!!
+        title = ss.title
+        countFact = intent.extras!!.getString("CountFact")!!.toInt()
         //заполним заново товар и док
-        GetItemAndDocSet()
+        getItemAndDocSet()
         val label: TextView = findViewById(R.id.label)
 
-        label.text = "Корректировка позиции ${CCItem!!.InvCode}"
+        label.text = "Корректировка позиции ${ccItem!!.InvCode}"
         val enterCountCorrect: EditText = findViewById(R.id.enterCountCorrect)
         NoQRCode.setOnClickListener {
             FExcStr.text = "Введите колво товара без QR-кода"
-            enterCountCorrect?.setText("")
+            enterCountCorrect.setText("")
             enterCountCorrect.visibility = View.VISIBLE
             NoQRCode.isFocusable = false
             flagBtn = 1
@@ -124,24 +124,24 @@ class Correct : BarcodeDataReceiver() {
             btnShortage.visibility = View.INVISIBLE
             btnRejection.visibility = View.INVISIBLE
             btnDefect.isFocusable = false
-            ChoiseCorrect = 1
+            choiseCorrect = 1
             enterCountCorrect()
         }
         btnShortage.setOnClickListener {
             btnDefect.visibility = View.INVISIBLE
             btnRejection.visibility = View.INVISIBLE
             btnShortage.isFocusable = false
-            ChoiseCorrect = 2
+            choiseCorrect = 2
             enterCountCorrect()
         }
         btnRejection.setOnClickListener {
             btnDefect.visibility = View.INVISIBLE
             btnShortage.visibility = View.INVISIBLE
             btnRejection.isFocusable = false
-            ChoiseCorrect = 3
+            choiseCorrect = 3
             enterCountCorrect()
         }
-        if (SS.isMobile){
+        if (ss.isMobile){
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@Correct, ScanActivity::class.java)
@@ -153,38 +153,38 @@ class Correct : BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String) {
-        if (countCorrect < EnterCount) {
-            if (codeId == BarcodeId) {//проверим DataMatrix ли пришедший код
+        if (countCorrect < enterCount) {
+            if (codeId == barcodeId) {//проверим DataMatrix ли пришедший код
                 //проверим, был ли уже принят этот товар с маркировкой
-                var testBatcode = Barcode.replace("'","''")
+                val testBatcode = Barcode.replace("'","''")
                 var textQuery =
                     "SELECT \$Спр.МаркировкаТовара.Товар, \$Спр.МаркировкаТовара.ДокОтгрузки, \$Спр.МаркировкаТовара.ФлагОтгрузки " +
                             "FROM \$Спр.МаркировкаТовара " +
                             "WHERE \$Спр.МаркировкаТовара.Маркировка like ('%' + SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                            "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' "
-                val dt = SS.ExecuteWithRead(textQuery) ?: return
+                            "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' "
+                val dt = ss.executeWithRead(textQuery) ?: return
                 if (dt.isEmpty()){
                     FExcStr.text = "Маркировка не найдена, либо товар уже набран/скорректирован! Отсканируйте QR - код"
                     return
                 }
-                if (dt[1][2].toInt() == 1 && dt[1][1] == SS.ExtendID(iddoc,"КонтрольНабора")) {
+                if (dt[1][2].toInt() == 1 && dt[1][1] == ss.extendID(iddoc,"КонтрольНабора")) {
                     //корректируют позицию, которую только что набрали
-                    CountFact -= 1
+                    countFact -= 1
                 }
                 //найдем маркировку в справочнике МаркировкаТовара, занулим флаг
                 textQuery =
                     "UPDATE \$Спр.МаркировкаТовара " +
-                            "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '${SS.ExtendID(iddoc,"КонтрольНабора")}', \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 " +
+                            "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(iddoc,"КонтрольНабора")}', \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 " +
                             "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                            "and \$Спр.МаркировкаТовара.Товар = '${CCItem!!.ID}' "
-                if (!SS.ExecuteWithoutRead(textQuery)) {
+                            "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' "
+                if (!ss.executeWithoutRead(textQuery)) {
                     FExcStr.text = "Не удалось освободить маркировку!"
                     return
                 }
                 countCorrect += 1
-                FExcStr.text = "Корректировка принята " + CCItem!!.InvCode.trim() + " - " + countCorrect.toString() + " шт. ( Осталось: " + (EnterCount - countCorrect).toString() + ") Отсканируйте QR - код!"
-                if (countCorrect == EnterCount) { // скорректировали задданное колво позиций
-                    CompleteCorrect(ChoiseCorrect, countCorrect)
+                FExcStr.text = "Корректировка принята " + ccItem!!.InvCode.trim() + " - " + countCorrect.toString() + " шт. ( Осталось: " + (enterCount - countCorrect).toString() + ") Отсканируйте QR - код!"
+                if (countCorrect == enterCount) { // скорректировали задданное колво позиций
+                    completeCorrect(choiseCorrect, countCorrect)
                 }
             } else {
                 FExcStr.text = "Неправильный тип QR - кода"
@@ -192,7 +192,7 @@ class Correct : BarcodeDataReceiver() {
         }
     }
 
-    private fun GetItemAndDocSet(): Boolean {
+    private fun getItemAndDocSet(): Boolean {
         var textQuery =
             "DECLARE @curdate DateTime; " +
                     "SELECT @curdate = DATEADD(DAY, 1 - DAY(curdate), curdate) FROM _1ssystem (nolock); " +
@@ -263,14 +263,14 @@ class Correct : BarcodeDataReceiver() {
                     "order by " +
                     "DocCCHead.\$КонтрольНабора.Сектор , Sections.\$Спр.Секции.Маршрут , LINENO_"
 
-        textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID())
-        textQuery = SS.QuerySetParam(textQuery, "Warehouse", MainWarehouse)
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", iddoc)
-        textQuery = SS.QuerySetParam(textQuery, "AddressID", AddressID)
-        val dataTable = SS.ExecuteWithRead(textQuery) ?: return false
+        textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
+        textQuery = ss.querySetParam(textQuery, "Warehouse", mainWarehouse)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        textQuery = ss.querySetParam(textQuery, "iddoc", iddoc)
+        textQuery = ss.querySetParam(textQuery, "AddressID", addressID)
+        val dataTable = ss.executeWithRead(textQuery) ?: return false
 
-        CCItem = Model.StructItemSet(
+        ccItem = Model.StructItemSet(
             dataTable[1][0],                            //ID
             dataTable[1][3],                            //InvCode
             dataTable[1][2].trim(),                     //Name
@@ -287,7 +287,7 @@ class Correct : BarcodeDataReceiver() {
             1                                 //OKEI2Coef
         )
 
-        DocSet = Model.StrictDoc(
+        docSet = Model.StrictDoc(
             dataTable[1][10],                           //ID
             dataTable[1][18].toInt(),                   //SelfRemovel
             "",                                   //View
@@ -305,19 +305,19 @@ class Correct : BarcodeDataReceiver() {
 
     }
 
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?) {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?) {
 
         // нажали назад, вернемся на форму набора
         if (keyCode == 4) {
-            if (ChoiseCorrect == 0) {
+            if (choiseCorrect == 0) {
                 FExcStr.text = ""
                 val setInitialization = Intent(this, SetInitialization::class.java)
                 setInitialization.putExtra("ParentForm", "Correct")
-                setInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
-                setInitialization.putExtra("AddressID", CCItem!!.AdressID)
+                setInitialization.putExtra("DocSetID", docSet!!.id)  //вернемся на определенную, так как что-то еще осталось
+                setInitialization.putExtra("AddressID", ccItem!!.AdressID)
                 setInitialization.putExtra("PreviousAction", FExcStr.text.toString())
-                setInitialization.putExtra("CountFact", CountFact.toString())
-                setInitialization.putExtra("isMobile",SS.isMobile.toString())
+                setInitialization.putExtra("CountFact", countFact.toString())
+                setInitialization.putExtra("isMobile",ss.isMobile.toString())
                 startActivity(setInitialization)
                 finish()
             }
@@ -325,27 +325,27 @@ class Correct : BarcodeDataReceiver() {
 
         if (keyCode in 8..10) {
 
-            ChoiseCorrect = 0
+            choiseCorrect = 0
             // нажали 1 - брак
             if (keyCode.toString() == "8") {
                 btnShortage.visibility = View.INVISIBLE
                 btnRejection.visibility = View.INVISIBLE
                 btnDefect.isFocusable = false
-                ChoiseCorrect = 1
+                choiseCorrect = 1
             }
             // нажали 2 - недостача
             if (keyCode.toString() == "9") {
                 btnDefect.visibility = View.INVISIBLE
                 btnRejection.visibility = View.INVISIBLE
                 btnShortage.isFocusable = false
-                ChoiseCorrect = 2
+                choiseCorrect = 2
             }
             // нажали 3 - отказ
             if (keyCode.toString() == "10") {
                 btnDefect.visibility = View.INVISIBLE
                 btnShortage.visibility = View.INVISIBLE
                 btnRejection.isFocusable = false
-                ChoiseCorrect = 3
+                choiseCorrect = 3
             }
             enterCountCorrect()
         }
@@ -356,18 +356,18 @@ class Correct : BarcodeDataReceiver() {
         FExcStr.text = "Укажите количество в штуках"
         enterCountCorrect.setOnKeyListener { v: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                if (SS.isMobile){  //спрячем клаву
+                if (ss.isMobile){  //спрячем клаву
                     val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                     inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
                 }
                 try {
                     if (flagBtn == 0) {
-                        EnterCount = enterCountCorrect.getText().toString().toInt()
-                        if (EnterCount > CCItem!!.Count || EnterCount > (CCItem!!.Count - CountFact)) {
+                        enterCount = enterCountCorrect.text.toString().toInt()
+                        if (enterCount > ccItem!!.Count || enterCount > (ccItem!!.Count - countFact)) {
                             FExcStr.text = "Нельзя скорректировать столько! "
-                            if (EnterCount > (CCItem!!.Count - CountFact)) {
+                            if (enterCount > (ccItem!!.Count - countFact)) {
                                 FExcStr.text =
-                                    "Нельзя скорректировать столько! Возможно: " + (CCItem!!.Count - CountFact).toString() + " шт"
+                                    "Нельзя скорректировать столько! Возможно: " + (ccItem!!.Count - countFact).toString() + " шт"
                             }
                         } else {
                             //проверим есть ли маркировка
@@ -378,13 +378,13 @@ class Correct : BarcodeDataReceiver() {
                                     "INNER JOIN \$Спр.КатегорииТоваров  as Categories (nolock) " +
                                     "ON Categories.id = Product.\$Спр.Товары.Категория " +
                                     "WHERE " +
-                                    "Product.id = '${CCItem!!.ID}' and Categories.\$Спр.КатегорииТоваров.Маркировка = 1 "
-                            val dt = SS.ExecuteWithRead(textQuery)
+                                    "Product.id = '${ccItem!!.ID}' and Categories.\$Спр.КатегорииТоваров.Маркировка = 1 "
+                            val dt = ss.executeWithRead(textQuery)
 
                             //есть маркировка, пусть сканируют QR-code
                             if (dt!!.isNotEmpty()) {
                                 flagMark = 1
-                                FExcStr.text = "Отсканируйте QR - код! (Осталось: " + (EnterCount - countCorrect).toString() + " шт)"
+                                FExcStr.text = "Отсканируйте QR - код! (Осталось: " + (enterCount - countCorrect).toString() + " шт)"
                                 enterCountCorrect.visibility = View.INVISIBLE
                                 //без QR - кода можно корректировать только при недостачи
                                 if(btnShortage.isVisible) {
@@ -393,28 +393,28 @@ class Correct : BarcodeDataReceiver() {
 
                             } else {
                                 //if (countCorrect == EnterCount) {
-                                countCorrect = EnterCount
-                                CompleteCorrect(ChoiseCorrect, countCorrect)
+                                countCorrect = enterCount
+                                completeCorrect(choiseCorrect, countCorrect)
                                 // }
                             }
                         }
                     } else {
                         //нажали кн "без QR - кода "
-                        EnterCountWithoutQRCode = enterCountCorrect.getText().toString().toInt()
-                        if (EnterCountWithoutQRCode > EnterCount - countCorrect) {
+                        enterCountWithoutQRCode = enterCountCorrect.text.toString().toInt()
+                        if (enterCountWithoutQRCode > enterCount - countCorrect) {
                             FExcStr.text =
-                                "Нельзя скорректировать столько! Возможно: " + (EnterCount - countCorrect).toString() + " шт"
+                                "Нельзя скорректировать столько! Возможно: " + (enterCount - countCorrect).toString() + " шт"
 
                         } else {
                             flagBtn = 0
                             enterCountCorrect.visibility = View.INVISIBLE
-                            countWithoutQRCode += EnterCountWithoutQRCode
-                            countCorrect += EnterCountWithoutQRCode
-                            if (countCorrect == EnterCount) {
+                            countWithoutQRCode += enterCountWithoutQRCode
+                            countCorrect += enterCountWithoutQRCode
+                            if (countCorrect == enterCount) {
                                 //все позиций скорректированы, завершим корректировку
-                                CompleteCorrect(ChoiseCorrect, countCorrect)
+                                completeCorrect(choiseCorrect, countCorrect)
                             }
-                            FExcStr.text = "Корректировка принята " + CCItem!!.InvCode.trim() + " - " + countCorrect.toString() + " шт. ( Осталось: " + (EnterCount - countCorrect).toString() + ") Отсканируйте QR - код!"
+                            FExcStr.text = "Корректировка принята " + ccItem!!.InvCode.trim() + " - " + countCorrect.toString() + " шт. ( Осталось: " + (enterCount - countCorrect).toString() + ") Отсканируйте QR - код!"
                         }
                     }
 
@@ -427,7 +427,7 @@ class Correct : BarcodeDataReceiver() {
         }
     }
 
-    private fun CompleteCorrect(Choise: Int, CountCorrect: Int): Boolean {
+    private fun completeCorrect(Choise: Int, CountCorrect: Int): Boolean {
         //Заглушка, рефрешим позицию, чтобы не было проблем, если оборвется связь
 //        if (!ToModeSet(CCItem.AdressID, DocSet.ID))
 //        {
@@ -437,14 +437,14 @@ class Correct : BarcodeDataReceiver() {
 //        FCurrentMode = Mode.SetCorrect;
         //конец заглушки
 
-        if (CountCorrect <= 0 || CountCorrect > CCItem!!.Count) {
+        if (CountCorrect <= 0 || CountCorrect > ccItem!!.Count) {
             FExcStr.text = "Нельзя скорректировать столько!"
             return false
         }
 
-        var adressCode:Int
-        var correctReason: String
-        var what: String
+        val adressCode:Int
+        val correctReason: String
+        val what: String
         when (Choise) {
             1 -> {
                 adressCode = 7
@@ -501,35 +501,35 @@ class Correct : BarcodeDataReceiver() {
                     "end " +
                     "else rollback"
 
-        textQuery = SS.QuerySetParam(textQuery, "count", CCItem!!.Count - CountCorrect)
-        textQuery = SS.QuerySetParam(textQuery, "CountCorrect", CountCorrect)
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", DocSet!!.ID)
-        textQuery = SS.QuerySetParam(textQuery, "currline", CCItem!!.CurrLine)
-        textQuery = SS.QuerySetParam(textQuery, "Reason", correctReason)
-        textQuery = SS.QuerySetParam(textQuery, "AdressCode", adressCode)
+        textQuery = ss.querySetParam(textQuery, "count", ccItem!!.Count - CountCorrect)
+        textQuery = ss.querySetParam(textQuery, "CountCorrect", CountCorrect)
+        textQuery = ss.querySetParam(textQuery, "iddoc", docSet!!.id)
+        textQuery = ss.querySetParam(textQuery, "currline", ccItem!!.CurrLine)
+        textQuery = ss.querySetParam(textQuery, "Reason", correctReason)
+        textQuery = ss.querySetParam(textQuery, "AdressCode", adressCode)
 
-        if (!SS.ExecuteWithoutRead(textQuery)) {
+        if (!ss.executeWithoutRead(textQuery)) {
             return false
         }
         FExcStr.text =
-            "Корректировка принята " + CCItem!!.InvCode.trim() + " - " + CountCorrect.toString() + " шт. (" + what + ")"
+            "Корректировка принята " + ccItem!!.InvCode.trim() + " - " + CountCorrect.toString() + " шт. (" + what + ")"
 
         // переходим обратно на форму отбора и завершаем корректировку
         val setInitialization = Intent(this, SetInitialization::class.java)
-        if (CountCorrect == CCItem!!.Count) {
+        if (CountCorrect == ccItem!!.Count) {
             setInitialization.putExtra("ParentForm", "Correct")
             setInitialization.putExtra("DocSetID", "")  //скорректировали полностью
             setInitialization.putExtra("AddressID", "")
         } else {
            setInitialization.putExtra("ParentForm", "Correct")
-            setInitialization.putExtra("DocSetID", DocSet!!.ID)  //вернемся на определенную, так как что-то еще осталось
-            if (CountCorrect == CCItem!!.Count) {
+            setInitialization.putExtra("DocSetID", docSet!!.id)  //вернемся на определенную, так как что-то еще осталось
+            if (CountCorrect == ccItem!!.Count) {
                 setInitialization.putExtra("AddressID", "")
-            } else setInitialization.putExtra("AddressID", CCItem!!.AdressID)
+            } else setInitialization.putExtra("AddressID", ccItem!!.AdressID)
         }
         setInitialization.putExtra("PreviousAction", FExcStr.text.toString())
-        setInitialization.putExtra("isMobile",SS.isMobile.toString())
-        setInitialization.putExtra("CountFact", CountFact.toString())
+        setInitialization.putExtra("isMobile",ss.isMobile.toString())
+        setInitialization.putExtra("CountFact", countFact.toString())
         startActivity(setInitialization)
         finish()
 

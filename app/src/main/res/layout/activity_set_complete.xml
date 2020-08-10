@@ -65,7 +65,7 @@
         android:id="@+id/FExcStr"
         android:layout_width="275dp"
         android:layout_height="127dp"
-        android:gravity="top|left"
+        android:gravity="top|start"
         android:text="Отсканируйте принтер"
         android:textColor="#070AA0"
         android:textSize="24sp"

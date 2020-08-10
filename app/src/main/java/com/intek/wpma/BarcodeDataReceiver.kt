@@ -27,13 +27,13 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
     val EXTRA_CONTROL = "com.honeywell.aidc.action.ACTION_CONTROL_SCANNER"
     val EXTRA_SCAN = "com.honeywell.aidc.extra.EXTRA_SCAN"
 
-    val sdkVersion = Build.VERSION.SDK_INT
-    val SS: SQL1S = SQL1S
+    private val sdkVersion = Build.VERSION.SDK_INT
+    val ss: SQL1S = SQL1S
 
     //для штрих-кода типа data matrix
-    val BarcodeId = "w"
-    val ResponceTime: Int = 60 //время ожидания отклика от 1С
-    fun sendImplicitBroadcast(ctxt: Context, i: Intent) {
+    val barcodeId = "w"
+    private val responceTime: Int = 60 //время ожидания отклика от 1С
+    private fun sendImplicitBroadcast(ctxt: Context, i: Intent) {
         val pm = ctxt.packageManager
         val matches = pm.queryBroadcastReceivers(i, 0)
 
@@ -50,7 +50,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         }
     }
 
-    fun mysendBroadcast(intent: Intent) {
+    private fun mysendBroadcast(intent: Intent) {
         if (sdkVersion < 26) {
             sendBroadcast(intent)
         } else {
@@ -86,17 +86,17 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         )
     }
 
-    fun GoodDone() {
+    fun goodDone() {
         //GoodVoise()
 
     }
 
-    fun BadVoise() {
+    fun badVoise() {
         val bad = MediaPlayer.create(this, R.raw.bad)
         bad.start()
     }
 
-    fun GoodVoise() {
+    fun goodVoise() {
         val good = MediaPlayer.create(this, R.raw.good)
         good.start()
     }
@@ -107,10 +107,10 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
     /// </summary>
     /// <param name="DataMap"></param>
     /// <returns></returns>
-    fun ToSetString(DataMap: MutableMap<String, Any>): String {
+    private fun toSetString(DataMap: MutableMap<String, Any>): String {
         var result = ""
         for (pair in DataMap) {
-            result += SS.GetSynh(pair.key) + "=" + SS.ValueToQuery(pair.value) + ","
+            result += ss.getSynh(pair.key) + "=" + ss.valueToQuery(pair.value) + ","
         }
         //удаляем последнюю запятую
         if (result.isNotEmpty()) {
@@ -135,47 +135,47 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
     /// <param name="Command"></param>
     /// <param name="DataMapWrite"></param>
     /// <returns></returns>
-    fun ExecCommandNoFeedback(Command: String, DataMapWrite: MutableMap<String, Any>): Boolean {
+    fun execCommandNoFeedback(Command: String, DataMapWrite: MutableMap<String, Any>): Boolean {
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(11, 19))
         val query =
-            "UPDATE " + SS.GetSynh("Спр.СинхронизацияДанных") +
-                    " SET DESCR='" + Command + "'," + ToSetString(DataMapWrite) + (if (DataMapWrite.isEmpty()) "" else ",") +
-                    SS.GetSynh("Спр.СинхронизацияДанных.Дата") + " = '" + currentDate + "', " +
-                    SS.GetSynh("Спр.СинхронизацияДанных.Время") + " = " + currentTime + ", " +
-                    SS.GetSynh("Спр.СинхронизацияДанных.ФлагРезультата") + " = 1," +
-                    SS.GetSynh("Спр.СинхронизацияДанных.ИДТерминала") + " = '" + SS.ANDROID_ID + "'" +
-                    " WHERE ID = (SELECT TOP 1 ID FROM " + SS.GetSynh("Спр.СинхронизацияДанных") +
-                    " WHERE " + SS.GetSynh("Спр.СинхронизацияДанных.ФлагРезультата") + "=0)"
-        if (!SS.ExecuteWithoutRead(query)) {
+            "UPDATE " + ss.getSynh("Спр.СинхронизацияДанных") +
+                    " SET DESCR='" + Command + "'," + toSetString(DataMapWrite) + (if (DataMapWrite.isEmpty()) "" else ",") +
+                    ss.getSynh("Спр.СинхронизацияДанных.Дата") + " = '" + currentDate + "', " +
+                    ss.getSynh("Спр.СинхронизацияДанных.Время") + " = " + currentTime + ", " +
+                    ss.getSynh("Спр.СинхронизацияДанных.ФлагРезультата") + " = 1," +
+                    ss.getSynh("Спр.СинхронизацияДанных.ИДТерминала") + " = '" + ss.ANDROID_ID + "'" +
+                    " WHERE ID = (SELECT TOP 1 ID FROM " + ss.getSynh("Спр.СинхронизацияДанных") +
+                    " WHERE " + ss.getSynh("Спр.СинхронизацияДанных.ФлагРезультата") + "=0)"
+        if (!ss.executeWithoutRead(query)) {
             return false
         }
         return true
     }
 
-    fun ExecCommand(Command: String,DataMapWrite: MutableMap<String, Any>,FieldList: MutableList<String>,DataMapRead: MutableMap<String, Any>): MutableMap<String, Any> {
+    fun execCommand(Command: String, DataMapWrite: MutableMap<String, Any>, FieldList: MutableList<String>, DataMapRead: MutableMap<String, Any>): MutableMap<String, Any> {
         //тк в котлине нельзя переприсвоить значение переданному в фун параметру, создаю еще 1 перем
         var commandID = ""
         var beda = 0
 
         if (commandID == "") {
-            commandID = SendCommand(Command, DataMapWrite)
+            commandID = sendCommand(Command, DataMapWrite)
         }
         //Ждем выполнения или отказа
         val query =
-            "SELECT " + SS.GetSynh("Спр.СинхронизацияДанных.ФлагРезультата") + " as Flag" + (if (FieldList.size == 0) "" else "," + SS.ToFieldString(
+            "SELECT " + ss.getSynh("Спр.СинхронизацияДанных.ФлагРезультата") + " as Flag" + (if (FieldList.size == 0) "" else "," + ss.toFieldString(
                 FieldList
             )) +
-                    " FROM " + SS.GetSynh("Спр.СинхронизацияДанных") + " (nolock)" +
+                    " FROM " + ss.getSynh("Спр.СинхронизацияДанных") + " (nolock)" +
                     " WHERE ID='" + commandID + "'"
 
         var waitRobotWork = false
         val sdf = SimpleDateFormat("HH:mm:ss", Locale.US)
         var timeBegin: Int = timeStrToSeconds(sdf.format(Date()))
-        while (kotlin.math.abs(timeBegin - timeStrToSeconds(sdf.format(Date()))) < ResponceTime) {
+        while (kotlin.math.abs(timeBegin - timeStrToSeconds(sdf.format(Date()))) < responceTime) {
 
-            val dataTable = SS.ExecuteWithRead(query)
+            val dataTable = ss.executeWithRead(query)
             //Ждем выполнения или отказа
             if (dataTable == null) {
                 FExcStr.text = "Нет доступных команд! Ошибка робота!"
@@ -209,13 +209,13 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                 }
             }
         }
-        SS.ExcStr = "1C не ответила! " + (if (beda == 0) "" else " Испарений: $beda")
-        FExcStr.text = SS.ExcStr
+        ss.excStr = "1C не ответила! " + (if (beda == 0) "" else " Испарений: $beda")
+        FExcStr.text = ss.excStr
         return DataMapRead
 
     }
 
-    fun SendCommand(Command: String, DataMapWrite: MutableMap<String, Any> ): String {
+    private fun sendCommand(Command: String, DataMapWrite: MutableMap<String, Any> ): String {
         val commandID: String
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"
@@ -227,15 +227,15 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                     "SELECT TOP 1 @CommandID = ID FROM \$Спр.СинхронизацияДанных (tablockx) " +
                     "WHERE \$Спр.СинхронизацияДанных.ФлагРезультата = 0; " +
                     "UPDATE \$Спр.СинхронизацияДанных " +
-                    " SET DESCR='" + Command + "'," + ToSetString(DataMapWrite) + (if (DataMapWrite.isEmpty()) "" else ",") +
+                    " SET DESCR='" + Command + "'," + toSetString(DataMapWrite) + (if (DataMapWrite.isEmpty()) "" else ",") +
                     "\$Спр.СинхронизацияДанных.Дата = '" + currentDate + "', " +
                     "\$Спр.СинхронизацияДанных.Время  = " + currentTime + ", " +
                     "\$Спр.СинхронизацияДанных.ФлагРезультата = 1," +
-                    "\$Спр.СинхронизацияДанных.ИДТерминала = '${SS.ANDROID_ID}'" +
+                    "\$Спр.СинхронизацияДанных.ИДТерминала = '${ss.ANDROID_ID}'" +
                     " WHERE ID=@CommandID; " +
                     " SELECT @@rowcount as Rows, @CommandID as CommandID; " +
                     "COMMIT TRAN;"
-        val dataTable = SS.ExecuteWithReadNew(textQuery)
+        val dataTable = ss.executeWithReadNew(textQuery)
         if (dataTable == null) {
             FExcStr.text = "Нет доступных команд! Ошибка робота!"
         }
@@ -243,16 +243,16 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         return commandID
     }
 
-    fun IBS_Inicialization(EmployerID: String): Boolean {
+    fun ibsInicialization(EmployerID: String): Boolean {
         var textQuery =
             "set nocount on; " +
                     "declare @id bigint; " +
                     "exec IBS_Inicialize_with_DeviceID_new :Employer, :HostName, :DeviceID, @id output; " +
                     "select @id as ID;"
-        textQuery = SS.QuerySetParam(textQuery, "Employer", EmployerID)
-        textQuery = SS.QuerySetParam(textQuery, "HostName", "Android")
-        textQuery = SS.QuerySetParam(textQuery, "DeviceID", SS.ANDROID_ID)
-        val dt = SS.ExecuteWithRead(textQuery) ?: return false
+        textQuery = ss.querySetParam(textQuery, "Employer", EmployerID)
+        textQuery = ss.querySetParam(textQuery, "HostName", "Android")
+        textQuery = ss.querySetParam(textQuery, "DeviceID", ss.ANDROID_ID)
+        val dt = ss.executeWithRead(textQuery) ?: return false
         if (dt.isEmpty()) {
             return false
         }
@@ -260,37 +260,37 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
 
     }
 
-    fun LockoutDoc(IDDoc: String): Boolean {
-        return IBS_Lockuot("int_doc_$IDDoc")
+    fun lockoutDoc(IDDoc: String): Boolean {
+        return ibsLockuot("int_doc_$IDDoc")
     }
 
-    fun IBS_Lockuot(BlockText: String): Boolean {
+    fun ibsLockuot(BlockText: String): Boolean {
         var textQuery = "exec IBS_Lockout :BlockText"
-        textQuery = SS.QuerySetParam(textQuery, "BlockText", BlockText)
-        if (!SS.ExecuteWithoutRead(textQuery)) {
+        textQuery = ss.querySetParam(textQuery, "BlockText", BlockText)
+        if (!ss.executeWithoutRead(textQuery)) {
             return false
         }
         return true
     }
 
-    fun LockDoc(IDDoc: String): Boolean {
-        return IBS_Lock("int_doc_$IDDoc")
+    fun lockDoc(IDDoc: String): Boolean {
+        return ibsLock("int_doc_$IDDoc")
     }
 
-    fun IBS_Lock(BlockText: String): Boolean {
+    fun ibsLock(BlockText: String): Boolean {
 
         var textQuery =
             "set nocount on; " +
                     "declare @result int; " +
                     "exec IBS_Lock :BlockText, @result output; " +
                     "select @result as result;"
-        textQuery = SS.QuerySetParam(textQuery, "BlockText", BlockText)
-        var dataTable: Array<Array<String>>? = SS.ExecuteWithRead(textQuery) ?: return false
+        textQuery = ss.querySetParam(textQuery, "BlockText", BlockText)
+        var dataTable: Array<Array<String>>? = ss.executeWithRead(textQuery) ?: return false
         if (dataTable!![1][0].toInt() > 0) {
             return true
         }
         else {
-            SS.ExcStr = "Объект заблокирован!"
+            ss.excStr = "Объект заблокирован!"
             FExcStr.text = "Объект заблокирован!" //Ответ по умолчанию
             //Покажем кто заблокировал
             textQuery =
@@ -305,12 +305,12 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                         "ON Collation.ID = Block.ProcessID " +
                         "WHERE " +
                         "left(Block.BlockText, len(:BlockText)) = :BlockText "
-            textQuery = SS.QuerySetParam(textQuery, "BlockText", BlockText)
-            dataTable = SS.ExecuteWithRead(textQuery)
+            textQuery = ss.querySetParam(textQuery, "BlockText", BlockText)
+            dataTable = ss.executeWithRead(textQuery)
             if (dataTable!!.isNotEmpty()) {
-                SS.ExcStr = "Объект заблокирован! " + dataTable[1][1] + ", " + dataTable[1][0] +
+                ss.excStr = "Объект заблокирован! " + dataTable[1][1] + ", " + dataTable[1][0] +
                         ", в " + dataTable[1][3] + " (" + dataTable[1][2] + ")"
-                FExcStr.text = SS.ExcStr
+                FExcStr.text = ss.excStr
 
             }
             return false
@@ -320,7 +320,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
     fun checkCameraHardware(context: Context): Boolean {
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+            context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
         } else {
             @Suppress("DEPRECATION") val numCameras: Int = Camera.getNumberOfCameras()
             numCameras > 0
@@ -328,7 +328,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         }
     }
 
-    fun Login(EmployerID: String): Boolean {
+    fun login(EmployerID: String): Boolean {
 //        if (!SS.UpdateProgram())
 //        {
 //            return false
@@ -337,33 +337,33 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
 //        {
 //            return false
 //        }
-        if (!IBS_Inicialization(EmployerID)) {
+        if (!ibsInicialization(EmployerID)) {
             return false
         }
 
         val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] =
-            SS.ExtendID(EmployerID, "Спр.Сотрудники")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.ANDROID_ID
-        if (!ExecCommandNoFeedback("Login", dataMapWrite)) {
+            ss.extendID(EmployerID, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = ss.ANDROID_ID
+        if (!execCommandNoFeedback("Login", dataMapWrite)) {
             return false
         }
         return true
     }
 
-    fun Logout(EmployerID: String): Boolean {
+    fun logout(EmployerID: String): Boolean {
         val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] =
-            SS.ExtendID(EmployerID, "Спр.Сотрудники")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = SS.ANDROID_ID
-        if (!ExecCommandNoFeedback("Logout", dataMapWrite)) {
+            ss.extendID(EmployerID, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = ss.ANDROID_ID
+        if (!execCommandNoFeedback("Logout", dataMapWrite)) {
             return false
         }
-        SS.ExecuteWithoutRead("exec IBS_Finalize")
+        ss.executeWithoutRead("exec IBS_Finalize")
         return true
     }
 
-    fun IsMarkProduct(ItemID: String): Boolean {
+    fun isMarkProduct(ItemID: String): Boolean {
         val textQuery =
             "SELECT " +
                     "Product.\$Спр.Товары.ИнвКод as ИнвКод , Product.descr as Name , Product.\$Спр.Товары.Категория as Категория " +
@@ -374,14 +374,14 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                     "WHERE " +
                     "Product.id = '${ItemID}' and Categories.\$Спр.КатегорииТоваров.Маркировка = 1 "
 
-        val dt = SS.ExecuteWithReadNew(textQuery) ?: return false
+        val dt = ss.executeWithReadNew(textQuery) ?: return false
         return dt.isNotEmpty()
     }
 
-    fun CheckOrder():String {
+    fun checkOrder():String {
         val result = "Menu"
         //ЗАДАНИЕ СПУСКА
-        if (SS.FEmployer.CanDown) {
+        if (ss.FEmployer.canDown) {
             var textQuery =
             "select top 1 " +
                     "Ref.id " +
@@ -392,15 +392,15 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                     "and not Ref.\$Спр.МестаПогрузки.Дата40 = :EmptyDate " +
                     "and not Ref.\$Спр.МестаПогрузки.Адрес3 = :EmptyID " +
                     "and Ref.\$Спр.МестаПогрузки.Дата5 = :EmptyDate "
-            textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
-            val DT  = SS.ExecuteWithRead(textQuery) ?: return result
-            if (DT.isNotEmpty())
+            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+            val dt  = ss.executeWithRead(textQuery) ?: return result
+            if (dt.isNotEmpty())
             {
                 return "Down"
             }
         }
         //ЗАДАНИЕ СВОБОДНОГО СПУСКА/КОМПЛЕКТАЦИИ
-        if (SS.FEmployer.CanComplectation) {
+        if (ss.FEmployer.canComplectation) {
             var textQuery =
             "select top 1 " +
                     "Ref.id " +
@@ -417,15 +417,15 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                     "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
                     "and Ref.\$Спр.МестаПогрузки.Адрес7 = :EmptyID " +
                     "and not Ref.\$Спр.МестаПогрузки.Дата80 = :EmptyDate)"
-            textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
-            val DT  = SS.ExecuteWithRead(textQuery) ?: return result
-            if (DT.isNotEmpty())
+            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+            val dt  = ss.executeWithRead(textQuery) ?: return result
+            if (dt.isNotEmpty())
             {
                 return "FreeDownComplete"
             }
         }
         //ЗАДАНИЕ ОТБОРА КОМПЛЕКТАЦИИ
-        if (SS.FEmployer.CanComplectation) {
+        if (ss.FEmployer.canComplectation) {
             var textQuery =
             "select top 1 " +
                     "Ref.id " +
@@ -436,9 +436,9 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                     "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
                     "and not Ref.\$Спр.МестаПогрузки.Адрес7 = :EmptyID " +
                     "and not Ref.\$Спр.МестаПогрузки.Дата80 = :EmptyDate"
-            textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
-            val DT  = SS.ExecuteWithRead(textQuery) ?: return result
-            if (DT.isNotEmpty())
+            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+            val dt  = ss.executeWithRead(textQuery) ?: return result
+            if (dt.isNotEmpty())
             {
                 return "NewComplectation"
             }

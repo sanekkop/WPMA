@@ -1,11 +1,11 @@
 package com.intek.wpma.Ref
 
-class RefBox(): ARef() {
-    override val TypeObj: String get() = "МестаПогрузки"
+class RefBox : ARef() {
+    override val typeObj: String get() = "МестаПогрузки"
 
     init {
-        HaveName    = false
-        HaveCode    = false
+        haveName    = false
+        haveCode    = false
     }
 
 }

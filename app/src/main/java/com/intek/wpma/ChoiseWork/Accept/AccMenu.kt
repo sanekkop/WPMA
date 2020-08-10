@@ -15,10 +15,8 @@ import kotlinx.android.synthetic.main.activity_acc_menu.FExcStr
 
 class AccMenu : BarcodeDataReceiver() {
 
-    var ParentForm: String = ""
-
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
-    var Barcode: String = ""
+    var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -28,8 +26,8 @@ class AccMenu : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        reactionBarcode(Barcode)
+                        barcode = intent.getStringExtra("data")
+                        reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
                         val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
@@ -47,9 +45,9 @@ class AccMenu : BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             }
             catch (e: Exception){
                 val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
@@ -65,7 +63,7 @@ class AccMenu : BarcodeDataReceiver() {
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
     }
     companion object {
         var scanRes: String? = null
@@ -78,7 +76,7 @@ class AccMenu : BarcodeDataReceiver() {
         setContentView(R.layout.activity_acc_menu)
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
-        title = SS.title
+        title = ss.title
 
         btnBack.setOnClickListener {
             startActivity(0)
@@ -95,8 +93,8 @@ class AccMenu : BarcodeDataReceiver() {
 
     private fun reactionBarcode(Barcode: String){
         //выход из сессии
-        if (SS.FEmployer.IDD == "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)) {
-            if (!Logout(SS.FEmployer.ID)) {
+        if (ss.FEmployer.idd == "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)) {
+            if (!logout(ss.FEmployer.id)) {
                 FExcStr.text = "Ошибка выхода из системы!"
                 return
             }
@@ -108,9 +106,9 @@ class AccMenu : BarcodeDataReceiver() {
         }
     }
 
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?):Boolean {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
-        val key = SS.helper.WhatInt(keyCode)
+        val key = ss.helper.whatInt(keyCode)
         if (key in 0..9) {
             //нажали 0
             startActivity(key)

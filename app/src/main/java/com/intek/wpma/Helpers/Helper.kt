@@ -6,52 +6,52 @@ import java.util.*
 
 class Helper {
 
-    fun SuckDigits(Str:String):String    {
-        val Numbers  = "01234567890"
-        var result   = "";
+    fun suckDigits(Str:String):String    {
+        val numbers  = "01234567890"
+        var result   = ""
         var str = Str
-        while (str.length > 0)
+        while (str.isNotEmpty())
         {
-            if (Numbers.indexOf(str.substring(0, 1)) != -1)
+            if (numbers.indexOf(str.substring(0, 1)) != -1)
             {
-                result += str.substring(0, 1);
+                result += str.substring(0, 1)
             }
-            str = str.substring(1);
+            str = str.substring(1)
         }
         return result
     }
 
-    fun GetShortFIO(FIO:String):String    {
+    fun getShortFIO(FIO:String):String    {
         var result = ""
-        var fio = FIO.trim()
+        val fio = FIO.trim()
         var space = false
         var surname = false
-        for (i in 0..fio.length-1)
+        for (i in fio.indices)
         {
-            var ch = fio.substring(i, i+1);
+            val ch = fio.substring(i, i+1)
             if (!surname)
             {
                 result += ch
             }
             if (space)
             {
-                result += ch + "."
+                result += "$ch."
             }
             surname = if (ch == " ") true else surname
             space = ch == " "
         }
-        return result;
+        return result
     }
 
     fun timeToString(sec : Any) : String {
         sec as Int
-        val Hours = sec / 3600
-        val Minutes = (sec -(Hours * 3600)) / 60
-        return if (Hours < 10) "0" + "$Hours" else {"$Hours" } + ":" +  if (Minutes < 10) "0" + "$Minutes" else "$Minutes"
+        val hours = sec / 3600
+        val minutes = (sec -(hours * 3600)) / 60
+        return if (hours < 10) "0$hours" else {"$hours" } + ":" +  if (minutes < 10) "0$minutes" else "$minutes"
     }
 
-    fun ShortDate(dat : Any) : String {
-        val datFormat:SimpleDateFormat  = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+    fun shortDate(dat : Any) : String {
+        val datFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
         val date2 = datFormat.parse(dat.toString())
 
        // return "(" +  date2.date.toString() + "." + (date2.month + 1).toString() + ")"
@@ -61,86 +61,82 @@ class Helper {
         else { (date2.month + 1).toString() } + ")"
     }
 
-    fun GetIDD(Barcode:String):String    {
-        var IDD = ""
-        if (Barcode.length == 18)
-            IDD = "9999" + Barcode.substring(5, 18)
+    private fun getIDD(Barcode:String):String    {
+        var idd = ""
+        idd = if (Barcode.length == 18)
+            "9999" + Barcode.substring(5, 18)
         else //13 symbols
-            IDD = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
+            "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
-        return IDD;
+        return idd
     }
 
-    fun DisassembleBarcode (Barcode: String): MutableMap<String,String>    {
-        var bigInteger: BigInteger // для перевода в др сс
-        var result: MutableMap<String,String>  = mutableMapOf()
+    fun disassembleBarcode (Barcode: String): MutableMap<String,String>    {
+        val bigInteger: BigInteger // для перевода в др сс
+        val result: MutableMap<String,String>  = mutableMapOf()
         result["Type"]  = "999"    //Код ошибки
-        if (Barcode.length == 18)
-        {
-            result["Type"]  = "118"
-            result["IDD"]   = GetIDD(Barcode)
-        }
-        else if (Barcode.length == 13)
-        {
-            if (Barcode.substring(0, 4) == "2599")
-            {
-                result["Type"] = "6"
-                //В следующих 8 разрядах - закодированный ИД справочника
-                bigInteger = Barcode.substring(4, 12).toBigInteger()
-                var encodedID: String   = bigInteger.toString(36)
-                encodedID = "      $encodedID"
-                encodedID = encodedID.substring(encodedID.length - 6) + "   "
-                result["ID"] = encodedID.toUpperCase()
+        when (Barcode.length) {
+            18 -> {
+                result["Type"]  = "118"
+                result["IDD"]   = getIDD(Barcode)
             }
-            else if (Barcode.substring(0, 9) == "259000000")
-            {
-                result["Type"]  = "part"
-                result["count"] = Barcode.substring(9, 12)
-            }
-            else if (Barcode.substring(0, 4) == "2580")
-            {
-                result["Type"] = "pallete"
-                result["number"] = Barcode.substring(4, 12)
-            }
-            else
-            {
-                result["Type"] = "113"
-                result["IDD"] = GetIDD(Barcode)
-            }
-        }
-        else
-        {
-            //128-Code (поехали, будем образать задние разряды полсе их обработки
-            try{
-            bigInteger = Barcode.toBigInteger()
-            var firstChange: String   = bigInteger.toString(10)
-            var binaryBar: String = "00000" + firstChange.toBigInteger().toString(2)
-            //Последние пять разрядов - тип
-            val type: String = binaryBar.substring(binaryBar.length - 6).toBigInteger().toString(10).toString()
-            if (type == "5")
-            {
-                result["Type"]      = type
-                //В следующие 34 разряда - закодированный ИДД документа
-                binaryBar              = binaryBar.substring(0, binaryBar.length - 6)
-                var encodedIDD: String = binaryBar.substring(binaryBar.length - 34).toBigInteger().toString(10).toString()
-                encodedIDD          = "000000000$encodedIDD"
-                encodedIDD          = encodedIDD.substring(encodedIDD.length - 10) //получаем 10 правых символов
-                result["IDD"]       = "99990" + encodedIDD.substring(0, 2) + "00" + encodedIDD.substring(2)
-                //В следующих 20 разрядах кроется строка документа (вот так с запасом взял)
-                binaryBar           = "0000000000000000000" + binaryBar.substring(0, binaryBar.length - 34)
-                result["LineNo"]    = binaryBar.substring(binaryBar.length - 20).toBigInteger().toString(10).toString()
+            13 -> {
+                when {
+                    Barcode.substring(0, 4) == "2599" -> {
+                        result["Type"] = "6"
+                        //В следующих 8 разрядах - закодированный ИД справочника
+                        bigInteger = Barcode.substring(4, 12).toBigInteger()
+                        var encodedID: String   = bigInteger.toString(36)
+                        encodedID = "      $encodedID"
+                        encodedID = encodedID.substring(encodedID.length - 6) + "   "
+                        result["ID"] = encodedID.toUpperCase(Locale.ROOT)
+                    }
+                    Barcode.substring(0, 9) == "259000000" -> {
+                        result["Type"]  = "part"
+                        result["count"] = Barcode.substring(9, 12)
+                    }
+                    Barcode.substring(0, 4) == "2580" -> {
+                        result["Type"] = "pallete"
+                        result["number"] = Barcode.substring(4, 12)
+                    }
+                    else -> {
+                        result["Type"] = "113"
+                        result["IDD"] = getIDD(Barcode)
+                    }
                 }
             }
-            catch (e: Exception){
-                result["IDD"] = ""
+            else -> {
+                //128-Code (поехали, будем образать задние разряды полсе их обработки
+                try{
+                    bigInteger = Barcode.toBigInteger()
+                    val firstChange: String   = bigInteger.toString(10)
+                    var binaryBar: String = "00000" + firstChange.toBigInteger().toString(2)
+                    //Последние пять разрядов - тип
+                    val type: String = binaryBar.substring(binaryBar.length - 6).toBigInteger().toString(10).toString()
+                    if (type == "5") {
+                        result["Type"]      = type
+                        //В следующие 34 разряда - закодированный ИДД документа
+                        binaryBar              = binaryBar.substring(0, binaryBar.length - 6)
+                        var encodedIDD: String = binaryBar.substring(binaryBar.length - 34).toBigInteger().toString(10).toString()
+                        encodedIDD          = "000000000$encodedIDD"
+                        encodedIDD          = encodedIDD.substring(encodedIDD.length - 10) //получаем 10 правых символов
+                        result["IDD"]       = "99990" + encodedIDD.substring(0, 2) + "00" + encodedIDD.substring(2)
+                        //В следующих 20 разрядах кроется строка документа (вот так с запасом взял)
+                        binaryBar           = "0000000000000000000" + binaryBar.substring(0, binaryBar.length - 34)
+                        result["LineNo"]    = binaryBar.substring(binaryBar.length - 20).toBigInteger().toString(10).toString()
+                    }
+                }
+                catch (e: Exception){
+                    result["IDD"] = ""
+                }
             }
         }
         return result
     }
 
-    fun ControlSymbolEAN(strBarcode:String):String    {
-        var even = 0;
-        var odd = 0;
+    fun controlSymbolEAN(strBarcode:String):String    {
+        var even = 0
+        var odd = 0
         for (i in 0..5)
         {
             even += strBarcode.substring(2 * i + 1, 2 * i + 2).toInt()
@@ -149,7 +145,7 @@ class Helper {
         return ((10 - (even * 3 + odd) % 10) % 10).toString()
     }
 
-    fun Pause(millisecond:Long)    {
+    fun pause(millisecond:Long)    {
         try {
             Thread.sleep(millisecond) //Приостанавливает поток
         }
@@ -157,45 +153,44 @@ class Helper {
         }
     }
 
-    fun StringToList(SourceStr: String, separator: String): MutableList<String>    {
-        var SourceStr = SourceStr.replace(" ", "")
-        var result: MutableList<String>
-        result = mutableListOf()
+    private fun stringToList(SourceStr: String, separator: String): MutableList<String>    {
+        var sourceStr = SourceStr.replace(" ", "")
+        val result: MutableList<String> = mutableListOf()
         while (true)
         {
-            var index: Int = SourceStr.indexOf(separator)
+            var index: Int = sourceStr.indexOf(separator)
             index = if (index == -1) {
                 0
             } else {
                 index
             }
 
-            val thispart: String = SourceStr.substring(0, index)
+            val thispart: String = sourceStr.substring(0, index)
             if (thispart.isNotEmpty())
             {
                 result.add(thispart)
             }
             if (index > 0)
             {
-                SourceStr = SourceStr.substring(index + separator.length)
+                sourceStr = sourceStr.substring(index + separator.length)
             }
             else
             {
                 break
             }
         }
-        if (SourceStr.isNotEmpty())
+        if (sourceStr.isNotEmpty())
         {
-            result.add(SourceStr)
+            result.add(sourceStr)
         }
         return result
     }
 
-    fun StringToList(SourceStr: String): MutableList<String>    {
-        return StringToList(SourceStr, ",")
+    fun stringToList(SourceStr: String): MutableList<String>    {
+        return stringToList(SourceStr, ",")
     }
 
-    fun ListToStringWithQuotes(SourceList: MutableList<String>): String    {
+    fun listToStringWithQuotes(SourceList: MutableList<String>): String    {
         var result = ""
         for (element in SourceList)
         {
@@ -205,7 +200,7 @@ class Helper {
         return result
     }
 
-    fun WhatInt(keyCode:Int):Int    {
+    fun whatInt(keyCode:Int):Int    {
         when (keyCode)
         {
             //если нажата просто цифра
@@ -223,10 +218,10 @@ class Helper {
 
 
         }
-        return -1;
+        return -1
     }
 
-    fun WhatDirection(keyCode:Int):String    {
+    fun whatDirection(keyCode:Int):String    {
         when (keyCode)
         {
             //если нажата просто цифра
@@ -238,17 +233,16 @@ class Helper {
         return "null"
     }
 
-    fun ReverseString(s:String):String    {
-        return s.reversed();
+    fun reverseString(s:String):String    {
+        return s.reversed()
     }
 
-    fun GetPictureFileName(InvCode:String):String    {
-        var invcode = InvCode.toLowerCase()
+    fun getPictureFileName(InvCode:String):String    {
+        val invcode = InvCode.toLowerCase(Locale.ROOT)
         var result = ""
         for ( i in 0.. invcode.length)
         {
-            val symbol = invcode.substring(i, i+1)
-            when (symbol)
+            when (invcode.substring(i, i+1))
             {
                 "й" -> result += "iy"
                 "ц" -> result += "cc"
@@ -296,10 +290,10 @@ class Helper {
                 "0" -> result += "0"
             }
         }
-        return result + ".gif"
+        return "$result.gif"
     }
 
-    fun IsGreenKey(Key:Int):Boolean    {
+    fun isGreenKey(Key:Int):Boolean    {
         return (Key == 1 || Key == 2 || Key == 3 || Key == 0)
     }
 

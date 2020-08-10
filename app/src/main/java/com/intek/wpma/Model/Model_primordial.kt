@@ -1,25 +1,24 @@
 package com.intek.wpma.Model
 
-import com.intek.wpma.SQL.SQL1S
 import com.intek.wpma.SQL.SQLSynchronizer
 import java.math.BigDecimal
 
 class Model : SQLSynchronizer() {
 
-    private val FOKEIUnit: String       = "     1   "
-    private val FOKEIPack: String       = "     2   "
-    private val FOKEIPackage: String    = "     E   "
-    private val FOKEIKit: String        = "     A   "
-    private val FOKEIOthers: String     = "     0   "
-    val OKEIUnit: String get() { return FOKEIUnit }
-    val OKEIPack: String get() { return FOKEIPack }
-    val OKEIPackage: String get() { return FOKEIPackage }
-    val OKEIKit: String get() { return FOKEIKit }
-    val OKEIOthers: String get() { return FOKEIOthers }
+    private val fOKEIUnit: String       = "     1   "
+    private val fOKEIPack: String       = "     2   "
+    private val fOKEIPackage: String    = "     E   "
+    private val fOKEIKit: String        = "     A   "
+    private val fOKEIOthers: String     = "     0   "
+    val okeiUnit: String get() { return fOKEIUnit }
+    val okeiPack: String get() { return fOKEIPack }
+    val okeiPackage: String get() { return fOKEIPackage }
+    val okeiKit: String get() { return fOKEIKit }
+    val okeiOthers: String get() { return fOKEIOthers }
 
     data class StrictDoc(
         // оставил только то, что используется в отборе, тк заполнить нужно сразу все поля, иначе структура не создастся
-        val ID: String,
+        val id: String,
         var SelfRemovel: Int,
         var View: String,
         var Rows: Int,

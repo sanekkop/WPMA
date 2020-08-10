@@ -2,99 +2,95 @@ package com.intek.wpma.Ref
 
 import com.intek.wpma.SQL.SQL1S
 
-abstract class ARef() {
+abstract class ARef {
 
-    protected var SS: SQL1S = SQL1S
-    protected var FID: String = ""
-    protected var FName: String = ""
-    protected var FCode: String = ""
-    protected var FIsMark: Boolean = false
+    var ss: SQL1S = SQL1S
+    var fID: String = ""
+    var fName: String = ""
+    private var fCode: String = ""
+    private var fIsMark: Boolean = false
 
-    protected var HaveName: Boolean = false
-    protected var HaveCode: Boolean = false
+    var haveName: Boolean = false
+    var haveCode: Boolean = false
 
-    private var Attributes: MutableMap<String, Any> = mutableMapOf()
+    private var attributes: MutableMap<String, Any> = mutableMapOf()
 
-    protected abstract val TypeObj: String get
+    protected abstract val typeObj: String
 
-    val ID: String get() = FID
-    val Name: String get() = FName
-    val Code: String get() = FCode
-    val Selected: Boolean get() = FID != ""
-    val IsMark: Boolean get() = FIsMark
+    val id: String get() = fID
+    val name: String get() = fName
+    val code: String get() = fCode
+    val selected: Boolean get() = fID != ""
+    val isMark: Boolean get() = fIsMark
 
 
-    private fun FoundIDDorID(IDDorID: String, ThisID: Boolean): Boolean {
-        FID = ""
-        val prefix = "Спр." + TypeObj + "."
-        var DataMap: MutableMap<String, Any> = mutableMapOf()
-        var FieldList: MutableList<String>
-        FieldList = mutableListOf()
-        FieldList.add("ID")
-        FieldList.add("ISMARK")
-        if (HaveName) {
-            FieldList.add("DESCR");
+    private fun foundIDDorID(IDDorID: String, ThisID: Boolean): Boolean {
+        fID = ""
+        val prefix = "Спр.$typeObj."
+        var dataMap: MutableMap<String, Any> = mutableMapOf()
+        val fieldList: MutableList<String> = mutableListOf()
+        fieldList.add("ID")
+        fieldList.add("ISMARK")
+        if (haveName) {
+            fieldList.add("DESCR")
         }
-        if (HaveCode) {
-            FieldList.add("CODE");
+        if (haveCode) {
+            fieldList.add("CODE")
         }
         if (!ThisID) {
-            FieldList.add(prefix + "IDD");
+            fieldList.add(prefix + "IDD")
         }
-        val ServCount: Int = FieldList.count()    //Количество сервисных полей
-        SS.AddKnownAttributes(prefix, FieldList)
-        DataMap = SS.GetSCData(IDDorID, TypeObj, FieldList, DataMap, ThisID)!!
-        FID = DataMap["ID"].toString()
-        FIsMark = (DataMap["ISMARK"].toString() == "1")
-        FCode = if (HaveCode) DataMap["CODE"].toString() else ""
-        FName = if (HaveName) DataMap["DESCR"].toString().trim() else ""
+        val servCount: Int = fieldList.count()    //Количество сервисных полей
+        ss.addKnownAttributes(prefix, fieldList)
+        dataMap = ss.getSCData(IDDorID, typeObj, fieldList, dataMap, ThisID)!!
+        fID = dataMap["ID"].toString()
+        fIsMark = (dataMap["ISMARK"].toString() == "1")
+        fCode = if (haveCode) dataMap["CODE"].toString() else ""
+        fName = if (haveName) dataMap["DESCR"].toString().trim() else ""
         //Добавляем оставшиеся поля в словарик
-        var i: Int = ServCount + 1
-        while (i < FieldList.count()) {
-            Attributes.put(
-                FieldList[i].toString().substring(prefix.length),
-                DataMap[FieldList[i]]!!
-            )
+        var i: Int = servCount + 1
+        while (i < fieldList.count()) {
+            attributes[fieldList[i].substring(prefix.length)] = dataMap[fieldList[i]]!!
             i++
         }
         return true
     }
 
-    fun FoundIDD(IDD: String): Boolean {
-        return FoundIDDorID(IDD, false);
+    fun foundIDD(IDD: String): Boolean {
+        return foundIDDorID(IDD, false)
     }
 
-    fun FoundID(ID: String): Boolean {
-        return FoundIDDorID(ID, true);
+    fun foundID(ID: String): Boolean {
+        return foundIDDorID(ID, true)
     }
 
-    fun GetAttribute(Name: String): Any {
+    fun getAttribute(Name: String): Any {
         //Классная штука ниже, но опасная, может что-то наебнуться. Неохота думать
         //if (!Selected)
         //{
         //    throw new NullReferenceException("Reference element not selected");
         //}
-        if (Attributes.containsKey(Name)) {
-            return Attributes.get(Name)!!
+        if (attributes.containsKey(Name)) {
+            return attributes[Name]!!
         }
         //Подгружаем недостающий атрибут (он добавится в карту соответствия и будет в дальнейшем подгружаться сразу)
-        var DataMap: MutableMap<String, Any> = mutableMapOf()
-        DataMap = SS.GetSCData(FID, TypeObj, Name, DataMap, true)!!
-        val result = DataMap["Спр." + TypeObj + "." + Name];
-        Attributes.put(Name, result!!)
-        return result;
+        var dataMap: MutableMap<String, Any> = mutableMapOf()
+        dataMap = ss.getSCData(fID, typeObj, Name, dataMap, true)!!
+        val result = dataMap["Спр.$typeObj.$Name"]
+        attributes[Name] = result!!
+        return result
     }
 
-    fun GetGatesProperty(name:String):RefGates    {
-        var result = RefGates()
-        val currId = GetAttribute(name).toString()
-        result.FoundID(currId);
+    fun getGatesProperty(name:String):RefGates    {
+        val result = RefGates()
+        val currId = getAttribute(name).toString()
+        result.foundID(currId)
         return result
     } // GetGatesProperty
 
-    open fun Refresh() {
-        if (Selected) {
-            FoundIDDorID(ID, true);
+    open fun refresh() {
+        if (selected) {
+            foundIDDorID(id, true)
         }
     }
 

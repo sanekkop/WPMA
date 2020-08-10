@@ -17,8 +17,8 @@ import java.util.*
 
 object SQL1S : SQLSynchronizer() {
 
-    val SynhMap: MutableMap<String, String> = mutableMapOf()       //хеш-таблица, сопоставляет имена 1С с именами SQL
-    val ExclusionFields: MutableList<String> = mutableListOf()
+    private val SynhMap: MutableMap<String, String> = mutableMapOf()       //хеш-таблица, сопоставляет имена 1С с именами SQL
+    private val ExclusionFields: MutableList<String> = mutableListOf()
     var helper: Helper = Helper()
     var terminal: String = ""
     var isMobile: Boolean = false
@@ -28,7 +28,7 @@ object SQL1S : SQLSynchronizer() {
     val Const: ConstantsDepot = ConstantsDepot
     var widthDisplay:Int = 400
     var heightDisplay:Int = 800
-    var title:String = Vers
+    var title:String = vers
     var CurrentAction: Global.ActionSet? = null
     var CurrentMode: Global.Mode? = null
 
@@ -46,9 +46,9 @@ object SQL1S : SQLSynchronizer() {
         ExclusionFields.add("DOCNO")
 
         for (curr in ExclusionFields) {
-            SynhMap.put(curr, curr)
+            SynhMap[curr] = curr
         }
-        LoadAliases()
+        loadAliases()
     }
 
     /*Функция по выполнению запроса с возвратом результата
@@ -56,26 +56,26 @@ object SQL1S : SQLSynchronizer() {
      Если не отработал запрос то возвращается null
      Если отработал то возвращается двумерный массив
      */
-    fun ExecuteWithRead(TextQuery: String): Array<Array<String>>? {
+    fun executeWithRead(TextQuery: String): Array<Array<String>>? {
         var myArr: Array<Array<String>> = emptyArray()
-        if (!ExecuteQuery(QueryParser(TextQuery))) {
+        if (!executeQuery(queryParser(TextQuery))) {
             return null
         }
-        if (MyReader == null) {
+        if (myReader == null) {
             return null
         }
-        while (MyReader!!.next()) {
+        while (myReader!!.next()) {
             var i = 1
             var columnArray: Array<String> = emptyArray()
             var rowsArray: Array<String> = emptyArray()
-            while (i <= MyReader!!.metaData.columnCount) {
+            while (i <= myReader!!.metaData.columnCount) {
                 //заполним наименования колонок
-                columnArray += MyReader!!.metaData.getColumnName(i)
+                columnArray += myReader!!.metaData.getColumnName(i)
                 //а теперь значение
-                rowsArray += if (MyReader!!.getString(MyReader!!.metaData.getColumnName(i)) == null) {
+                rowsArray += if (myReader!!.getString(myReader!!.metaData.getColumnName(i)) == null) {
                     "null"
                 } else
-                    MyReader!!.getString(MyReader!!.metaData.getColumnName(i))
+                    myReader!!.getString(myReader!!.metaData.getColumnName(i))
                 i++
             }
             if (myArr.isEmpty()) {
@@ -85,37 +85,34 @@ object SQL1S : SQLSynchronizer() {
 
         }
 
-        MyReader!!.close()
+        myReader!!.close()
 
         return myArr
     }
 
-    fun ExecuteWithReadNew(TextQuery: String): MutableList<MutableMap<String, String>>? {
+    fun executeWithReadNew(TextQuery: String): MutableList<MutableMap<String, String>>? {
         val myArr: MutableList<MutableMap<String, String>> = mutableListOf()
-        if (!ExecuteQuery(QueryParser(TextQuery))) {
+        if (!executeQuery(queryParser(TextQuery))) {
             return null
         }
-        if (MyReader == null) {
+        if (myReader == null) {
             return null
         }
-        while (MyReader!!.next()) {
+        while (myReader!!.next()) {
             var i = 1
             val columnArray: MutableMap<String, String> = mutableMapOf()
-            while (i <= MyReader!!.metaData.columnCount) {
+            while (i <= myReader!!.metaData.columnCount) {
                 //заполним наименования колонок
-                columnArray.put(
-                    MyReader!!.metaData.getColumnName(i),
-                    if (MyReader!!.getString(MyReader!!.metaData.getColumnName(i)) == null) {
-                        "null"
-                    } else
-                        MyReader!!.getString(MyReader!!.metaData.getColumnName(i))
-                )
+                columnArray[myReader!!.metaData.getColumnName(i)] = if (myReader!!.getString(myReader!!.metaData.getColumnName(i)) == null) {
+                    "null"
+                } else
+                    myReader!!.getString(myReader!!.metaData.getColumnName(i))
                 i++
             }
             myArr.add(columnArray)
 
         }
-        MyReader!!.close()
+        myReader!!.close()
 
         return myArr
     }
@@ -125,17 +122,17 @@ object SQL1S : SQLSynchronizer() {
          Если не отработал запрос то возвращается false
          Если отработал то возвращается true
     */
-    fun ExecuteWithoutRead(TextQuery: String): Boolean {
-        return ExecuteQuery(QueryParser(TextQuery), false)
+    fun executeWithoutRead(TextQuery: String): Boolean {
+        return executeQuery(queryParser(TextQuery), false)
     }
 
     //Возвращает пустой ID
-    fun GetVoidID(): String {
+    fun getVoidID(): String {
         return "     0   "
     }
 
     //Пустая дата
-    fun GetVoidDate(): String {
+    fun getVoidDate(): String {
         //return "17530101"
         //return "1/1/1753 12:00:00 AM"
         return "17530101 00:00:00.000"
@@ -152,23 +149,27 @@ object SQL1S : SQLSynchronizer() {
     <param name="Value"></param>
     Устанавливает значение параметра в запросе
      */
-    fun QuerySetParam(TextQuery: String, NameParam: String, Value: Any): String {
-        return TextQuery.replace(":$NameParam", ValueToQuery(Value))
+    fun querySetParam(TextQuery: String, NameParam: String, Value: Any): String {
+        return TextQuery.replace(":$NameParam", valueToQuery(Value))
     }
 
     /*
      <param name="Value"></param>
 
      */
-    fun ValueToQuery(Value: Any): String {
+    fun valueToQuery(Value: Any): String {
         var result = Value.toString()
 
-        if (Value is Int) {
-            result = Value.toString()
-        } else if (Value is DateTime) {
-            result = "'" + DateTimeToSQL((Value)) + "'"
-        } else if (Value is String) {
-            result = "'$Value'"
+        when (Value) {
+            is Int -> {
+                result = Value.toString()
+            }
+            is DateTime -> {
+                result = "'" + dateTimeToSQL((Value)) + "'"
+            }
+            is String -> {
+                result = "'$Value'"
+            }
         }
 
 
@@ -190,51 +191,51 @@ object SQL1S : SQLSynchronizer() {
     /// </summary>
     /// <param name="TextQuery"></param>
     /// <returns></returns>
-    fun QueryParser(TextQuery: String): String {
+    private fun queryParser(TextQuery: String): String {
 
         var result = TextQuery
-        result = QuerySetParam(result, "EmptyDate", GetVoidDate())
-        result = QuerySetParam(result, "EmptyID", GetVoidID())
+        result = querySetParam(result, "EmptyDate", getVoidDate())
+        result = querySetParam(result, "EmptyID", getVoidID())
         val sdf = SimpleDateFormat("yyyyMMdd HH:mm:ss", Locale.US)
         val currentDate = sdf.format(Date()).substring(0, 8) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(9, 17))
-        result = QuerySetParam(result, "NowDate", currentDate)
-        result = QuerySetParam(result, "NowTime", currentTime)
+        result = querySetParam(result, "NowDate", currentDate)
+        result = querySetParam(result, "NowTime", currentTime)
         var curI = result.indexOf("$")
         while (curI != -1) {
             val endI = result.substring(curI + 1).indexOf(' ')
             val part = result.substring(curI + 1, curI + 1 + endI)
-            result = result.replace("$" + part + " ", GetSynh(part) + " ")
+            result = result.replace("$$part ", getSynh(part) + " ")
             curI = result.indexOf('$')
         }
         return result
     }
 
-    fun LoadAliases(): Boolean {
+    private fun loadAliases(): Boolean {
         //Начальная загрузка псевдонимов. Лениво делать список...
         //в принципе метод - нахуй не нужный.
-        val DefaultAlies: MutableList<String> = mutableListOf()
+        val defaultAlies: MutableList<String> = mutableListOf()
         //Таблица синхронизации имен
-        DefaultAlies.add("Константа.ТоварДляЕдиниц")
-        DefaultAlies.add("Константа.ОснСклад")
+        defaultAlies.add("Константа.ТоварДляЕдиниц")
+        defaultAlies.add("Константа.ОснСклад")
 
         var result = "'"
         var i = 0
-        while (i < DefaultAlies.count()) {
-            result += DefaultAlies[i] + "','"
+        while (i < defaultAlies.count()) {
+            result += defaultAlies[i] + "','"
             i++
         }
         //удаляем последнюю запятую и ковычки "','"
         result = result.substring(0, result.length - 2)
 
         val textQuery =
-            "select Name1C as Name1C, NameSQL as NameSQL from RT_Aliases (nolock) where Name1C in (" + result + ")"
-        val dataTable = ExecuteWithRead(textQuery)
+            "select Name1C as Name1C, NameSQL as NameSQL from RT_Aliases (nolock) where Name1C in ($result)"
+        val dataTable = executeWithRead(textQuery)
         if (dataTable!!.isNotEmpty()) {
             //если есть незаконченные задания по отбору
 
             for (dr in dataTable) {
-                SynhMap.put(dr[0], dr[1])
+                SynhMap[dr[0]] = dr[1]
             }
         } else {
             return false
@@ -243,12 +244,12 @@ object SQL1S : SQLSynchronizer() {
         return true
     }
 
-    fun AddKnownAttributes(parent: String, AttributeList: MutableList<String>) {
+    fun addKnownAttributes(parent: String, AttributeList: MutableList<String>) {
         for (pair in SynhMap) {
             if (pair.key.length >= parent.length) {
                 if (pair.key.substring(0, parent.length) == parent) {
                     val part: String = pair.key.substring(parent.length)
-                    if (part.length > 0) {
+                    if (part.isNotEmpty()) {
                         AttributeList.add(pair.key)
                     }
                 }
@@ -256,18 +257,18 @@ object SQL1S : SQLSynchronizer() {
         }
     }
 
-    fun GetSynh(Alias: String): String {
+    fun getSynh(Alias: String): String {
         if (SynhMap.containsKey(Alias)) {
             return SynhMap[Alias].toString()
         }
         var textQuery =
             "select top 1 NameSQL as NameSQL from RT_Aliases (nolock) where Name1C = :Alias"
-        textQuery = QuerySetParam(textQuery, "Alias", Alias)
+        textQuery = querySetParam(textQuery, "Alias", Alias)
         val dt: Array<Array<String>>
-        if (ExecuteWithRead(textQuery) == null) {
+        if (executeWithRead(textQuery) == null) {
             throw Exception("Cant connect for load this KEY $Alias!")
         } else {
-            dt = ExecuteWithRead(textQuery)!!
+            dt = executeWithRead(textQuery)!!
         }
         if (dt.isEmpty()) {
             throw Exception("Cant find this KEY $Alias!")
@@ -314,27 +315,27 @@ object SQL1S : SQLSynchronizer() {
                  /// <param name="TextQuery"></param>
                  /// <returns></returns>
                  */
-    fun ExecuteScalar(textQuery:String): String? {
+    fun executeScalar(textQuery:String): String? {
         var result: String? = null
 
-        if (!ExecuteQuery(QueryParser(textQuery))) {
+        if (!executeQuery(queryParser(textQuery))) {
             return result
         }
-        if (MyReader == null) {
+        if (myReader == null) {
             return result
         }
-        if (MyReader!!.next()) {
-            result = MyReader!!.getString(MyReader!!.metaData.getColumnName(1))
+        if (myReader!!.next()) {
+            result = myReader!!.getString(myReader!!.metaData.getColumnName(1))
         }
 
-        MyReader!!.close()
+        myReader!!.close()
 
         return result
 
     } // ExecuteScalar
 
      /// Преобразует имя поля или таблицы SQL в имя 1С
-    fun To1CName(SQLName: String): String {
+    fun to1CName(SQLName: String): String {
          val result: String
          for (pair in SynhMap) {
             if (pair.value == SQLName) {
@@ -346,21 +347,19 @@ object SQL1S : SQLSynchronizer() {
         //нихуя не найдено, подсосем из базы!
         var textQuery =
             "select top 1 Name1C as Name1C from RT_Aliases (nolock) where NameSQL = :SQLName"
-        textQuery = QuerySetParam(textQuery, "SQLName", SQLName)
-        val DT = ExecuteWithReadNew(textQuery)
-        if (DT == null) {
-            throw Exception("Cant connect for load this SQL name! Sheet!")
-        }
-        if (DT.isEmpty()) {
+        textQuery = querySetParam(textQuery, "SQLName", SQLName)
+        val dt = executeWithReadNew(textQuery)
+            ?: throw Exception("Cant connect for load this SQL name! Sheet!")
+         if (dt.isEmpty()) {
             throw Exception("Cant find this SQL name! Sheet!")
         }
-        result = DT[0]["Name1C"].toString().trim()
+        result = dt[0]["Name1C"].toString().trim()
         SynhMap[result] = SQLName   //add in dictionary
         return result
     }
 
     /// Преобразует дату из DateTime в формат в котором будем писать его в SQL, вот он: YYYY-DD-MM 05:20:00.000
-    fun DateTimeToSQL(DateTime: DateTime): String {
+    private fun dateTimeToSQL(DateTime: DateTime): String {
         // из-за отсутствия типа DateTime в kotlin функция нуждается в отладке
         //YYYYMMDD hh:mm:ss.nnn
         //return DateTime.Year.ToString() +
@@ -371,7 +370,7 @@ object SQL1S : SQLSynchronizer() {
 
     }
 
-    fun SQLToDateTime(StrDateTime: String): String {
+    private fun sqlToDateTime(StrDateTime: String): String {
         //Пока что без времени
         return StrDateTime.substring(0, 4) + "." +
                 StrDateTime.substring(4, 6) + "." +
@@ -379,15 +378,15 @@ object SQL1S : SQLSynchronizer() {
     }
 
     /// Get extend ID, include ID and 4 symbols determining the type (in 36-dimension system)
-    fun ExtendID(ID: String, Type: String): String {
+    fun extendID(ID: String, Type: String): String {
         val bigInteger: BigInteger
-        if (GetSynh(Type).substring(0, 2) == "SC") {
-            bigInteger = GetSynh(Type).substring(2, GetSynh(Type).length).toBigInteger()
+        return if (getSynh(Type).substring(0, 2) == "SC") {
+            bigInteger = getSynh(Type).substring(2, getSynh(Type).length).toBigInteger()
             val result = bigInteger.toString(36).toUpperCase(Locale.ROOT).padStart(4) + ID
-            return result
+            result
         } else {
-            bigInteger = GetSynh(Type).toBigInteger()
-            return bigInteger.toString(36).toUpperCase(Locale.ROOT).padStart(4) + ID
+            bigInteger = getSynh(Type).toBigInteger()
+            bigInteger.toString(36).toUpperCase(Locale.ROOT).padStart(4) + ID
         }
     }
 
@@ -426,11 +425,11 @@ object SQL1S : SQLSynchronizer() {
          return GetColumns(table_name, out columns, null);
      } // GetCollumns
      */
-    fun IsVoidDate(DateTime: String): Boolean {
+    fun isVoidDate(DateTime: String): Boolean {
         //Тут можно и по красивей написать...
-        if (DateTime == "1753-01-01 00:00:00.0") {
-            return true
-        } else return DateTime == "17530101 00:00:00.000"
+        return if (DateTime == "1753-01-01 00:00:00.0") {
+            true
+        } else DateTime == "17530101 00:00:00.000"
     }
 
     /*
@@ -449,10 +448,10 @@ object SQL1S : SQLSynchronizer() {
      /// <param name="DataList"></param>
      /// <returns></returns>
      */
-    fun ToFieldString(DataList: MutableList<String>): String {
+    fun toFieldString(DataList: MutableList<String>): String {
         var result = ""
         for (item in DataList) {
-            result += GetSynh(item) + " as " + (if ("." in item) item.replace(
+            result += getSynh(item) + " as " + (if ("." in item) item.replace(
                 ".",
                 ""
             ) else item.trim()) + " ,"
@@ -477,131 +476,127 @@ object SQL1S : SQLSynchronizer() {
                  */
     //пока переписал эту функцию принимающую FieldList: String вместо FieldList: MutableList<String>
     // чтобы это исправить нужно поднять функцию StringToList из класса Helper
-    fun GetSCData(
+    fun getSCData(
         IDDorID: String,
         SCType: String,
         FieldList: MutableList<String>,
         DataMap: MutableMap<String, Any>,
         ThisID: Boolean
     ): MutableMap<String, Any>? {
-        val scType = "Спр." + SCType
+        val scType = "Спр.$SCType"
 
-        if (!ExecuteQuery(
-                "SELECT " + ToFieldString(FieldList) + " FROM " + GetSynh(scType) + " (nolock)" +
+        if (!executeQuery(
+                "SELECT " + toFieldString(FieldList) + " FROM " + getSynh(scType) + " (nolock)" +
                         " WHERE " + (if (ThisID) {
                     "ID"
                 } else {
-                    GetSynh("$scType.IDD")
+                    getSynh("$scType.IDD")
                 } + "='" + IDDorID + "'")
             )
         ) {
             return null
         }
 
-        if (MyReader!!.next()) {
+        return if (myReader!!.next()) {
             var i = 1
-            while (i <= MyReader!!.metaData.columnCount) {
-                DataMap.put(
-                    FieldList.get(i - 1),
-                    MyReader!!.getString(MyReader!!.metaData.getColumnName(i))
-                )
+            while (i <= myReader!!.metaData.columnCount) {
+                DataMap[FieldList[i - 1]] = myReader!!.getString(myReader!!.metaData.getColumnName(i))
                 i++
             }
-            MyReader!!.close()
-            return DataMap
+            myReader!!.close()
+            DataMap
         } else {
-            MyReader!!.close()
-            FExcStr = "Элемент справочника не найден!"
-            return null
+            myReader!!.close()
+            fExcStr = "Элемент справочника не найден!"
+            null
         }
     }
 
-    fun GetSCData(
+    fun getSCData(
         IDD: String,
         SCType: String,
         ListStr: String,
         DataMap: MutableMap<String, Any>,
         ThisID: Boolean
     ): MutableMap<String, Any>? {
-        val FieldList: MutableList<String>
-        FieldList = helper.StringToList(ListStr)
+        val fieldList: MutableList<String> = helper.stringToList(ListStr)
         var i = 0
-        while (i < FieldList.count()) {
-            var curr = FieldList[i]
+        while (i < fieldList.count()) {
+            var curr = fieldList[i]
             if (!ExclusionFields.contains(curr)) {
-                curr = "Спр." + SCType + "." + curr
-                FieldList.removeAt(i)
-                FieldList.add(i, curr)
+                curr = "Спр.$SCType.$curr"
+                fieldList.removeAt(i)
+                fieldList.add(i, curr)
             }
             i++
         }
-        return GetSCData(IDD, SCType, FieldList, DataMap, ThisID)
+        return getSCData(IDD, SCType, fieldList, DataMap, ThisID)
     }
 
-    fun IsSC(IDD: String, SCType: String): Boolean {
+    fun isSC(IDD: String, SCType: String): Boolean {
         if (SCType == "Сотрудники") {
             val textQuery =
                 "SELECT ID FROM SC838 (nolock) WHERE SP1933='$IDD'"
-            val dataTable = ExecuteWithRead(textQuery)
+            val dataTable = executeWithRead(textQuery)
             return dataTable!!.isNotEmpty()
         }
         if (SCType == "Секции") {
             val textQuery =
                 "SELECT ID FROM SC1141 (nolock) WHERE SP1935='$IDD'"
-            val dataTable = ExecuteWithRead(textQuery)
+            val dataTable = executeWithRead(textQuery)
             return dataTable!!.isNotEmpty()
         }
         if (SCType == "Принтеры") {
             val textQuery =
                 "SELECT ID FROM SC2459 (nolock) WHERE SP2465='$IDD'"
-            val dataTable = ExecuteWithRead(textQuery)
+            val dataTable = executeWithRead(textQuery)
             return dataTable!!.isNotEmpty()
         }
         if (SCType == "МестаПогрузки") {
             val textQuery =
                 "SELECT ID FROM SC5794 (nolock) WHERE ID='$IDD'"
-            val dataTable = ExecuteWithRead(textQuery)
+            val dataTable = executeWithRead(textQuery)
             return dataTable!!.isNotEmpty()
         }
         return true
     }
 
     /// возвращает список данных элемента справочника по его IDD
-    fun GetSCData(
+    fun getSCData(
         IDD: String,
         SCType: String,
         FieldList: MutableList<String>,
         DataMap: MutableMap<String, Any>
     ): MutableMap<String, Any>? {
-        return GetSCData(IDD, SCType, FieldList, DataMap, false)
+        return getSCData(IDD, SCType, FieldList, DataMap, false)
     }
 
-    fun GetDoc(IDDorID: String, ThisID: Boolean): MutableMap<String, String>? {
+    fun getDoc(IDDorID: String, ThisID: Boolean): MutableMap<String, String>? {
         var iddocid = IDDorID
-        val DataMap: MutableMap<String, String> = mutableMapOf()
+        val dataMap: MutableMap<String, String> = mutableMapOf()
         if (ThisID) {
             //Если ID - расширенный, то переведем его в обычный, 9-и символьный
             if (iddocid.length > 9) {
                 iddocid = IDDorID.substring(4)
             }
         }
-        val DT = ExecuteWithReadNew(
-            "SELECT IDDOC, IDDOCDEF, DATE_TIME_IDDOC, DOCNO, ISMARK, " + GetSynh("IDD") + " as IDD" +
+        val dt = executeWithReadNew(
+            "SELECT IDDOC, IDDOCDEF, DATE_TIME_IDDOC, DOCNO, ISMARK, " + getSynh("IDD") + " as IDD" +
                     " FROM _1SJOURN (nolock) WHERE ISMARK = 0 and " + if (ThisID) "IDDOC" else {
-                GetSynh("IDD")
+                getSynh("IDD")
             } + "='" + iddocid + "'"
         )
 
-        if (DT == null || DT.isEmpty()) {
+        if (dt == null || dt.isEmpty()) {
             return null
         }
-        DataMap.put("ID", DT[0]["IDDOC"].toString())
-        DataMap.put("IDD", DT[0]["IDD"].toString())
-        DataMap.put("ПометкаУдаления", DT[0]["ISMARK"].toString())
-        DataMap.put("НомерДок", DT[0]["DOCNO"].toString())
-        DataMap.put("ДатаДок", SQLToDateTime(DT[0]["DATE_TIME_IDDOC"].toString()))
-        DataMap.put("Тип", To1CName(DT[0]["IDDOCDEF"].toString()))
-        return DataMap
+        dataMap["ID"] = dt[0]["IDDOC"].toString()
+        dataMap["IDD"] = dt[0]["IDD"].toString()
+        dataMap["ПометкаУдаления"] = dt[0]["ISMARK"].toString()
+        dataMap["НомерДок"] = dt[0]["DOCNO"].toString()
+        dataMap["ДатаДок"] = sqlToDateTime(dt[0]["DATE_TIME_IDDOC"].toString())
+        dataMap["Тип"] = to1CName(dt[0]["IDDOCDEF"].toString())
+        return dataMap
     }
 /*
 

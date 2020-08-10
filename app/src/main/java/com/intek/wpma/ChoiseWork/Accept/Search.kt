@@ -35,7 +35,7 @@ class Search : BarcodeDataReceiver() {
     var iddoc: String = ""
     var iddocControl: String = ""
     var number: String = ""
-    var Barcode: String = ""
+    var barcode: String = ""
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
@@ -47,8 +47,8 @@ class Search : BarcodeDataReceiver() {
                     // ту прописываем что делать при событии сканирования
 
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        reactionBarcode(Barcode)
+                        barcode = intent.getStringExtra("data")
+                        reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
                         val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
@@ -68,9 +68,9 @@ class Search : BarcodeDataReceiver() {
         number = intent.extras!!.getString("Number")!!
         ParentForm = intent.extras!!.getString("ParentForm")!!
 
-        title = SS.title
+        title = ss.title
 
-        if (SS.isMobile){
+        if (ss.isMobile){
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@Search, ScanActivity::class.java)
@@ -78,12 +78,12 @@ class Search : BarcodeDataReceiver() {
                 startActivity(scanAct)
             }
         }
-        Alitem()
+        alitem()
     }
 
 
     @SuppressLint("ClickableViewAccessibility")
-    fun Alitem() {
+    fun alitem() {
 
         val linearLayout = LinearLayout(this)
         val rowTitle = TableRow(this)
@@ -93,7 +93,7 @@ class Search : BarcodeDataReceiver() {
         number.text = "№"
         number.typeface = Typeface.SERIF
         number.layoutParams = LinearLayout.LayoutParams(
-            (SS.widthDisplay * 0.09).toInt(),
+            (ss.widthDisplay * 0.09).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         number.gravity = Gravity.CENTER
         number.textSize = 12F
@@ -103,7 +103,7 @@ class Search : BarcodeDataReceiver() {
         docum.typeface = Typeface.SERIF
         docum.gravity = Gravity.CENTER
         docum.layoutParams = LinearLayout.LayoutParams(
-            (SS.widthDisplay * 0.28).toInt(),
+            (ss.widthDisplay * 0.28).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         docum.textSize = 12F
         docum.setTextColor(-0x1000000)
@@ -111,7 +111,7 @@ class Search : BarcodeDataReceiver() {
         address.text = "Дата"
         address.typeface = Typeface.SERIF
         address.layoutParams = LinearLayout.LayoutParams(
-            (SS.widthDisplay * 0.35).toInt(),
+            (ss.widthDisplay * 0.35).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         address.gravity = Gravity.CENTER
         address.textSize = 12F
@@ -120,7 +120,7 @@ class Search : BarcodeDataReceiver() {
         boxes.text = "Осталось"
         boxes.typeface = Typeface.SERIF
         boxes.layoutParams = LinearLayout.LayoutParams(
-            (SS.widthDisplay * 0.14).toInt(),
+            (ss.widthDisplay * 0.14).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         boxes.gravity = Gravity.CENTER
         boxes.textSize = 12F
@@ -129,7 +129,7 @@ class Search : BarcodeDataReceiver() {
         boxesfact.text = "Поставщик"
         boxesfact.typeface = Typeface.SERIF
         boxesfact.layoutParams = LinearLayout.LayoutParams(
-            (SS.widthDisplay * 0.14).toInt(),
+            (ss.widthDisplay * 0.14).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         boxesfact.gravity = Gravity.CENTER
         boxesfact.textSize = 12F
@@ -165,10 +165,10 @@ class Search : BarcodeDataReceiver() {
                 " select * from #temp " +
                 " drop table #temp "
 
-        textQuery = SS.QuerySetParam(textQuery, "Number", number)
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", iddoc)
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate())
-        val dataTable = SS.ExecuteWithReadNew(textQuery) ?: return
+        textQuery = ss.querySetParam(textQuery, "Number", number)
+        textQuery = ss.querySetParam(textQuery, "iddoc", iddoc)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        val dataTable = ss.executeWithReadNew(textQuery) ?: return
 
         if (dataTable.isNotEmpty()) {
 
@@ -181,7 +181,7 @@ class Search : BarcodeDataReceiver() {
                 numb.text = DR["Number"]
                 numb.typeface = Typeface.SERIF
                 numb.layoutParams = LinearLayout.LayoutParams(
-                    (SS.widthDisplay * 0.09).toInt(),
+                    (ss.widthDisplay * 0.09).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 numb.gravity = Gravity.CENTER
                 numb.textSize = 12F
@@ -191,7 +191,7 @@ class Search : BarcodeDataReceiver() {
                 doc.typeface = Typeface.SERIF
                 doc.gravity = Gravity.CENTER
                 doc.layoutParams = LinearLayout.LayoutParams(
-                    (SS.widthDisplay * 0.28).toInt(),
+                    (ss.widthDisplay * 0.28).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 doc.textSize = 12F
                 doc.setTextColor(-0x1000000)
@@ -199,7 +199,7 @@ class Search : BarcodeDataReceiver() {
                 addr.text = DR["ParentIDD"]
                 addr.typeface = Typeface.SERIF
                 addr.layoutParams = LinearLayout.LayoutParams(
-                    (SS.widthDisplay * 0.35).toInt(),
+                    (ss.widthDisplay * 0.35).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 addr.gravity = Gravity.CENTER
                 addr.textSize = 12F
@@ -208,7 +208,7 @@ class Search : BarcodeDataReceiver() {
                 box.text = DR["CountRow"]
                 box.typeface = Typeface.SERIF
                 box.layoutParams = LinearLayout.LayoutParams(
-                    (SS.widthDisplay * 0.14).toInt(),
+                    (ss.widthDisplay * 0.14).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 box.gravity = Gravity.CENTER
                 box.textSize = 12F
@@ -217,7 +217,7 @@ class Search : BarcodeDataReceiver() {
                 boxf.text = DR["Client"]
                 boxf.typeface = Typeface.SERIF
                 boxf.layoutParams = LinearLayout.LayoutParams(
-                    (SS.widthDisplay * 0.14).toInt(),
+                    (ss.widthDisplay * 0.14).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 boxf.gravity = Gravity.CENTER
                 boxf.textSize = 12F
@@ -244,9 +244,9 @@ class Search : BarcodeDataReceiver() {
 
         if(scanRes != null){
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             }
             catch (e: Exception){
                 val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
@@ -1043,7 +1043,7 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc)
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
     }
 
     companion object {
@@ -1057,7 +1057,7 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc)
         return true
     }
 
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?):Boolean {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){

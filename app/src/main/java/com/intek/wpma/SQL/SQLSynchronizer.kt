@@ -1,6 +1,5 @@
 package com.intek.wpma.SQL
 
-import android.app.Application
 import android.os.StrictMode
 import java.sql.*
 
@@ -10,14 +9,14 @@ import java.sql.*
 ///
 open class SQLSynchronizer
 {
-    protected val FServerName: Array<String> = arrayOf("192.168.8.4:57068","192.168.8.5:57068") //Наши серваки
-    protected val FDBName: String = "int9999001ad1" //База
+    private val fServerName: Array<String> = arrayOf("192.168.8.4:57068","192.168.8.5:57068") //Наши серваки
+    private val fDBName: String = "int9999001ad1" //База
     //protected val FDBName: String? = "int9999001rab"
-    protected val FVers: String = "5.02"    //Номер версии
-    protected var MyConnection: Connection? = null
-    protected var MyComand: Statement? = null
-    protected var MyReader: ResultSet? = null
-    protected var FExcStr: String? = null
+    private val fVers: String = "5.02"    //Номер версии
+    private var myConnection: Connection? = null
+    private var myComand: Statement? = null
+    protected var myReader: ResultSet? = null
+    protected var fExcStr: String? = null
     var permission: Boolean? = null
 
     // public delegate void OpenedEventHendler(object sender, EventArgs e);
@@ -26,21 +25,21 @@ open class SQLSynchronizer
     /// <summary>
     /// Строка исключения или ошибки
     /// </summary>
-    var ExcStr: String
-       get() = FExcStr.toString()
-       set(value) {FExcStr  = value }
+    var excStr: String
+       get() = fExcStr.toString()
+       set(value) {fExcStr  = value }
 
-    val Vers:String get() = FVers
-    fun SQLConnect(ServName: String): Boolean
+    val vers:String get() = fVers
+    private fun sqlConnect(ServName: String): Boolean
     {
         val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
         StrictMode.setThreadPolicy(policy)
         Class.forName("net.sourceforge.jtds.jdbc.Driver")
         var conIsOpen: Boolean
         try {
-            var connection = DriverManager.getConnection("jdbc:jtds:sqlserver://" + ServName + "/" + FDBName,"sa","1419176")
-            MyConnection = connection
-            MyComand = connection.createStatement()
+            val connection = DriverManager.getConnection("jdbc:jtds:sqlserver://$ServName/$fDBName","sa","1419176")
+            myConnection = connection
+            myComand = connection.createStatement()
             conIsOpen = !connection.isClosed
         }
         catch (e: SQLException) {
@@ -53,28 +52,28 @@ open class SQLSynchronizer
     /// Конструктор класса
     /// </summary>
     init {
-        OpenConnection()
+        openConnection()
     }
 
     /// <summary>
     /// Выполняет открытие соединения, или ничего не выполняет, если соединение уже открыто
     /// </summary>
     /// <returns></returns>
-    private fun OpenConnection(): Boolean
+    private fun openConnection(): Boolean
     {
         //FExcStr = null;
 
         var conIsClosed = true
-        if (MyConnection != null)
+        if (myConnection != null)
         {
-            conIsClosed = MyConnection!!.isClosed
+            conIsClosed = myConnection!!.isClosed
         }
         if (conIsClosed)
         {
             //попытаемся подключиться к серверу
-            if (!SQLConnect(FServerName[0])) {
-                if (!SQLConnect(FServerName[1])) {
-                    FExcStr = "Не удалось подключиться к серверу!"
+            if (!sqlConnect(fServerName[0])) {
+                if (!sqlConnect(fServerName[1])) {
+                    fExcStr = "Не удалось подключиться к серверу!"
                     return false
                 }
             }
@@ -88,12 +87,12 @@ open class SQLSynchronizer
     // <param name="Query"></param>
     // <param name="Read"></param>
     // <returns></returns>
-    protected fun ExecuteQuery(Query: String, Read: Boolean): Boolean
+    protected fun executeQuery(Query: String, Read: Boolean): Boolean
     {
-        FExcStr = null
+        fExcStr = null
         //Сохраним первоначальое состояние соединения
-        val cs: Boolean = MyConnection!!.isClosed
-        if (!OpenConnection())
+        val cs: Boolean = myConnection!!.isClosed
+        if (!openConnection())
         {
             return false
         }
@@ -101,24 +100,24 @@ open class SQLSynchronizer
         {
             if (Read)
             {
-                MyReader = MyComand!!.executeQuery(Query)
+                myReader = myComand!!.executeQuery(Query)
             }
             else
             {
-                MyComand!!.execute(Query)
+                myComand!!.execute(Query)
             }
         }
         catch (e: SQLException)
         {
-            if (cs == true && MyConnection!!.isClosed != false)
+            if (cs && myConnection!!.isClosed)
             {
                 //Таким образом, если соединение до выполнения запроса было открыто,
                 //а после выполнения обвалилось (см. выше). Это наверняка эффект "уснувшего" терминала!
                 //От бесконечной рекурсии мы избавились так - был открыт, стал не открыт - повторяем,
                 //при повторе CS полюбому - не открыт, значит дополнительный вызов не произойдет!
-                return ExecuteQuery(Query, Read)
+                return executeQuery(Query, Read)
             }
-            FExcStr = e.toString()
+            fExcStr = e.toString()
             return false
         }
         return true
@@ -128,8 +127,8 @@ open class SQLSynchronizer
     // </summary>
     // <param name="Query"></param>
     // <returns></returns>
-    fun ExecuteQuery(Query: String): Boolean
+    fun executeQuery(Query: String): Boolean
     {
-        return ExecuteQuery(Query, true)
+        return executeQuery(Query, true)
     }
 }

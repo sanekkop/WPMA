@@ -1,55 +1,55 @@
 package com.intek.wpma.Ref
 
-class RefPalleteMove(): ARef() {
-    override val TypeObj: String get() = "ПеремещенияПаллет"
+class RefPalleteMove : ARef() {
+    override val typeObj: String get() = "ПеремещенияПаллет"
 
     init {
-        HaveName = false
-        HaveCode = false
+        haveName = false
+        haveCode = false
     }
 
-    val Adress0: RefSection
+    val adress0: RefSection
         get() {
-            return GetSectionProperty("Адрес0")
+            return getSectionProperty("Адрес0")
         }
-    val Adress1: RefSection
+    val adress1: RefSection
         get() {
-            return GetSectionProperty("Адрес1")
+            return getSectionProperty("Адрес1")
         }
-    val TypeMove: Int
+    private val typeMove: Int
         get() {
-            return GetAttribute("ТипДвижения").toString().toInt()
+            return getAttribute("ТипДвижения").toString().toInt()
         }
-    val PalleteBarcode: String
+    private val palleteBarcode: String
         get() {
-            return GetAttribute("ШКПаллеты").toString()
+            return getAttribute("ШКПаллеты").toString()
         }
-    val Pallete: String
+    val pallete: String
         get() {
-            if (PalleteBarcode.trim().length == 0) {
-                return "(..)";
+            if (palleteBarcode.trim().isEmpty()) {
+                return "(..)"
             }
-            val tmp = "   " + PalleteBarcode.substring(4, 12).toInt().toString()
-            return tmp.substring(tmp.length - 4, tmp.length);    //4 символа справа
+            val tmp = "   " + palleteBarcode.substring(4, 12).toInt().toString()
+            return tmp.substring(tmp.length - 4, tmp.length)    //4 символа справа
         } // PalleteNumber
-    val TypeMoveActionDescr: String
+    val typeMoveActionDescr: String
         get() {
-            return GetTypeMoveDescr(true)
+            return getTypeMoveDescr(true)
         } // get
-    val TypeMoveDescr: String
+    val typeMoveDescr: String
         get() {
-            return GetTypeMoveDescr(false)
+            return getTypeMoveDescr(false)
         } // get
 
-    fun GetSectionProperty(name: String): RefSection {
-        var result = RefSection()
-        val currId = GetAttribute(name).toString()
-        result.FoundID(currId);
+    private fun getSectionProperty(name: String): RefSection {
+        val result = RefSection()
+        val currId = getAttribute(name).toString()
+        result.foundID(currId)
         return result
     } // GetGatesProperty
 
-    fun GetTypeMoveDescr(thisAction: Boolean): String {
-        when (TypeMove) {
+    private fun getTypeMoveDescr(thisAction: Boolean): String {
+        when (typeMove) {
             1 -> return if (thisAction) "Спустите паллету" else "Спуск с адреса"
             2 -> return if (thisAction) "Возвратите паллету" else "Подъем"
             3 -> return if (thisAction) "Снимите паллету" else "Спуск с антрисоли"

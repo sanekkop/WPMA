@@ -24,17 +24,17 @@ import kotlinx.android.synthetic.main.activity_loading.*
 
 class Loading : BarcodeDataReceiver() {
 
-    var WayBill: MutableMap<String,String> = mutableMapOf()
-    var WayBillDT: MutableList<MutableMap<String,String>> = mutableListOf()
+    private var wayBill: MutableMap<String,String> = mutableMapOf()
+    private var wayBillDT: MutableList<MutableMap<String,String>> = mutableListOf()
     enum class Action {Inicialization,Loading}
-    var CurentAction:Action = Action.Inicialization
-    var Placer:String = ""
-    val Trans = Translation()
-    var CurrentLine:Int = 2 //информация начинается с 3 строки в таблице
-    var CurrentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
-    var oldx:Float = 0F
+    private var curentAction:Action = Action.Inicialization
+    private var placer:String = ""
+    private val trans = Translation()
+    private var currentLine:Int = 2 //информация начинается с 3 строки в таблице
+    private var currentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
+    private var oldx:Float = 0F
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
-    var Barcode: String = ""
+    var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -44,8 +44,8 @@ class Loading : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        reactionBarcode(Barcode)
+                        barcode = intent.getStringExtra("data")
+                        reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
                         val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
@@ -63,9 +63,9 @@ class Loading : BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             }
             catch (e: Exception){
                 val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
@@ -81,7 +81,7 @@ class Loading : BarcodeDataReceiver() {
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
     }
     companion object {
         var scanRes: String? = null
@@ -93,9 +93,9 @@ class Loading : BarcodeDataReceiver() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_loading)
-        title = SS.title
+        title = ss.title
 
-        if (SS.isMobile){
+        if (ss.isMobile){
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@Loading, ScanActivity::class.java)
@@ -105,27 +105,27 @@ class Loading : BarcodeDataReceiver() {
         }
         btnFinishLoadingMode!!.setOnClickListener {
             //еслинажали финиш, значит переходим в режим погрузки
-            if (CurentAction == Action.Inicialization) {
-                CompleteLoadingInicialization()
+            if (curentAction == Action.Inicialization) {
+                completeLoadingInicialization()
             }
             else
             {
-                CompleteLodading()
+                completeLodading()
             }
         }
 
 
-        ToModeLoadingInicialization()
+        toModeLoadingInicialization()
     }
 
-    fun CompleteLoadingInicialization() {
-        if (Placer == SS.FEmployer.ID)
+    private fun completeLoadingInicialization() {
+        if (placer == ss.FEmployer.id)
         {
             FExcStr.text = "Пользователь совпадает с укладчиком! Извини друг, так нельзя!"
             return
         }
 
-        if (WayBill.isEmpty())
+        if (wayBill.isEmpty())
         {
             FExcStr.text = "Не выбран путевой лист!"
             return
@@ -136,14 +136,14 @@ class Loading : BarcodeDataReceiver() {
         "select DocWayBill.\$ПутевойЛист.ЧекПогрузка as ЧекПогрузка " +
                 "from DH\$ПутевойЛист as DocWayBill (nolock) " +
                 "where " +
-                "DocWayBill.iddoc = :iddoc ";
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
-        var dataTable = SS.ExecuteWithRead(textQuery)
+                "DocWayBill.iddoc = :iddoc "
+        textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
+        var dataTable = ss.executeWithRead(textQuery)
         if (dataTable!![1][0].toInt() == 0 )
         {
             //погрузка не разрешена
             FExcStr.text = "Погрузка запрещена!"
-            return;
+            return
         }
 
         //Проверим еще раз не засрал ли путевой кто-нибудь еще
@@ -157,10 +157,10 @@ class Loading : BarcodeDataReceiver() {
                     "PL.\$ПутевойЛист.Дата1 = :EmptyDate " +
                     "and journ.ismark = 0 " +
                     "and journ.iddoc = :iddoc " +
-                    "ORDER BY journ.date_time_iddoc";
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate",   SS.GetVoidDate());
-        textQuery = SS.QuerySetParam(textQuery, "iddoc",       WayBill["ID"].toString());
-        dataTable = SS.ExecuteWithRead(textQuery)
+                    "ORDER BY journ.date_time_iddoc"
+        textQuery = ss.querySetParam(textQuery, "EmptyDate",   ss.getVoidDate())
+        textQuery = ss.querySetParam(textQuery, "iddoc",       wayBill["ID"].toString())
+        dataTable = ss.executeWithRead(textQuery)
 
         if (dataTable == null){
             return
@@ -185,12 +185,12 @@ class Loading : BarcodeDataReceiver() {
                         "or \$ПутевойЛист.Укладчик = :EmptyLoader " +
                         "or \$ПутевойЛист.Укладчик2 = :EmptyLoader " +
                         "or \$ПутевойЛист.Укладчик3 = :EmptyLoader )" +
-                        "ORDER BY journ.date_time_iddoc";
-            textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
-            textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
-            textQuery = SS.QuerySetParam(textQuery, "EmptyLoader", SS.GetVoidID());
+                        "ORDER BY journ.date_time_iddoc"
+            textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+            textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
+            textQuery = ss.querySetParam(textQuery, "EmptyLoader", ss.getVoidID())
 
-            dataTable = SS.ExecuteWithRead(textQuery)
+            dataTable = ss.executeWithRead(textQuery)
             if (dataTable == null){
                 return
             }
@@ -208,45 +208,45 @@ class Loading : BarcodeDataReceiver() {
                         "\$ПутевойЛист.Укладчик2  = :Placer_2, " +
                         "\$ПутевойЛист.Укладчик3  = :Placer_3 " +
                         "WHERE " +
-                        "DH\$ПутевойЛист .iddoc = :iddoc;";
+                        "DH\$ПутевойЛист .iddoc = :iddoc;"
             var findeEmpty = false
-            if (dataTable[1][0].toString() == SS.GetVoidID())
+            if (dataTable[1][0] == ss.getVoidID())
             {
-                textQuery = SS.QuerySetParam(textQuery, "Loader", SS.FEmployer.ID);
-                findeEmpty = true;
+                textQuery = ss.querySetParam(textQuery, "Loader", ss.FEmployer.id)
+                findeEmpty = true
             }
             else
             {
-                textQuery = SS.QuerySetParam(textQuery, "Loader", dataTable[1][0].toString());
+                textQuery = ss.querySetParam(textQuery, "Loader", dataTable[1][0])
             }
-            if (dataTable[1][1].toString() == SS.GetVoidID() && !findeEmpty)
+            if (dataTable[1][1] == ss.getVoidID() && !findeEmpty)
             {
-                textQuery = SS.QuerySetParam(textQuery, "Placer_1", SS.FEmployer.ID);
-                findeEmpty = true;
+                textQuery = ss.querySetParam(textQuery, "Placer_1", ss.FEmployer.id)
+                findeEmpty = true
             }
             else
             {
-                textQuery = SS.QuerySetParam(textQuery, "Placer_1", dataTable[1][1].toString());
+                textQuery = ss.querySetParam(textQuery, "Placer_1", dataTable[1][1])
             }
-            if (dataTable[1][2].toString() == SS.GetVoidID() && !findeEmpty)
+            if (dataTable[1][2] == ss.getVoidID() && !findeEmpty)
             {
-                textQuery = SS.QuerySetParam(textQuery, "Placer_2", SS.FEmployer.ID);
-                findeEmpty = true;
+                textQuery = ss.querySetParam(textQuery, "Placer_2", ss.FEmployer.id)
+                findeEmpty = true
             }
             else
             {
-                textQuery = SS.QuerySetParam(textQuery, "Placer2", dataTable[1][2].toString());
+                textQuery = ss.querySetParam(textQuery, "Placer2", dataTable[1][2])
             }
-            if (dataTable[1][3].toString() == SS.GetVoidID() && !findeEmpty)
+            if (dataTable[1][3] == ss.getVoidID() && !findeEmpty)
             {
-                textQuery = SS.QuerySetParam(textQuery, "Placer_3", SS.FEmployer.ID);
-                findeEmpty = true;
+                textQuery = ss.querySetParam(textQuery, "Placer_3", ss.FEmployer.id)
+                findeEmpty = true
             }
             else
             {
-                textQuery = SS.QuerySetParam(textQuery, "Placer3", dataTable[1][3].toString());
+                textQuery = ss.querySetParam(textQuery, "Placer3", dataTable[1][3])
             }
-            textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
+            textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
             if (!findeEmpty)
             {
                 //все строки заполнены и нас там нет облом
@@ -266,43 +266,43 @@ class Loading : BarcodeDataReceiver() {
                         "\$ПутевойЛист.Время1    = :NowTime " +
                         "WHERE " +
                         "DH\$ПутевойЛист .iddoc = :iddoc;"
-            textQuery = SS.QuerySetParam(textQuery, "Loader", SS.FEmployer.ID);
-            textQuery = SS.QuerySetParam(textQuery, "Placer", if (Placer != "") Placer else SS.GetVoidID())
-            textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
+            textQuery = ss.querySetParam(textQuery, "Loader", ss.FEmployer.id)
+            textQuery = ss.querySetParam(textQuery, "Placer", if (placer != "") placer else ss.getVoidID())
+            textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
 
         }
 
-        dataTable = SS.ExecuteWithRead(textQuery)
+        dataTable = ss.executeWithRead(textQuery)
         if (dataTable == null){
             return
         }
-        ToModeLoading(WayBill["ID"].toString())
+        toModeLoading(wayBill["ID"].toString())
     }
-    fun CompleteLodading() {
-        var idSchet = "   " + Trans.DecTo36(SS.GetSynh("Счет"));
-        idSchet = idSchet.substring(idSchet.length - 4);
-        var idClaim = "   " + Trans.DecTo36(SS.GetSynh("ПретензияОтКлиента"));
-        idClaim = idClaim.substring(idClaim.length - 4);
+    private fun completeLodading() {
+        var idSchet = "   " + trans.decTo36(ss.getSynh("Счет"))
+        idSchet = idSchet.substring(idSchet.length - 4)
+        var idClaim = "   " + trans.decTo36(ss.getSynh("ПретензияОтКлиента"))
+        idClaim = idClaim.substring(idClaim.length - 4)
 
         //проверим чек погрузки
         var textQuery =
             "select DocWayBill.\$ПутевойЛист.ЧекПогрузка as ЧекПогрузка " +
                     "from DH\$ПутевойЛист as DocWayBill (nolock) " +
                     "where " +
-                    "DocWayBill.iddoc = :iddoc ";
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
-        var dataTable = SS.ExecuteWithRead(textQuery)
+                    "DocWayBill.iddoc = :iddoc "
+        textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
+        var dataTable = ss.executeWithRead(textQuery)
         if (dataTable!![1][0].toInt() == 0 )
         {
             //погрузка не разрешена
             FExcStr.text = "Погрузка запрещена!"
-            return;
+            return
         }
 
         textQuery =
             "SELECT " +
                     "Main.DocFull as DocFull " +
-                    "FROM (" + GiveSomeOneQueryText() +
+                    "FROM (" + giveSomeOneQueryText() +
                     ") as Main " +
                     "INNER JOIN (" +
                     "SELECT " +
@@ -312,16 +312,16 @@ class Loading : BarcodeDataReceiver() {
                     "GROUP BY Boxes.\$Спр.МестаПогрузки.Док " +
                     ") as Boxes " +
                     "ON Boxes.DocID = Main.DocFull " +
-                    "";
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
-        textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID());
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
+                    ""
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
+        textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
 
-        dataTable = SS.ExecuteWithRead(textQuery)
+        dataTable = ss.executeWithRead(textQuery)
         if (dataTable == null){
             return
         }
-        if (!dataTable.isEmpty())
+        if (dataTable.isNotEmpty())
         {
             FExcStr.text = "Не все погружено"
             return
@@ -333,11 +333,11 @@ class Loading : BarcodeDataReceiver() {
                     "\$ПутевойЛист.Дата2 = :NowData, " +
                     "\$ПутевойЛист.Время2 = :NowTime " +
                     "WHERE " +
-                    "DH\$ПутевойЛист .iddoc = :iddoc";
+                    "DH\$ПутевойЛист .iddoc = :iddoc"
 
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
+        textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
 
-        dataTable = SS.ExecuteWithRead(textQuery)
+        dataTable = ss.executeWithRead(textQuery)
         if (dataTable == null){
             return
         }
@@ -347,10 +347,10 @@ class Loading : BarcodeDataReceiver() {
         finish()
     }
 
-    fun GiveSomeOneQueryText():String {
-        var idSchet = "   " + Trans.DecTo36(SS.GetSynh("Счет"))
+    private fun giveSomeOneQueryText():String {
+        var idSchet = "   " + trans.decTo36(ss.getSynh("Счет"))
         idSchet = idSchet.substring(idSchet.length - 4)
-        var idClaim = "   " + Trans.DecTo36(SS.GetSynh("ПретензияОтКлиента"))
+        var idClaim = "   " + trans.decTo36(ss.getSynh("ПретензияОтКлиента"))
         idClaim = idClaim.substring(idClaim.length - 4)
         return "SELECT " +
                 "PL.\$ПутевойЛист.ИндексРазгрузки as AdressCounter, " +
@@ -394,7 +394,7 @@ class Loading : BarcodeDataReceiver() {
                 "and journ.iddocdef in (\$Счет , \$РасходнаяКредит , \$ПретензияОтКлиента , \$РасходнаяРеализ , \$Перемещение )"
     }
 
-    fun ToModeLoadingInicialization() {
+    private fun toModeLoadingInicialization() {
         var textQuery =
         "SELECT " +
                 "PL.iddoc as iddoc " +
@@ -409,36 +409,28 @@ class Loading : BarcodeDataReceiver() {
                 "and not PL.\$ПутевойЛист.Дата1 = :EmptyDate " +
                 "and PL.\$ПутевойЛист.Дата2 = :EmptyDate " +
                 "and journ.ismark = 0 " +
-                "ORDER BY journ.date_time_iddoc";
-        textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
-        var DT = SS.ExecuteWithReadNew(textQuery)
-        if (DT == null){
-           return
-        }
+                "ORDER BY journ.date_time_iddoc"
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        val dt = ss.executeWithReadNew(textQuery) ?: return
 
-        if (!DT.isEmpty())
+        if (dt.isNotEmpty())
         {
             //существует документ!
-            ToModeLoading(DT[0]["iddoc"].toString())
+            toModeLoading(dt[0]["iddoc"].toString())
             return
         }
-        RefreshActivity()
+        refreshActivity()
         return
     }
-    fun ToModeLoading(iddoc:String) {
+    private fun toModeLoading(iddoc:String) {
         //Если wayBill еще не выбран, то испавим это недоразумение
 
-        if (WayBill.isEmpty() || WayBill["ID"] != iddoc)
+        if (wayBill.isEmpty() || wayBill["ID"] != iddoc)
         {
-            var DataMap = SS.GetDoc(iddoc, true)
-
-            if (DataMap == null)
-            {
-                return
-            }
-            WayBill = DataMap
-            WayBill.put("View",DataMap["НомерДок"].toString() + " (" + DataMap["ДатаДок"].toString() + ")")
+            val dataMap = ss.getDoc(iddoc, true) ?: return
+            wayBill = dataMap
+            wayBill["View"] = dataMap["НомерДок"].toString() + " (" + dataMap["ДатаДок"].toString() + ")"
         }
 
         //проверим чек погрузки
@@ -446,14 +438,14 @@ class Loading : BarcodeDataReceiver() {
             "select DocWayBill.\$ПутевойЛист.ЧекПогрузка as ЧекПогрузка " +
                     "from DH\$ПутевойЛист as DocWayBill (nolock) " +
                     "where " +
-                    "DocWayBill.iddoc = :iddoc ";
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
-        var dataTable = SS.ExecuteWithRead(textQuery)
+                    "DocWayBill.iddoc = :iddoc "
+        textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
+        val dataTable = ss.executeWithRead(textQuery)
         if (dataTable!![1][0].toInt() == 0 )
         {
             //погрузка не разрешена
             FExcStr.text = "Погрузка запрещена!"
-            return;
+            return
         }
 
         textQuery =
@@ -467,7 +459,7 @@ class Loading : BarcodeDataReceiver() {
                     "ISNULL(Boxes.CountBox, 0) as Boxes, " +
                     "ISNULL(BoxesComplete.CountBox, 0) as BoxesFact, " +
                     "Main.Number as Number " +
-                    "FROM ( " + GiveSomeOneQueryText() +
+                    "FROM ( " + giveSomeOneQueryText() +
                     ") as Main " +
                     "LEFT JOIN (" +
                     "SELECT " +
@@ -499,65 +491,65 @@ class Loading : BarcodeDataReceiver() {
                     "and not ((ISNULL(journ.iddocdef,'') = \$ПретензияОтКлиента ) " +
                     "and (SUBSTRING(ISNULL(RefSection.descr, '80'),1,2) = '80')) " +
                     "ORDER BY Main.AdressCounter desc, Main.Number desc " +
-                    "";
+                    ""
 
-        textQuery = SS.QuerySetParam(textQuery, "EmptyDate", SS.GetVoidDate());
-        textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID());
-        textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
-        WayBillDT = SS.ExecuteWithReadNew(textQuery)!!
-        CurrentLine = 2
-        CurrentLineWayBillDT.put("ProposalNumber",WayBillDT[0]["ProposalNumber"].toString())
-        CurrentLineWayBillDT.put("Doc", WayBillDT[0]["Doc"].toString())
-        CurrentLineWayBillDT.put("AdressCounter",WayBillDT[0]["AdressCounter"].toString())
-        CurentAction = Action.Loading
-        RefreshActivity()
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
+        textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
+        wayBillDT = ss.executeWithReadNew(textQuery)!!
+        currentLine = 2
+        currentLineWayBillDT["ProposalNumber"] = wayBillDT[0]["ProposalNumber"].toString()
+        currentLineWayBillDT["Doc"] = wayBillDT[0]["Doc"].toString()
+        currentLineWayBillDT["AdressCounter"] = wayBillDT[0]["AdressCounter"].toString()
+        curentAction = Action.Loading
+        refreshActivity()
         return
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
 
-        val helper: Helper = Helper()
-        val barcoderes = helper.DisassembleBarcode(Barcode)
+        val helper = Helper()
+        val barcoderes = helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         if(typeBarcode == "6")
         {
             val id = barcoderes["ID"].toString()
-            if (SS.IsSC(id, "МестаПогрузки")) {
+            if (ss.isSC(id, "МестаПогрузки")) {
                 //проверим что это то что нам нужно
                 //проверим чек погрузки
                 var textQuery =
                 "select DocWayBill.\$ПутевойЛист.ЧекПогрузка " +
                         "from DH\$ПутевойЛист as DocWayBill (nolock) " +
                         "where " +
-                        "DocWayBill.iddoc = :iddoc ";
-                textQuery = SS.QuerySetParam(textQuery, "iddoc", WayBill["ID"].toString());
-                var dataTable = SS.ExecuteWithRead(textQuery)
+                        "DocWayBill.iddoc = :iddoc "
+                textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
+                val dataTable = ss.executeWithRead(textQuery)
                 if (dataTable!![1][0].toInt() == 0 )
                 {
                     //погрузка не разрешена
                     FExcStr.text = "Погрузка запрещена!"
-                    BadVoise()
+                    badVoise()
                     return false
                 }
                 textQuery =
                     "Select " +
                             "\$Спр.МестаПогрузки.Дата6 as Date, " +
                             "right(\$Спр.МестаПогрузки.Док , 9) as Doc " +
-                            "from \$Спр.МестаПогрузки (nolock) where id = :id";
-                textQuery = SS.QuerySetParam(textQuery, "id", id);
-                textQuery = SS.QuerySetParam(textQuery, "EmptyID", SS.GetVoidID());
-                var DT = SS.ExecuteWithReadNew(textQuery)
-                if (DT == null )
+                            "from \$Спр.МестаПогрузки (nolock) where id = :id"
+                textQuery = ss.querySetParam(textQuery, "id", id)
+                textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
+                val dt = ss.executeWithReadNew(textQuery)
+                if (dt == null )
                 {
                     //погрузка не разрешена
-                    BadVoise()
+                    badVoise()
                     return false
                 }
 
-                if (DT.isEmpty())
+                if (dt.isEmpty())
                 {
 
-                    FExcStr.text = "Нет действий с данным штрихкодом в этом режиме!";
+                    FExcStr.text = "Нет действий с данным штрихкодом в этом режиме!"
                     //блокируем путевой
                     /*TextQuery =
                                    "UPDATE DH$ПутевойЛист " +
@@ -569,12 +561,12 @@ class Loading : BarcodeDataReceiver() {
                     QuerySetParam(ref TextQuery, "id", WayBill.ID);
                     ExecuteWithoutRead(TextQuery);
                     */
-                    BadVoise()
+                    badVoise()
                     return false
                 }
-                if (!SS.IsVoidDate(DT[0]["Date"].toString()))
+                if (!ss.isVoidDate(dt[0]["Date"].toString()))
                 {
-                    FExcStr.text = "Ошибка! Место уже погружено!";
+                    FExcStr.text = "Ошибка! Место уже погружено!"
                     //блокируем путевой
                     /*TextQuery =
                                    "UPDATE DH$ПутевойЛист " +
@@ -586,15 +578,15 @@ class Loading : BarcodeDataReceiver() {
                     QuerySetParam(ref TextQuery, "id", WayBill.ID);
                     ExecuteWithoutRead(TextQuery);
                     */
-                    BadVoise()
+                    badVoise()
                     return false
                 }
 
                 //теперь проверяем та ли это строка
                 var indexWayBill = -1
-                for (DR in WayBillDT)
+                for (DR in wayBillDT)
                 {
-                    if (DR["Doc"].toString() == DT[0]["Doc"].toString())
+                    if (DR["Doc"].toString() == dt[0]["Doc"].toString())
                     {
                         //это наш документ, запомним индекс данной строки
                         indexWayBill = DR["AdressCounter"].toString().toInt()
@@ -605,25 +597,25 @@ class Loading : BarcodeDataReceiver() {
                 if (indexWayBill == -1)
                 {
                     //не нашли в путевом
-                    FExcStr.text = "Не числится в данном путевом!";
+                    FExcStr.text = "Не числится в данном путевом!"
                     //блокируем путевой
                     textQuery =
                         "UPDATE DH\$ПутевойЛист " +
                                 "SET " +
                                 "\$ПутевойЛист.ЧекПогрузка = 0 " +
                                 "WHERE " +
-                                "DH\$ПутевойЛист .iddoc = :id";
+                                "DH\$ПутевойЛист .iddoc = :id"
 
-                    textQuery = SS.QuerySetParam(textQuery, "id", WayBill["ID"].toString())
-                    SS.ExecuteWithoutRead(textQuery);
-                    BadVoise()
+                    textQuery = ss.querySetParam(textQuery, "id", wayBill["ID"].toString())
+                    ss.executeWithoutRead(textQuery)
+                    badVoise()
                     return false
                 }
 
-                if (SS.Const.OrderControl) {
-                    val currCounter = WayBillDT[0]["AdressCounter"].toString().toInt()
+                if (ss.Const.OrderControl) {
+                    val currCounter = wayBillDT[0]["AdressCounter"].toString().toInt()
                     if (currCounter > indexWayBill) {
-                        FExcStr.text = "Нарушена последовательность погрузки!";
+                        FExcStr.text = "Нарушена последовательность погрузки!"
                         //блокируем путевой
                         /*
                            textQuery =
@@ -636,8 +628,8 @@ class Loading : BarcodeDataReceiver() {
                     textQuery = SS.QuerySetParam(textQuery, "id", WayBill["ID"].toString())
                     SS.ExecuteWithoutRead(textQuery);
                              */
-                        BadVoise()
-                        return false;
+                        badVoise()
+                        return false
                     }
 
                 }
@@ -648,36 +640,36 @@ class Loading : BarcodeDataReceiver() {
                             "\$Спр.МестаПогрузки.Дата6 = :NowDate, " +
                             "\$Спр.МестаПогрузки.Время6 = :NowTime " +
                             "WHERE " +
-                            "\$Спр.МестаПогрузки .id = :id";
+                            "\$Спр.МестаПогрузки .id = :id"
 
-                textQuery = SS.QuerySetParam(textQuery, "id", id);
+                textQuery = ss.querySetParam(textQuery, "id", id)
 
-                if (!SS.ExecuteWithoutRead(textQuery))
+                if (!ss.executeWithoutRead(textQuery))
                 {
-                    FExcStr.text = "Ошибка фиксации погрузки";
-                    BadVoise()
+                    FExcStr.text = "Ошибка фиксации погрузки"
+                    badVoise()
                     return false
                 }
 
-                FExcStr.text = "Погрузка МЕСТА зафиксирована";
-                ToModeLoading(WayBill["ID"].toString())
+                FExcStr.text = "Погрузка МЕСТА зафиксирована"
+                toModeLoading(wayBill["ID"].toString())
             }
             else {
                 FExcStr.text = "Неверно! Отсканируйте коробку."
-                BadVoise()
+                badVoise()
                 return false
             }
         }
         else {
             FExcStr.text = "Нет действий с данным ШК! Отсканируйте коробку."
-            BadVoise()
+            badVoise()
             return false
         }
-        GoodVoise()
+        goodVoise()
         return true
     }
 
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?):Boolean {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
         // нажали назад, выйдем
         if (keyCode == 4){
@@ -687,66 +679,59 @@ class Loading : BarcodeDataReceiver() {
             finish()
             return true
         }
-        if (SS.helper.WhatDirection(keyCode) == "Right")
+        if (ss.helper.whatDirection(keyCode) == "Right")
         {
             //переход в просмотр состояния
             val showInfo = Intent(this, ShowInfo::class.java)
             showInfo.putExtra("ParentForm", "Loading")
-            showInfo.putExtra("Number",CurrentLineWayBillDT["ProposalNumber"].toString())
-            showInfo.putExtra("Doc",CurrentLineWayBillDT["Doc"].toString())
+            showInfo.putExtra("Number",currentLineWayBillDT["ProposalNumber"].toString())
+            showInfo.putExtra("Doc",currentLineWayBillDT["Doc"].toString())
             startActivity(showInfo)
             finish()
             return true
         }
-        else if(SS.helper.WhatDirection(keyCode) in listOf<String>("Down","Up")){
-            table.getChildAt(CurrentLine).isFocusable = false
-            table.getChildAt(CurrentLine).setBackgroundColor(Color.WHITE)
-            if (SS.helper.WhatDirection(keyCode) == "Down")
+        else if(ss.helper.whatDirection(keyCode) in listOf("Down","Up")){
+            table.getChildAt(currentLine).isFocusable = false
+            table.getChildAt(currentLine).setBackgroundColor(Color.WHITE)
+            if (ss.helper.whatDirection(keyCode) == "Down")
             {
-                if (CurrentLine -1 < WayBillDT.count()) CurrentLine++ else CurrentLine = 2
+                if (currentLine -1 < wayBillDT.count()) currentLine++ else currentLine = 2
             }
             else {
-                if (CurrentLine > 2) CurrentLine-- else CurrentLine = WayBillDT.count()+1
+                if (currentLine > 2) currentLine-- else currentLine = wayBillDT.count()+1
             }
-            CurrentLineWayBillDT.put(
-                    "ProposalNumber",
-                    WayBillDT[CurrentLine-2]["ProposalNumber"].toString()
-                )
-                CurrentLineWayBillDT.put("Doc", WayBillDT[CurrentLine-2]["Doc"].toString())
-                CurrentLineWayBillDT.put(
-                    "AdressCounter",
-                    WayBillDT[CurrentLine-2]["AdressCounter"].toString()
-                )
+            currentLineWayBillDT["ProposalNumber"] = wayBillDT[currentLine-2]["ProposalNumber"].toString()
+            currentLineWayBillDT["Doc"] = wayBillDT[currentLine-2]["Doc"].toString()
+            currentLineWayBillDT["AdressCounter"] = wayBillDT[currentLine-2]["AdressCounter"].toString()
             //теперь подкрасим строку серым
-            table.getChildAt(CurrentLine).setBackgroundColor(Color.GRAY)
-            table.getChildAt(CurrentLine).isFocusable = true
+            table.getChildAt(currentLine).setBackgroundColor(Color.GRAY)
+            table.getChildAt(currentLine).isFocusable = true
             return true
         }
         return false
     }
 
-
     @SuppressLint("ClickableViewAccessibility")
-    fun RefreshActivity()    {
+    fun refreshActivity()    {
         //пока не отсканировали путевой обновлять нечего
-        if (WayBill.isEmpty())
+        if (wayBill.isEmpty())
         {
             lblPlacer.text = "Путевой: <не выбран>"
             FExcStr.text = "Отсканируйте путевой лист"
             return
         }
         //путевой есть, надо подтянуть его в название
-        lblPlacer.text = "Путевой: " + WayBill["НомерДок"] + " (" + WayBill["ДатаДок"] + ") Укладчик: "
+        lblPlacer.text = "Путевой: " + wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ") Укладчик: "
         //теперь укладчик
-        if (Placer == "")
+        if (placer == "")
         {
             lblPlacer.text = lblPlacer.text.toString() + "<не выбран>"
         }
         else
         {
-            lblPlacer.text = lblPlacer.text.toString() + Placer
+            lblPlacer.text = lblPlacer.text.toString() + placer
         }
-        if (CurentAction == Action.Inicialization)
+        if (curentAction == Action.Inicialization)
         {
             //это инициализация дальше ничего не надо делать пока
             lblPlacer.visibility = View.VISIBLE
@@ -760,13 +745,13 @@ class Loading : BarcodeDataReceiver() {
         val linearLayoutDoc = LinearLayout(this)
         val rowTitleDoc = TableRow(this)
 
-        val DocumName = TextView(this)
-        DocumName.text = WayBill["НомерДок"] + " (" + WayBill["ДатаДок"] + ")"
-        DocumName.gravity = Gravity.LEFT
-        DocumName.textSize = 20F
-        DocumName.setTextColor(-0x1000000)
-        DocumName.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        linearLayoutDoc.addView(DocumName)
+        val documName = TextView(this)
+        documName.text = wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ")"
+        documName.gravity = Gravity.START
+        documName.textSize = 20F
+        documName.setTextColor(-0x1000000)
+        documName.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        linearLayoutDoc.addView(documName)
         rowTitleDoc.addView(linearLayoutDoc)
         table.addView(rowTitleDoc)
 
@@ -777,7 +762,7 @@ class Loading : BarcodeDataReceiver() {
         val number = TextView(this)
         number.text = "№"
         number.typeface = Typeface.SERIF
-        number.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.09).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        number.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.09).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         number.gravity = Gravity.CENTER
         number.textSize = 12F
         number.setTextColor(-0x1000000)
@@ -785,27 +770,27 @@ class Loading : BarcodeDataReceiver() {
         docum.text = "Документ"
         docum.typeface = Typeface.SERIF
         docum.gravity = Gravity.CENTER
-        docum.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.28).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        docum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.28).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         docum.textSize = 12F
         docum.setTextColor(-0x1000000)
         val address = TextView(this)
         address.text = "Адрес"
         address.typeface = Typeface.SERIF
-        address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.35).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.35).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         address.gravity = Gravity.CENTER
         address.textSize = 12F
         address.setTextColor(-0x1000000)
         val boxes = TextView(this)
         boxes.text = "Мест"
         boxes.typeface = Typeface.SERIF
-        boxes.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         boxes.gravity = Gravity.CENTER
         boxes.textSize = 12F
         boxes.setTextColor(-0x1000000)
         val boxesfact = TextView(this)
         boxesfact.text = "Факт"
         boxesfact.typeface = Typeface.SERIF
-        boxesfact.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        boxesfact.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         boxesfact.gravity = Gravity.CENTER
         boxesfact.textSize = 12F
         boxesfact.setTextColor(-0x1000000)
@@ -820,7 +805,7 @@ class Loading : BarcodeDataReceiver() {
         table.addView(rowTitle)
         var linenom = 2 //2 строки шапки не считаем
 
-        for (rowDT in WayBillDT)
+        for (rowDT in wayBillDT)
         {
             //строки теперь
             val rowTitle = TableRow(this)
@@ -838,13 +823,13 @@ class Loading : BarcodeDataReceiver() {
                         }
                         else
                         {
-                            CurrentLine = i
+                            currentLine = i
                             rowTitle.setBackgroundColor(Color.GRAY)
-                            for (rowCDT in WayBillDT) {
+                            for (rowCDT in wayBillDT) {
                                 if (((rowTitle.getChildAt(0) as ViewGroup).getChildAt(1) as TextView).text.toString() == rowCDT["ProposalNumber"]) {
-                                    CurrentLineWayBillDT.put("ProposalNumber",rowCDT["ProposalNumber"].toString())
-                                    CurrentLineWayBillDT.put("Doc", rowCDT["Doc"].toString())
-                                    CurrentLineWayBillDT.put("AdressCounter", rowCDT["AdressCounter"].toString())
+                                    currentLineWayBillDT["ProposalNumber"] = rowCDT["ProposalNumber"].toString()
+                                    currentLineWayBillDT["Doc"] = rowCDT["Doc"].toString()
+                                    currentLineWayBillDT["AdressCounter"] = rowCDT["AdressCounter"].toString()
                                 }
                             }
                         }
@@ -855,8 +840,8 @@ class Loading : BarcodeDataReceiver() {
                     if (event.x > oldx) {
                         val showInfo = Intent(this, ShowInfo::class.java)
                         showInfo.putExtra("ParentForm", "Loading")
-                        showInfo.putExtra("Number",CurrentLineWayBillDT["ProposalNumber"].toString())
-                        showInfo.putExtra("Doc",CurrentLineWayBillDT["Doc"].toString())
+                        showInfo.putExtra("Number",currentLineWayBillDT["ProposalNumber"].toString())
+                        showInfo.putExtra("Doc",currentLineWayBillDT["Doc"].toString())
                         startActivity(showInfo)
                         finish()
                     }
@@ -865,7 +850,7 @@ class Loading : BarcodeDataReceiver() {
             }
             val linearLayout = LinearLayout(this)
             var colorline =  Color.WHITE
-            if (linenom == CurrentLine)
+            if (linenom == currentLine)
             {
                 colorline = Color.GRAY
             }
@@ -874,35 +859,35 @@ class Loading : BarcodeDataReceiver() {
             val number = TextView(this)
             number.text = rowDT["AdressCounter"]
             number.typeface = Typeface.SERIF
-            number.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.09).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+            number.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.09).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             number.gravity = Gravity.CENTER
             number.textSize = 12F
             number.setTextColor(-0x1000000)
             val docum = TextView(this)
             docum.text = rowDT["ProposalNumber"]
             docum.typeface = Typeface.SERIF
-            docum.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.28).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+            docum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.28).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             docum.gravity = Gravity.CENTER
             docum.textSize = 12F
             docum.setTextColor(-0x1000000)
             val address = TextView(this)
             address.text = rowDT["AdressCompl"]?.trim()
             address.typeface = Typeface.SERIF
-            address.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.35).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+            address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.35).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             address.gravity = Gravity.CENTER
             address.textSize = 12F
             address.setTextColor(-0x1000000)
             val boxes = TextView(this)
             boxes.text = rowDT["Boxes"]
             boxes.typeface = Typeface.SERIF
-            boxes.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+            boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             boxes.gravity = Gravity.CENTER
             boxes.textSize = 12F
             boxes.setTextColor(-0x1000000)
             val boxesfact = TextView(this)
             boxesfact.text = rowDT["BoxesFact"]
             boxesfact.typeface = Typeface.SERIF
-            boxesfact.layoutParams = LinearLayout.LayoutParams((SS.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+            boxesfact.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             boxesfact.gravity = Gravity.CENTER
             boxesfact.textSize = 12F
             boxesfact.setTextColor(-0x1000000)

@@ -17,7 +17,7 @@ import kotlinx.android.synthetic.main.activity_menu_shipping.*
 class ChoiseWorkShipping: BarcodeDataReceiver() {
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
-    var Barcode: String = ""
+    var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -27,8 +27,8 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        Barcode = intent.getStringExtra("data")
-                        reactionBarcode(Barcode)
+                        barcode = intent.getStringExtra("data")
+                        reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
                         val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
@@ -46,9 +46,9 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
-                Barcode = scanRes.toString()
+                barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
-                reactionBarcode(Barcode)
+                reactionBarcode(barcode)
             }
             catch (e: Exception){
                 val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
@@ -64,7 +64,7 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        return if (ReactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
     }
     companion object {
         var scanRes: String? = null
@@ -77,7 +77,7 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
         setContentView(R.layout.activity_menu_shipping)
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
-        title = SS.title
+        title = ss.title
 
         btnCancel.setOnClickListener {
             val shoiseWorkInit = Intent(this, Menu::class.java)
@@ -115,8 +115,8 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
 
     private fun reactionBarcode(Barcode: String) {
         //выход из сессии
-        if (SS.FEmployer.IDD == "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)) {
-            if (!Logout(SS.FEmployer.ID)) {
+        if (ss.FEmployer.idd == "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)) {
+            if (!logout(ss.FEmployer.id)) {
                 FExcStr.text = "Ошибка выхода из системы!"
                 return
             }
@@ -128,9 +128,9 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
         }
     }
 
-    private fun ReactionKey(keyCode: Int, event: KeyEvent?):Boolean {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
-        val key = SS.helper.WhatInt(keyCode)
+        val key = ss.helper.whatInt(keyCode)
         if (key in 0..9) {
             //нажали 0
             startActivity(key)

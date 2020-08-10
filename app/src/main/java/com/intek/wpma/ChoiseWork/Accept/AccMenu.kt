@@ -129,11 +129,12 @@ class AccMenu : BarcodeDataReceiver() {
 
       private fun startActivity(num: Int) {
           var intent: Intent
+          val toast = Toast.makeText(applicationContext, "Режим находится в разработке!", Toast.LENGTH_LONG)
           intent = Intent(this, Menu::class.java)
           when (num)
           {
               0 -> intent = Intent(this, Menu::class.java)
-              1 -> intent = Intent(this, Search::class.java)
+              1 -> toast.show()  //Intent(this, Search::class.java)
             //  2 -> intent = Intent(this, CrossDoc::class.java)
           }
           intent.putExtra("ParentForm", "AccMenu")

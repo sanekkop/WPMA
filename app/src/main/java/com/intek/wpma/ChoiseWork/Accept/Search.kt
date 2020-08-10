@@ -70,12 +70,6 @@ class Search : BarcodeDataReceiver() {
                 startActivity(scanAct)
             }
         }
-        Alitem()
-    }
-
-
-    @SuppressLint("ClickableViewAccessibility")
-    fun Alitem() {
 
         val linearLayout = LinearLayout(this)
         val rowTitle = TableRow(this)
@@ -135,6 +129,13 @@ class Search : BarcodeDataReceiver() {
 
         rowTitle.addView(linearLayout)
         table.addView(rowTitle)
+
+        Alitem()
+    }
+
+
+    @SuppressLint("ClickableViewAccessibility")
+    fun Alitem() {
 
         var textQuery = "SELECT " +
                 "identity(int, 1, 1) as Number, " +

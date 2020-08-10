@@ -195,12 +195,12 @@ object SQL1S : SQLSynchronizer() {
         var result = TextQuery
         result = QuerySetParam(result, "EmptyDate", GetVoidDate())
         result = QuerySetParam(result, "EmptyID", GetVoidID())
-        val sdf = SimpleDateFormat("yyyyMMdd HH:mm:ss")
+        val sdf = SimpleDateFormat("yyyyMMdd HH:mm:ss", Locale.US)
         val currentDate = sdf.format(Date()).substring(0, 8) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(9, 17))
         result = QuerySetParam(result, "NowDate", currentDate)
         result = QuerySetParam(result, "NowTime", currentTime)
-        var curI = result.indexOf("$");
+        var curI = result.indexOf("$")
         while (curI != -1) {
             val endI = result.substring(curI + 1).indexOf(' ')
             val part = result.substring(curI + 1, curI + 1 + endI)
@@ -215,8 +215,8 @@ object SQL1S : SQLSynchronizer() {
         //в принципе метод - нахуй не нужный.
         val DefaultAlies: MutableList<String> = mutableListOf()
         //Таблица синхронизации имен
-        DefaultAlies.add("Константа.ТоварДляЕдиниц");
-        DefaultAlies.add("Константа.ОснСклад");
+        DefaultAlies.add("Константа.ТоварДляЕдиниц")
+        DefaultAlies.add("Константа.ОснСклад")
 
         var result = "'"
         var i = 0
@@ -383,11 +383,11 @@ object SQL1S : SQLSynchronizer() {
         val bigInteger: BigInteger
         if (GetSynh(Type).substring(0, 2) == "SC") {
             bigInteger = GetSynh(Type).substring(2, GetSynh(Type).length).toBigInteger()
-            val result = bigInteger.toString(36).toUpperCase().padStart(4) + ID
+            val result = bigInteger.toString(36).toUpperCase(Locale.ROOT).padStart(4) + ID
             return result
         } else {
             bigInteger = GetSynh(Type).toBigInteger()
-            return bigInteger.toString(36).toUpperCase().padStart(4) + ID
+            return bigInteger.toString(36).toUpperCase(Locale.ROOT).padStart(4) + ID
         }
     }
 

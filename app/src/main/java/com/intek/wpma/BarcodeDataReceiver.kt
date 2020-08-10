@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.Camera
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
@@ -135,7 +136,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
     /// <param name="DataMapWrite"></param>
     /// <returns></returns>
     fun ExecCommandNoFeedback(Command: String, DataMapWrite: MutableMap<String, Any>): Boolean {
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(11, 19))
         val query =
@@ -170,7 +171,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                     " WHERE ID='" + commandID + "'"
 
         var waitRobotWork = false
-        val sdf = SimpleDateFormat("HH:mm:ss")
+        val sdf = SimpleDateFormat("HH:mm:ss", Locale.US)
         var timeBegin: Int = timeStrToSeconds(sdf.format(Date()))
         while (kotlin.math.abs(timeBegin - timeStrToSeconds(sdf.format(Date()))) < ResponceTime) {
 
@@ -199,6 +200,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                 beda++
                 continue   //Бред какой-то, попробуем еще раз
             }
+
             if (timeBegin + 1 < timeStrToSeconds(sdf.format(Date()))) {
                 //Пауза в 1, после первой секунды беспрерывной долбежки!
                 val tb: Int = timeStrToSeconds(sdf.format(Date()))
@@ -207,14 +209,15 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                 }
             }
         }
-        FExcStr.text = "1C не ответила! " + (if (beda == 0) "" else " Испарений: $beda")
+        SS.ExcStr = "1C не ответила! " + (if (beda == 0) "" else " Испарений: $beda")
+        FExcStr.text = SS.ExcStr
         return DataMapRead
 
     }
 
     fun SendCommand(Command: String, DataMapWrite: MutableMap<String, Any> ): String {
         val commandID: String
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"
         val currentTime = timeStrToSeconds(sdf.format(Date()).substring(11, 19))
 
@@ -305,18 +308,24 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
             textQuery = SS.QuerySetParam(textQuery, "BlockText", BlockText)
             dataTable = SS.ExecuteWithRead(textQuery)
             if (dataTable!!.isNotEmpty()) {
-                FExcStr.text =
-                    "Объект заблокирован! " + dataTable[1][1] + ", " + dataTable[1][0] +
-                            ", в " + dataTable[1][3] + " (" + dataTable[1][2] + ")"
                 SS.ExcStr = "Объект заблокирован! " + dataTable[1][1] + ", " + dataTable[1][0] +
                         ", в " + dataTable[1][3] + " (" + dataTable[1][2] + ")"
+                FExcStr.text = SS.ExcStr
+
             }
             return false
         }
     }
 
     fun checkCameraHardware(context: Context): Boolean {
-        return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+        } else {
+            @Suppress("DEPRECATION") val numCameras: Int = Camera.getNumberOfCameras()
+            numCameras > 0
+
+        }
     }
 
     fun Login(EmployerID: String): Boolean {
@@ -408,7 +417,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                     "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
                     "and Ref.\$Спр.МестаПогрузки.Адрес7 = :EmptyID " +
                     "and not Ref.\$Спр.МестаПогрузки.Дата80 = :EmptyDate)"
-            textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID);
+            textQuery = SS.QuerySetParam(textQuery, "Employer", SS.FEmployer.ID)
             val DT  = SS.ExecuteWithRead(textQuery) ?: return result
             if (DT.isNotEmpty())
             {

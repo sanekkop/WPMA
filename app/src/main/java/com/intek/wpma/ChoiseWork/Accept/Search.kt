@@ -1,13 +1,10 @@
 package com.intek.wpma.ChoiseWork.Accept
 
-
 import android.annotation.SuppressLint
-
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-
 import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
@@ -23,14 +20,10 @@ import com.intek.wpma.ParentForm
 import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_accept.*
 import kotlinx.android.synthetic.main.activity_accept.table
-
 import android.view.KeyEvent
-
 import com.intek.wpma.ScanActivity
 
-
 class Search : BarcodeDataReceiver() {
-
 
     var iddoc: String = ""
     var iddocControl: String = ""
@@ -59,7 +52,6 @@ class Search : BarcodeDataReceiver() {
             }
         }
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -234,7 +226,6 @@ class Search : BarcodeDataReceiver() {
             }
         }
     }
-
 
     override fun onResume() {
         super.onResume()

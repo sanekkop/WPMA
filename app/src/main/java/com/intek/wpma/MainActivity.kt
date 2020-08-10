@@ -5,6 +5,7 @@ import android.content.*
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -121,7 +122,15 @@ class MainActivity :  BarcodeDataReceiver() {
         SS.title = SS.Vers + " " + SS.terminal.trim()
         title = SS.title
     }
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
+        if (keyCode == 4){
+            val main = Intent(this, MainActivity::class.java)
+            startActivity(main)
+            finish()
+        }
+        return super.onKeyDown(keyCode, event)
+    }
     private fun reactionBarcode(Barcode: String) {
         //расшифруем IDD
         //ИДД = "99990" + СокрЛП(Сред(ШК,3,2)) + "00" + Сред(ШК,5,8);

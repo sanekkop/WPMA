@@ -319,6 +319,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
 
         // нажали назад, выйдем
         if (keyCode == 4|| SS.helper.WhatDirection(keyCode) == "Right") {
+            FExcStr.text = "Секунду..."
             val shoiseWorkInit = Intent(this, NewComplectation::class.java)
             shoiseWorkInit.putExtra("ParentForm", "ShowInfoNewComp")
             startActivity(shoiseWorkInit)

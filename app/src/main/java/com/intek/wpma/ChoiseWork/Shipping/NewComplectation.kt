@@ -129,6 +129,7 @@ class NewComplectation : BarcodeDataReceiver() {
                 true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
+                    FExcStr.text = "Подгружаю состояние..."
                     val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
                     shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
                     shoiseWorkInit.putExtra("BadDocID", BadDoc["ID"])
@@ -386,6 +387,7 @@ class NewComplectation : BarcodeDataReceiver() {
                     }
                     if (DT[0]["Employer"].toString() != SS.FEmployer.ID) {
                         FExcStr.text = "Этого места нет в задании!"
+                        BadVoise()
                         return false
                     }
 
@@ -574,6 +576,7 @@ class NewComplectation : BarcodeDataReceiver() {
             return true
         }
         if (SS.helper.WhatDirection(keyCode) == "Left") {
+            FExcStr.text = "Подгружаю состояние..."
             val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
             shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
             shoiseWorkInit.putExtra("BadDocID", BadDoc["ID"])

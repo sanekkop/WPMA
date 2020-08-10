@@ -9,6 +9,7 @@ import android.provider.Settings
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.R
@@ -96,7 +97,10 @@ class SetComplete : BarcodeDataReceiver() {
                     countPlace.visibility = View.VISIBLE
                     FExcStr.text = "Ожидание команды"
                 } catch (e: Exception) {
-
+                    if (SS.isMobile){  //спрячем клаву
+                        val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                        inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
+                    }
                 }
             }
             false

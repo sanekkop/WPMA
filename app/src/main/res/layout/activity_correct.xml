@@ -54,6 +54,8 @@
         android:layout_width="119dp"
         android:layout_height="42dp"
         android:ems="10"
+        android:focusable="auto"
+        android:focusableInTouchMode="true"
         android:inputType="number"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"

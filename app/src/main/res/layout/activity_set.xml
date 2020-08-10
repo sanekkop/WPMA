@@ -124,6 +124,7 @@
         android:layout_width="0dp"
         android:layout_height="49dp"
         android:textColorHint="#000000"
+        android:textColor="#000"
         android:textSize="25sp"
         android:textStyle="bold"
         android:visibility="invisible"

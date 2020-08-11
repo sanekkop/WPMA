@@ -15,12 +15,10 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.R
-import kotlinx.android.synthetic.main.activity_set.*
-import kotlinx.android.synthetic.main.activity_show_info.*
+import kotlinx.android.synthetic.main.activity_watch_table_part.*
 import kotlinx.android.synthetic.main.activity_watch_table_part.FExcStr
 import kotlinx.android.synthetic.main.activity_watch_table_part.PreviousAction
 import kotlinx.android.synthetic.main.activity_watch_table_part.table
-import java.lang.Float.sum
 
 
 class WatchTablePart : BarcodeDataReceiver() {
@@ -43,7 +41,6 @@ class WatchTablePart : BarcodeDataReceiver() {
                     barcode = intent.getStringExtra("data")
                     codeId = intent.getStringExtra("codeId")
                     reactionBarcode(barcode)
-
                 }
             }
         }
@@ -66,7 +63,7 @@ class WatchTablePart : BarcodeDataReceiver() {
         title = ss.title
 
         var oldx : Float = 0F                      //для свайпа, чтобы посмотреть накладную
-        FExcStr.setOnTouchListener{ v, event ->
+        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
                 true
@@ -75,17 +72,17 @@ class WatchTablePart : BarcodeDataReceiver() {
                     FExcStr.text = "Подгружаю список..."
                     //перейдем на форму просмотра
                     val setInitialization = Intent(this, SetInitialization::class.java)
-                    setInitialization.putExtra("DocSetID",iddoc)
-                    setInitialization.putExtra("AddressID",addressID)
-                    setInitialization.putExtra("PreviousAction",PreviousAction.text.toString())
-                    setInitialization.putExtra("CountFact",CountFact.toString())
-                    setInitialization.putExtra("ParentForm","WatchTablePart")
+                    setInitialization.putExtra("DocSetID", iddoc)
+                    setInitialization.putExtra("AddressID", addressID)
+                    setInitialization.putExtra("PreviousAction", PreviousAction.text.toString())
+                    setInitialization.putExtra("CountFact", countFact.toString())
+                    setInitialization.putExtra("ParentForm", "WatchTablePart")
                     startActivity(setInitialization)
                     finish()
                 }
             }
-            true
-        }
+            return true
+        })
 
         //строка с шапкой
         val rowTitle = TableRow(this)

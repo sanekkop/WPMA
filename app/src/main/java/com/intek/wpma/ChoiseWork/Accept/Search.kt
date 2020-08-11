@@ -1,13 +1,10 @@
 package com.intek.wpma.ChoiseWork.Accept
 
-
 import android.annotation.SuppressLint
-
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-
 import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
@@ -23,14 +20,10 @@ import com.intek.wpma.ParentForm
 import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_accept.*
 import kotlinx.android.synthetic.main.activity_accept.table
-
 import android.view.KeyEvent
-
 import com.intek.wpma.ScanActivity
 
-
 class Search : BarcodeDataReceiver() {
-
 
     var iddoc: String = ""
     var iddocControl: String = ""
@@ -78,12 +71,6 @@ class Search : BarcodeDataReceiver() {
                 startActivity(scanAct)
             }
         }
-        alitem()
-    }
-
-
-    @SuppressLint("ClickableViewAccessibility")
-    fun alitem() {
 
         val linearLayout = LinearLayout(this)
         val rowTitle = TableRow(this)
@@ -143,6 +130,13 @@ class Search : BarcodeDataReceiver() {
 
         rowTitle.addView(linearLayout)
         table.addView(rowTitle)
+
+        alitem()
+    }
+
+
+    @SuppressLint("ClickableViewAccessibility")
+    fun alitem() {
 
         var textQuery = "SELECT " +
                 "identity(int, 1, 1) as Number, " +

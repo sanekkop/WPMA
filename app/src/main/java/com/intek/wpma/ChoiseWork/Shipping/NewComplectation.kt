@@ -1,5 +1,6 @@
 package com.intek.wpma.ChoiseWork.Shipping
 
+import android.R.string
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -14,6 +15,7 @@ import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.MainActivity
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
+import com.intek.wpma.Ref.RefPrinter
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_new_complectation.*
 
@@ -127,6 +129,7 @@ class NewComplectation : BarcodeDataReceiver() {
                 true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
+                    FExcStr.text = "Подгружаю состояние..."
                     val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
                     shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
                     shoiseWorkInit.putExtra("BadDocID", badDoc["ID"])
@@ -376,6 +379,7 @@ class NewComplectation : BarcodeDataReceiver() {
                     }
                     if (dt[0]["Employer"].toString() != ss.FEmployer.id) {
                         FExcStr.text = "Этого места нет в задании!"
+                        badVoise()
                         return false
                     }
 
@@ -561,6 +565,7 @@ class NewComplectation : BarcodeDataReceiver() {
             return true
         }
         if (ss.helper.whatDirection(keyCode) == "Left") {
+            FExcStr.text = "Подгружаю состояние..."
             val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
             shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
             shoiseWorkInit.putExtra("BadDocID", badDoc["ID"])

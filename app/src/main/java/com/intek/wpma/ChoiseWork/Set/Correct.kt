@@ -359,6 +359,9 @@ class Correct : BarcodeDataReceiver() {
                 if (ss.isMobile){  //спрячем клаву
                     val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                     inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
+                    //фокус на поле ввода при открытии активити не пашет, надо сделать
+                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.showSoftInput(this.enterCountCorrect, InputMethodManager.SHOW_IMPLICIT)
                 }
                 try {
                     if (flagBtn == 0) {

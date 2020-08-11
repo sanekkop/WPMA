@@ -15,8 +15,12 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.R
+import kotlinx.android.synthetic.main.activity_set.*
+import kotlinx.android.synthetic.main.activity_show_info.*
+import kotlinx.android.synthetic.main.activity_watch_table_part.FExcStr
 import kotlinx.android.synthetic.main.activity_watch_table_part.PreviousAction
 import kotlinx.android.synthetic.main.activity_watch_table_part.table
+import java.lang.Float.sum
 
 
 class WatchTablePart : BarcodeDataReceiver() {
@@ -61,6 +65,28 @@ class WatchTablePart : BarcodeDataReceiver() {
         countFact = intent.extras!!.getString("CountFact")!!.toInt()
         title = ss.title
 
+        var oldx : Float = 0F                      //для свайпа, чтобы посмотреть накладную
+        FExcStr.setOnTouchListener{ v, event ->
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                oldx = event.x
+                true
+            } else if (event.action == MotionEvent.ACTION_MOVE) {
+                if (event.x > oldx) {
+                    FExcStr.text = "Подгружаю список..."
+                    //перейдем на форму просмотра
+                    val setInitialization = Intent(this, SetInitialization::class.java)
+                    setInitialization.putExtra("DocSetID",iddoc)
+                    setInitialization.putExtra("AddressID",addressID)
+                    setInitialization.putExtra("PreviousAction",PreviousAction.text.toString())
+                    setInitialization.putExtra("CountFact",CountFact.toString())
+                    setInitialization.putExtra("ParentForm","WatchTablePart")
+                    startActivity(setInitialization)
+                    finish()
+                }
+            }
+            true
+        }
+
         //строка с шапкой
         val rowTitle = TableRow(this)
         val linearLayout = LinearLayout(this)
@@ -71,34 +97,34 @@ class WatchTablePart : BarcodeDataReceiver() {
         number.typeface = Typeface.SERIF
         number.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.09).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         number.gravity = Gravity.CENTER
-        number.textSize = 18F
+        number.textSize = 16F
         number.setTextColor(-0x1000000)
         val address = TextView(this)
         address.text = "Адрес"
         address.typeface = Typeface.SERIF
         address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.27).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
-        address.textSize = 18F
+        address.textSize = 16F
         address.setTextColor(-0x1000000)
         val code = TextView(this)
         code.text = "Инв.код"
         code.typeface = Typeface.SERIF
         code.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.29).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         code.gravity = Gravity.CENTER
-        code.textSize = 18F
+        code.textSize = 16F
         code.setTextColor(-0x1000000)
         val count = TextView(this)
         count.text = "Кол."
         count.typeface = Typeface.SERIF
         count.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.1).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         count.gravity = Gravity.CENTER
-        count.textSize = 18F
+        count.textSize = 16F
         count.setTextColor(-0x1000000)
         val sum = TextView(this)
         sum.text = "Сумма"
         sum.typeface = Typeface.SERIF
         sum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.25).toInt(),ViewGroup.LayoutParams.WRAP_CONTENT)
         sum.gravity = Gravity.CENTER
-        sum.textSize = 18F
+        sum.textSize = 16F
         sum.setTextColor(-0x1000000)
 
         linearLayout.addView(number)
@@ -116,7 +142,7 @@ class WatchTablePart : BarcodeDataReceiver() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        if (keyCode == 21){ //нажали влево; вернемся к документу
+        if (keyCode == 21 || keyCode == 4){ //нажали влево; вернемся к документу
             val setInitialization = Intent(this, SetInitialization::class.java)
             setInitialization.putExtra("DocSetID",iddoc)
             setInitialization.putExtra("AddressID",addressID)
@@ -159,8 +185,8 @@ class WatchTablePart : BarcodeDataReceiver() {
         textQuery = ss.querySetParam(textQuery, "addressID", addressID)
         val dataTable = ss.executeWithRead(textQuery) ?: return false
 
-        var oldx = 0F
-        var currentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
+        //var oldx = 0F
+       // var currentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
 
         if(dataTable.isNotEmpty()){
             for (i in 1 until dataTable.size){
@@ -196,6 +222,7 @@ class WatchTablePart : BarcodeDataReceiver() {
                 sum.textSize = 16F
                 sum.setTextColor(-0x1000000)
 
+                Price.text = "Сумма : " + dataTable[1][5]
 
                 linearLayout.addView(number)
                 linearLayout.addView(address)
@@ -208,32 +235,13 @@ class WatchTablePart : BarcodeDataReceiver() {
                     row.setBackgroundColor(Color.YELLOW)
                 }
                 table.addView(row)
-                table.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
-                    if (event.action == MotionEvent.ACTION_DOWN) {
-                        oldx = event.x
-                        true
-                    } else if (event.action == MotionEvent.ACTION_MOVE) {
-                        if (event.x > oldx) {
-                            val setInitialization = Intent(this, SetInitialization::class.java)
-                            setInitialization.putExtra("DocSetID", iddoc)
-                            setInitialization.putExtra("AddressID", addressID)
-                            setInitialization.putExtra(
-                                "PreviousAction",
-                                PreviousAction.text.toString()
-                            )
-                            setInitialization.putExtra("CountFact", countFact.toString())
-                            setInitialization.putExtra("ParentForm", "WatchTablePart")
-                            startActivity(setInitialization)
-                            finish()
-                        }
-                    }
-                    return true
-                })
 
             }
            // sum.text = dataTable[1][5]
         }
         return true
+
+
     }
 
     override fun onResume() {

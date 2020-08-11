@@ -109,6 +109,8 @@
         android:id="@+id/countPlace"
         android:layout_width="178dp"
         android:layout_height="39dp"
+        android:focusable="auto"
+        android:focusableInTouchMode="true"
         android:gravity="center"
         android:textColor="#000000"
         android:textSize="18sp"
@@ -117,7 +119,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.609" />
+        app:layout_constraintVertical_bias="0.609">
+
+    <requestFocus />
+    </TextView>
 
     <TextView
         android:id="@+id/terminalView"

@@ -131,12 +131,12 @@ class Search : BarcodeDataReceiver() {
         rowTitle.addView(linearLayout)
         table.addView(rowTitle)
 
-        alitem()
+        toModeAcceptance()
     }
 
 
     @SuppressLint("ClickableViewAccessibility")
-    fun alitem() {
+    private fun toModeAcceptance() {
 
         var textQuery = "SELECT " +
                 "identity(int, 1, 1) as Number, " +
@@ -255,6 +255,7 @@ class Search : BarcodeDataReceiver() {
         releaseScanner()
         Log.d("IntentApiSample: ", "onPause")
     }
+
 
 /*
 

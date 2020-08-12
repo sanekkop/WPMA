@@ -87,7 +87,7 @@ class SetComplete : BarcodeDataReceiver() {
         //тут этот код дублирую, чтобы поймать нажатие на enter после ввода колва с уже установленным принтером
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                if (SS.isMobile){  //спрячем клаву
+                if (ss.isMobile){  //спрячем клаву
                     val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                     inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
                 }
@@ -210,7 +210,7 @@ class SetComplete : BarcodeDataReceiver() {
 
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
-                if (SS.isMobile){  //спрячем клаву
+                if (ss.isMobile){  //спрячем клаву
                     val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                     inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
                 }

@@ -1,6 +1,5 @@
 package com.intek.wpma.ChoiseWork.Shipping
 
-import android.R.string
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -15,7 +14,8 @@ import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.MainActivity
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
-import com.intek.wpma.Ref.RefPrinter
+import com.intek.wpma.Ref.RefSection
+import com.intek.wpma.SQL.SQL1S
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_new_complectation.*
 
@@ -31,7 +31,7 @@ class NewComplectation : BarcodeDataReceiver() {
     private var downSituation: MutableList<MutableMap<String, String>> = mutableListOf()
     private var scaningBox = ""
     private var scaningBoxIddoc = ""
-    private var needAdressComplete = ""
+    private var needAdressComplete = ss.getVoidID()
 
     private var remain = 0
     private var lastGoodAdress = ""
@@ -119,7 +119,41 @@ class NewComplectation : BarcodeDataReceiver() {
             }
         }
         btnCansel.setOnClickListener {
-            repealNewComplectation()
+            if (curentAction == Action.Complectation) {
+                repealNewComplectation()
+            }
+            else {
+                if (needAdressComplete != ss.getVoidID()) {
+                    FExcStr.text = "Адрес полон, фиксирую..."
+                    if (!adressFull()) {
+                        lastGoodAdress = ""
+                        docDown = mutableMapOf()
+                        needAdressComplete = ss.getVoidID()
+                        toModeNewComplectationComplete()
+                    }
+                }
+            }
+
+        }
+        btnKey1.setOnClickListener {
+            if (curentAction == Action.Complectation) {
+                return@setOnClickListener
+            }
+
+            if (lastGoodAdress != "")
+            {
+                //Можно завершить
+                FExcStr.text = "Комплектую остальные..."
+                if (completeAll())
+                {
+                    goodVoise()
+                }
+                else
+                {
+                    badVoise()
+                }
+                refreshActivity()
+            }
         }
         newComplectationGetFirstOrder()
         var oldx = 0F
@@ -188,9 +222,17 @@ class NewComplectation : BarcodeDataReceiver() {
             return
         }
 
-        if (badDoc["ID"] == null) {
+        if (badDoc["ID"] == null ) {
+        //обновим документ для просмотра состояния иначе он не обновляется
             loadBadDoc(dt[0]["RefID"].toString())
         }
+        else //обновим документ для просмотра состояния иначе он не обновляется
+        {
+            if (badDoc["ID"] != dt[0]["iddoc"].toString()){
+                loadBadDoc(dt[0]["RefID"].toString())
+            }
+        }
+
         docDown["ID"] = dt[0]["iddoc"].toString()
         docDown["Boxes"] = dt[0]["CountBox"].toString()
         docDown["View"] = dt[0]["Sector"].toString()
@@ -286,7 +328,7 @@ class NewComplectation : BarcodeDataReceiver() {
 
     private fun refreshActivity() {
 
-        lblPrinter.text = ss.FPrinter.description
+        //lblPrinter.text = ss.FPrinter.description
         if (curentAction == Action.Complectation) {
 
             remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
@@ -298,7 +340,7 @@ class NewComplectation : BarcodeDataReceiver() {
             }
 
            */
-            lblState.text = docDown["View"].toString()
+            lblState.text = "Комплектация в тележку (новая)"//docDown["View"].toString()
             lblNumber.text = docDown["NumberBill"].toString().substring(
                 docDown["NumberBill"].toString().length - 5,
                 docDown["NumberBill"].toString().length - 3
@@ -315,7 +357,8 @@ class NewComplectation : BarcodeDataReceiver() {
                     .toInt() <= remain
             ) View.VISIBLE else View.INVISIBLE
             btnKey1.text = "Все"
-        } else if (curentAction == Downing.Action.DownComplete) {
+        }
+        else if (curentAction == Action.ComplectationComplete) {
 
 
             /*
@@ -325,22 +368,51 @@ class NewComplectation : BarcodeDataReceiver() {
 
              */
 
-            btnKey1.visibility = if (lastGoodAdress != "") View.INVISIBLE else View.VISIBLE
-            btnKey1.text = "Печать"
+
+            if (docDown.isNotEmpty()) {
+                lblAdress.text =
+                    "Ворота: " + docDown["Sector"].toString() + "  " + docDown["Boxes"].toString() + " м"
+                lblNumber.text = docDown["NumberBill"].toString().substring(
+                    docDown["NumberBill"].toString().length - 5,
+                    docDown["NumberBill"].toString().length - 3
+                ) +
+                        " " + docDown["NumberBill"].toString()
+                    .substring(docDown["NumberBill"].toString().length - 3) +
+                        " сектор: " + docDown["MainSectorName"].toString()
+                    .trim() + "-" + docDown["NumberCC"].toString()
+                lblSetter.text = docDown["AdressCollect"].toString().trim()
+            }
+            else {
+                lblAdress.text =""
+                lblNumber.text = ""
+                lblSetter.text = ""
+            }
+
+            btnKey1.visibility = if (lastGoodAdress == "") View.INVISIBLE else View.VISIBLE
+            if (lastGoodAdress != "") {
+                lblAdress.text =""
+                lblNumber.text = ""
+                lblSetter.text = ""
+            }
+            btnKey1.text = "TAB - Все"
             if (downSituation[0]["NumberOfOrder"].toString() != "0") {
                 val number: String = downSituation[0]["NumberOfOrder"].toString()
                 lblNumber.text = number.substring(if (number.length > 4) number.length - 4 else 0)
             }
             lblInfo1.text = "Всего " + downSituation[0]["AllBox"].toString() + " мест"
-            lblAdress.visibility = View.INVISIBLE
+            lblAdress.visibility = View.VISIBLE
             lblSetter.visibility = View.VISIBLE
-            if (lastGoodAdress != "0") {
+            if (lastGoodAdress != "") {
                 //lblSetter.ForeColor = Color.DarkGray
                 lblSetter.text = "'все' -->$nameLastGoodAdress"
             }
             btnCansel.visibility = View.INVISIBLE
             btnCansel.isEnabled = false
-            btnCansel.text = "ПОЛОН"
+            btnCansel.text = "DEL - ПОЛОН"
+            if (needAdressComplete != ss.getVoidID()) {
+                btnCansel.visibility = View.VISIBLE
+                btnCansel.isEnabled = true
+            }
 
         }
     }
@@ -436,8 +508,8 @@ class NewComplectation : BarcodeDataReceiver() {
                         "Select " +
                                 "isnull(Sections.descr, 'Пу') as Sector, " +
                                 "DocCC.\$КонтрольНабора.НомерЛиста as Number, " +
-                                "CONVERT(char(8), CAST(LEFT(journForBill.date_time_iddoc, 8) as datetime), 4) as DateDoc, " +
-                                "journForBill.docno as DocNo, " +
+                                "CONVERT(char(8), CAST(LEFT(journForBill.date_time_iddoc, 8) as datetime), 4) as datedoc, " +
+                                "journForBill.docno as docno, " +
                                 "Ref.\$Спр.МестаПогрузки.Дата9 as Date, " +
                                 "Ref.\$Спр.МестаПогрузки.КонтрольНабора as Doc, " +
                                 "Ref.\$Спр.МестаПогрузки.Сотрудник8 as Employer, " +
@@ -510,19 +582,17 @@ class NewComplectation : BarcodeDataReceiver() {
                     scaningBoxIddoc = dt[0]["Doc"].toString()
                     needAdressComplete = dt[0]["Adress9"].toString()
                     FExcStr.text = "Отсканируйте адрес!"
-                    //OnScanBox()
+                    refreshActivity()
                     return true
 
                 }
-            }
-            else {
+            } else {
                 FExcStr.text = "Нет действий с данным ШК в данном режиме!"
                 badVoise()
                 return false
             }
 
-        }
-        else if (typeBarcode == "113") {
+        } else if (typeBarcode == "113") {
             //справочники типовые
             val idd = barcoderes["IDD"].toString()
             if (ss.isSC(idd, "Сотрудники")) {
@@ -531,10 +601,45 @@ class NewComplectation : BarcodeDataReceiver() {
                 mainInit.putExtra("ParentForm", "NewComplectation")
                 startActivity(mainInit)
                 finish()
-            }
-            else if (curentAction == Action.ComplectationComplete && ss.isSC(idd, "Секции")) {
-                val id = barcoderes["ID"].toString()
-                if (downSituation[0]["NumberOfOrder"].toString() == "0") {
+            } else if (curentAction == Action.ComplectationComplete && ss.isSC(idd, "Секции")) {
+                if (scaningBox == "") {
+                    FExcStr.text = "Отсканируйте место!"
+                    return false
+                }
+                val section = RefSection()
+                if (!section.foundIDD(idd)) {
+                    FExcStr.text = "Не найден адрес!"
+                    return false
+                }
+                val id = section.id
+
+                if (needAdressComplete != ss.getVoidID()) {
+                    if (id != needAdressComplete) {
+                        FExcStr.text = "Неверный адрес!"
+                        return false
+                    }
+                }
+                var textQuery =
+                    "declare @res int; " +
+                            "begin tran; " +
+                            "exec WPM_CompleteBox :box, :adress, @res output; " +
+                            "if @res = 0 rollback tran else commit tran; " +
+                            "select @res as result; "
+                textQuery = ss.querySetParam(textQuery, "box", scaningBox)
+                textQuery = ss.querySetParam(textQuery, "adress", id)
+                val dt = ss.executeWithReadNew(textQuery) ?: return false
+                if (dt.isEmpty()) return false
+                if (dt[0]["result"] == "0") {
+                    FExcStr.text = "Не удалось зафиксировать комплектацию места!"
+                    return false
+                }
+                lastGoodAdress = id
+                nameLastGoodAdress = section.name
+
+                checkFullNewComplete(scaningBox)
+                toModeNewComplectationComplete()
+
+                /*if (downSituation[0]["NumberOfOrder"].toString() == "0") {
                     FExcStr.text = "Не присвоен номер задания! Напечатайте этикетку!"
                     return false
                 }
@@ -545,12 +650,13 @@ class NewComplectation : BarcodeDataReceiver() {
                 if (!ss.executeWithoutRead(textQuery)) {
                     return false
                 }
+
+                 */
                 // FlagPrintPallete = false;
                 // ToModeDown()
                 return true
             }
-        }
-        else {
+        } else {
             FExcStr.text = "Нет действий с данным ШК в данном режиме!"
             badVoise()
             return false
@@ -558,10 +664,130 @@ class NewComplectation : BarcodeDataReceiver() {
         return true
     }
 
+    private fun checkFullNewComplete(box:String) {
+        var textQuery = "declare @docCB char(9) " +
+                "select @DocCB = DocCC.\$КонтрольНабора.ДокументОснование " +
+                "from \$Спр.МестаПогрузки as Ref " +
+                "inner join DH\$КонтрольНабора as DocCC (nolock) " +
+                "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
+                "where Ref.ismark = 0 and Ref.id = :box " +
+                "if exists (" +
+                "select Ref.id from \$Спр.МестаПогрузки as Ref (nolock) " +
+                "inner join DH\$КонтрольНабора as DocCC (nolock) " +
+                "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
+                "where " +
+                "Ref.ismark = 0 " +
+                "and DocCC.\$КонтрольНабора.ДокументОснование = @docCB " +
+                "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate ) " +
+                " select 1 as result " +
+                " else select 0 as result, @DocCB as DocCB "
+        textQuery = ss.querySetParam(textQuery, "box", box)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        val dt = ss.executeWithReadNew(textQuery)
+        if (dt == null) {
+            FExcStr.text = "Ошибка Запроса!"
+            return
+        }
+        if (dt.isEmpty()) {
+            FExcStr.text = "Не удалось!"
+            return
+        }
+        if (dt[0]["result"] == "0") {
+            //Тут проверяем все ли места по накладной скомплектованы и если все то хуячим!!!
+            val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] =
+                ss.extendID(ss.FEmployer.id, "Спр.Сотрудники")
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] =
+                ss.extendID(lastGoodAdress, "Спр.Секции")
+            dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] =
+                ss.extendID(dt[0]["DocCB"].toString(), "КонтрольРасходной")
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = 1
+
+            execCommandNoFeedback("Complete", dataMapWrite)
+        }
+    }
+
+    private fun completeAll():Boolean  {
+        var textQuery =
+        "begin tran; " +
+                "declare @res int; " +
+                "declare @box char(9) " +
+                "exec WPM_CompleteAll :Employer, :Adress, :iddoc, @res OUTPUT, @box output; " +
+                "if @res = 0 rollback tran " +
+                "else begin commit tran select @box as box end"
+
+        textQuery = ss.querySetParam(textQuery, "Employer",    ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "Adress",      lastGoodAdress)
+        textQuery = ss.querySetParam(textQuery, "iddoc",       docDown["ID"].toString())
+        val dt = ss.executeWithReadNew(textQuery)
+        if (dt != null && dt.isNotEmpty())
+        {
+            checkFullNewComplete(dt[0]["box"].toString())
+        }
+        lastGoodAdress = ""
+        docDown = mutableMapOf()
+        toModeNewComplectationComplete()
+        return true
+    }
+
+    private fun adressFull():Boolean {
+        var textQuery =
+        "begin tran " +
+                "declare @res int " +
+                "exec WPM_AdressCompleteFull :iddoc, @res output " +
+                "if @res = 0 rollback tran else commit tran "
+        textQuery = ss.querySetParam(textQuery, "iddoc",    docDown["ID"].toString())
+
+        if (ss.executeWithoutRead(textQuery))
+        {
+            return false
+        }
+
+        toModeNewComplectation()
+        return true
+    }
+
     private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
         // нажали назад, выйдем и разблокируем доки
-        if (keyCode == 4) {
+        if (keyCode == 4 || keyCode == 67) {
+
+            if (curentAction == Action.Complectation) {
+                repealNewComplectation()
+            }
+            else {
+                if (needAdressComplete != ss.getVoidID()) {
+                    FExcStr.text = "Адрес полон, фиксирую..."
+                    if (!adressFull()){
+                        lastGoodAdress = ""
+                        docDown = mutableMapOf()
+                        needAdressComplete = ss.getVoidID()
+                        toModeNewComplectationComplete()
+                    }
+                }
+            }
+            return true
+        }
+        //это таб кнопка
+        if (keyCode == 61) {
+            if (curentAction == Action.Complectation) {
+                return true
+            }
+
+            if (lastGoodAdress != "")
+            {
+                //Можно завершить
+                FExcStr.text = "Комплектую остальные..."
+                if (completeAll())
+                {
+                    goodVoise()
+                }
+                else
+                {
+                    badVoise()
+                }
+                refreshActivity()
+            }
             return true
         }
         if (ss.helper.whatDirection(keyCode) == "Left") {

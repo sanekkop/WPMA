@@ -10,7 +10,9 @@
         android:id="@+id/btnCansel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Отказ"
+        android:background="#EA0A0A"
+        android:text="DEL - Отказ"
+        android:textColor="#FFFFFF"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -22,7 +24,9 @@
         android:id="@+id/btnKey1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="#4CAF50"
         android:text="Все"
+        android:textColor="#FFFFFF"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -46,37 +50,21 @@
 
     <TextView
         android:id="@+id/lblState"
-        android:layout_width="275dp"
+        android:layout_width="match_parent"
         android:layout_height="30dp"
-        android:gravity="start"
+        android:gravity="center"
         android:textColor="#000000"
         android:textColorHint="#000000"
-        android:textSize="12sp"
+        android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.078"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.011" />
 
     <TextView
-        android:id="@+id/lblPrinter"
-        android:layout_width="275dp"
-        android:layout_height="30dp"
-        android:gravity="center"
-        android:textColor="#4CAF50"
-        android:textColorHint="#000000"
-        android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.511"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.087" />
-
-    <TextView
         android:id="@+id/lblInfo1"
-        android:layout_width="382dp"
+        android:layout_width="match_parent"
         android:layout_height="97dp"
         android:gravity="center"
         android:textColor="#000000"
@@ -92,7 +80,7 @@
 
     <TextView
         android:id="@+id/lblNumber"
-        android:layout_width="380dp"
+        android:layout_width="match_parent"
         android:layout_height="165dp"
         android:gravity="center"
         android:textColor="#3F51B5"
@@ -108,7 +96,7 @@
 
     <TextView
         android:id="@+id/lblAdress"
-        android:layout_width="372dp"
+        android:layout_width="match_parent"
         android:layout_height="92dp"
         android:gravity="center"
         android:textColor="#000000"
@@ -123,7 +111,7 @@
 
     <TextView
         android:id="@+id/lblSetter"
-        android:layout_width="372dp"
+        android:layout_width="match_parent"
         android:layout_height="95dp"
         android:gravity="center"
         android:textColor="#000000"
@@ -139,7 +127,7 @@
 
     <TextView
         android:id="@+id/FExcStr"
-        android:layout_width="322dp"
+        android:layout_width="match_parent"
         android:layout_height="98dp"
         android:gravity="center"
         android:text="Ожидание команды"

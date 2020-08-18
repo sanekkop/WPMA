@@ -643,7 +643,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 if (reactionSC(barcoderes["IDD"]!!)) {
 
                     if (ss.CurrentMode == Global.Mode.Set) {
-                        goodDone()
+                        goodVoise()
                         return
                     }
                 }
@@ -658,7 +658,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         if (this.rbSet(Barcode)) {
 
             if (ss.CurrentMode == Global.Mode.Set) {
-                goodDone()
+                goodVoise()
                 return
             } else {
                 FExcStr.text = "Ожидание команды"
@@ -668,7 +668,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             if (typeBarcode == "6" && (ss.CurrentMode == Global.Mode.Set)) {
                 if (reactionSC(barcoderes["ID"]!!, true)) {
                     if (ss.CurrentMode == Global.Mode.Set) {
-                        goodDone()
+                        goodVoise()
                         return
                     }
                 }

@@ -86,11 +86,6 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         )
     }
 
-    fun goodDone() {
-        //GoodVoise()
-
-    }
-
     fun badVoise() {
         val bad = MediaPlayer.create(this, R.raw.bad)
         bad.start()

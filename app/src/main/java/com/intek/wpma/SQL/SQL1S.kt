@@ -370,11 +370,12 @@ object SQL1S : SQLSynchronizer() {
 
     }
 
-    private fun sqlToDateTime(StrDateTime: String): String {
+    fun sqlToDateTime(StrDateTime: String): String {
         //Пока что без времени
-        return StrDateTime.substring(0, 4) + "." +
-                StrDateTime.substring(4, 6) + "." +
-                StrDateTime.substring(6, 8)
+        return StrDateTime.substring(0, 10)
+       /* return StrDateTime.substring(0, 4) + //"." +
+                StrDateTime.substring(4, 7) + //"." +
+                StrDateTime.substring(7, 10)*/
     }
 
     /// Get extend ID, include ID and 4 symbols determining the type (in 36-dimension system)

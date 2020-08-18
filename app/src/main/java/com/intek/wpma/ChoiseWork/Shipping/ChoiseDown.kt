@@ -134,7 +134,7 @@ class ChoiseDown : BarcodeDataReceiver() {
         btn8.setOnClickListener {
             if (!btn8.isEnabled) return@setOnClickListener
             FExcStr.text = "Получаю задание..."
-            if (!newComplectationGetFirstOrder()) badVoise() else goodDone()
+            if (!newComplectationGetFirstOrder()) badVoise() else goodVoise()
         }
         btn9.setOnClickListener {
             //это резерв не работает

@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
@@ -13,14 +14,17 @@ import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.view.isVisible
 import kotlinx.android.synthetic.main.activity_accept.*
 import kotlinx.android.synthetic.main.activity_accept.table
 import com.intek.wpma.*
+import com.intek.wpma.SQL.SQL1S.sqlToDateTime
+import kotlinx.android.synthetic.main.activity_accept.FExcStr
+import kotlinx.android.synthetic.main.activity_set.*
 
 class Search : BarcodeDataReceiver() {
 
     var iddoc: String = ""
-    var iddocControl: String = ""
     var number: String = ""
     var barcode: String = ""
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
@@ -47,7 +51,6 @@ class Search : BarcodeDataReceiver() {
         }
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_accept)
@@ -62,7 +65,12 @@ class Search : BarcodeDataReceiver() {
                 true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
-                    val backAcc = Intent(this, AccMenu::class.java)
+                    val backAcc = Intent(this, YapItem::class.java)
+                    backAcc.putExtra("ParentForm", "ShowInfoNewComp")
+                    startActivity(backAcc)
+                    finish()
+                } else if (event.x > oldx) {
+                    val backAcc = Intent(this, NoneItem::class.java)
                     backAcc.putExtra("ParentForm", "ShowInfoNewComp")
                     startActivity(backAcc)
                     finish()
@@ -86,10 +94,8 @@ class Search : BarcodeDataReceiver() {
             printPal.text = "'принтер не выбран' НЕТ ПАЛЛЕТЫ"
         }
 
-
         toModeAcceptance()
     }
-
 
     @SuppressLint("ClickableViewAccessibility")
     fun toModeAcceptance() {
@@ -112,7 +118,7 @@ class Search : BarcodeDataReceiver() {
         docum.typeface = Typeface.SERIF
         docum.gravity = Gravity.CENTER
         docum.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.28).toInt(),
+            (ss.widthDisplay * 0.18).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         docum.textSize = 12F
         docum.setTextColor(-0x1000000)
@@ -120,16 +126,16 @@ class Search : BarcodeDataReceiver() {
         address.text = "Дата"
         address.typeface = Typeface.SERIF
         address.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.25).toInt(),
+            (ss.widthDisplay * 0.2).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         address.gravity = Gravity.CENTER
         address.textSize = 12F
         address.setTextColor(-0x1000000)
         val boxes = TextView(this)
-        boxes.text = "Осталось"
+        boxes.text = "Ост-сь"
         boxes.typeface = Typeface.SERIF
         boxes.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.17).toInt(),
+            (ss.widthDisplay * 0.13).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         boxes.gravity = Gravity.CENTER
         boxes.textSize = 12F
@@ -138,7 +144,7 @@ class Search : BarcodeDataReceiver() {
         boxesfact.text = "Поставщик"
         boxesfact.typeface = Typeface.SERIF
         boxesfact.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.25).toInt(),
+            (ss.widthDisplay * 0.44).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         boxesfact.gravity = Gravity.CENTER
         boxesfact.textSize = 12F
@@ -151,6 +157,7 @@ class Search : BarcodeDataReceiver() {
         linearLayout1.addView(boxesfact)
 
         rowTitle1.addView(linearLayout1)
+        rowTitle1.setBackgroundColor(Color.GRAY)
         table.addView(rowTitle1)
 
         getDocsAccept()
@@ -174,12 +181,11 @@ class Search : BarcodeDataReceiver() {
                 "LEFT JOIN \$Спр.Клиенты as Clients (nolock) " +
                 "     ON PK.\$ПриходнаяКредит.Клиент = Clients.id " +
                 "WHERE" +
-                " AC.iddoc in (:Docs) " +
+                " AC.iddoc in ($iddoc) " +
                 " select * from #temp " +
                 " drop table #temp "
 
         textQuery = ss.querySetParam(textQuery, "Number", number)
-        textQuery = ss.querySetParam(textQuery, "iddoc", iddoc)
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         val dataTable = ss.executeWithReadNew(textQuery) ?: return
 
@@ -201,19 +207,20 @@ class Search : BarcodeDataReceiver() {
                 numb.textSize = 12F
                 numb.setTextColor(-0x1000000)
                 val doc = TextView(this)
-                doc.text = DR["ACID"]
+                doc.text = DR["DocNo"]
                 doc.typeface = Typeface.SERIF
                 doc.gravity = Gravity.CENTER
                 doc.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.28).toInt(),
+                    (ss.widthDisplay * 0.18).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 doc.textSize = 12F
                 doc.setTextColor(-0x1000000)
                 val addr = TextView(this)
-                addr.text = DR["ParentIDD"]
+                //addr.text = DR["DateDoc"]
+                addr.text = sqlToDateTime(DR["DateDoc"].toString())
                 addr.typeface = Typeface.SERIF
                 addr.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.25).toInt(),
+                    (ss.widthDisplay * 0.2).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 addr.gravity = Gravity.CENTER
                 addr.textSize = 12F
@@ -222,16 +229,16 @@ class Search : BarcodeDataReceiver() {
                 box.text = DR["CountRow"]
                 box.typeface = Typeface.SERIF
                 box.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.17).toInt(),
+                    (ss.widthDisplay * 0.13).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 box.gravity = Gravity.CENTER
                 box.textSize = 12F
                 box.setTextColor(-0x1000000)
                 val boxf = TextView(this)
-                boxf.text = DR["Client"]
+                boxf.text = DR["Client"].toString().trim()
                 boxf.typeface = Typeface.SERIF
                 boxf.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.25).toInt(),
+                    (ss.widthDisplay * 0.44).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 boxf.gravity = Gravity.CENTER
                 boxf.textSize = 12F
@@ -249,15 +256,31 @@ class Search : BarcodeDataReceiver() {
         }
     }
 
-    private fun getDocsAccept() {
+    private fun getDocsAccept() : Boolean {
 
-        var textQuery = "SELECT " +
-            "QuestAcceptance as QuestAccept " +
-                "FROM "
+        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(ss.FEmployer.id, "Спр.Сотрудники")
+        var dataMapRead: MutableMap<String, Any> = mutableMapOf()
+        val fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
+        try {
+            dataMapRead = execCommand("QuestAcceptance", dataMapWrite, fieldList, dataMapRead)
+        }
+        catch (e: Exception){
+            val toast = Toast.makeText(applicationContext, "Не удалось получить задание!", Toast.LENGTH_SHORT)
+            toast.show()
+        }
 
-        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-        val dataTable = ss.executeWithReadNew(textQuery)
+        if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
+            FExcStr.text = "Заданий нет!"
+            return false
+        }
+        if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() != 3) {
+            FExcStr.text = "Не известный ответ робота... я озадачен..."
+            return false
+        }
+        iddoc = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
+
+        return true
     }
 
     override fun onResume() {
@@ -286,22 +309,6 @@ class Search : BarcodeDataReceiver() {
         Log.d("IntentApiSample: ", "onPause")
     }
 
-
- /* private bool ToModeAcceptance()
-{
-    if (FConsignment == null)
-    {
-        FConsignment = new DataTable();
-        FConsignment.Columns.Add("Number", Type.GetType("System.Int32")); е
-        FConsignment.Columns.Add("ACID", Type.GetType("System.String"));  е
-        FConsignment.Columns.Add("ParentIDD", Type.GetType("System.String")); е
-        FConsignment.Columns.Add("DOCNO", Type.GetType("System.String"));
-        FConsignment.Columns.Add("DateDoc", Type.GetType("System.DateTime"));
-        FConsignment.Columns.Add("DateDocText", Type.GetType("System.String"));
-        FConsignment.Columns.Add("Client", Type.GetType("System.String"));  е
-        FConsignment.Columns.Add("CountRow", Type.GetType("System.Int32"));  е
-        FConsignment.Columns.Add("CountNotAcceptRow", Type.GetType("System.Int32"));
-    } */
 
   /*  if (FNotAcceptedItems == null)
     {
@@ -1157,7 +1164,9 @@ class Search : BarcodeDataReceiver() {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
-            return true
+            val accMen = Intent(this, AccMenu::class.java)
+            startActivity(accMen)
+            finish()
         }
         return false
     }

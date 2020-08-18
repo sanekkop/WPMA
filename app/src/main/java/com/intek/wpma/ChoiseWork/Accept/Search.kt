@@ -339,59 +339,6 @@ class Search : BarcodeDataReceiver() {
         FAcceptedItems = FNotAcceptedItems.Clone();
     } */
 
-        //Непринятый товар
-  /*      var textQuery = "SELECT " +
-                "right(Journ.docno,5) as DOCNO," +
-                "Supply.iddoc as iddoc," +
-                "Goods.id as id," +
-                "Goods.Descr as ItemName," +
-                "Goods.\$Спр.Товары.ИнвКод as InvCode," +
-                "Goods.\$Спр.Товары.Артикул as Article," +
-                "Goods.\$Спр.Товары.АртикулНаУпаковке as ArticleOnPack," +
-                "Goods.\$Спр.Товары.Прих_Цена as Price," +
-                "Goods.\$Спр.Товары.КоличествоДеталей as Details, " +
-                "CASE WHEN round(Supply.\$АдресПоступление.Количество " +
-                "/ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.\$АдресПоступление.Количество " +
-                "THEN ISNULL(Package.Coef, 1) ELSE 1 END as Coef, " +
-                "CASE WHEN round(Supply.\$АдресПоступление.Количество " +
-                "/ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.\$АдресПоступление.Количество " +
-                "THEN round(Supply.\$АдресПоступление.Количество /ISNULL(Package.Coef, 1), 0) " +
-                "ELSE Supply.\$АдресПоступление.Количество END as CountPackage, " +
-                "Supply.\$АдресПоступление.Количество as Count," +
-                "Supply.\$АдресПоступление.ЕдиницаШК as Unit," +
-                "Supply.\$АдресПоступление.КоличествоЭтикеток as LabelCount," +
-                "Supply.\$АдресПоступление.НомерСтрокиДока as Number," +
-                "Supply.\$АдресПоступление.ГруппаСезона as SeasonGroup, " +
-                "SypplyHeader.\$АдресПоступление.ДальнийСклад as FlagFarWarehouse," +
-                "Supply.LineNO_ as LineNO_, " +
-                //"isnull(GS.$Спр.ТоварныеСекции.РазмерХранения , 0) as StoregeSize " +
-                "isnull(GS.\$Спр.ТоварныеСекции.РасчетныйРХ , 0) as StoregeSize " +
-                "FROM " +
-                "DT\$АдресПоступление as Supply (nolock) " +
-                "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
-                "ON Goods.ID = Supply.\$АдресПоступление.Товар " +
-                "LEFT JOIN DH\$АдресПоступление as SypplyHeader (nolock) " +
-                "ON SypplyHeader.iddoc = Supply.iddoc " +
-                "LEFT JOIN _1sjourn as Journ (nolock) " +
-                "ON Journ.iddoc = Right(SypplyHeader.\$АдресПоступление.ДокументОснование , 9) " +
-                "LEFT JOIN ( " +
-                "SELECT " +
-                "Units.parentext as ItemID, " +
-                "min(Units.\$Спр.ЕдиницыШК.Коэффициент ) as Coef " +
-                "FROM \$Спр.ЕдиницыШК as Units (nolock) " +
-                "WHERE " +
-                "Units.\$Спр.ЕдиницыШК.ОКЕИ = :OKEIPackage " +
-                "and Units.ismark = 0 " +
-                "and not Units.\$Спр.ЕдиницыШК.Коэффициент = 0 " +
-                "GROUP BY " +
-                "Units.parentext) as Package " +
-                "ON Package.ItemID = Goods.ID " +
-                "LEFT JOIN \$Спр.ТоварныеСекции as GS (nolock) " +
-                "on GS.parentext = goods.id and gs.\$Спр.ТоварныеСекции.Склад = :Warehouse " +
-                "WHERE Supply.IDDOC in (:Docs) " +
-                "and Supply.\$АдресПоступление.Состояние0 = 0 " +
-                "ORDER BY Journ.docno, Supply.LineNO_ "; */
-
     /*
         TextQuery = TextQuery.Replace(":Docs", Docs);
         QuerySetParam(ref TextQuery, "OKEIPackage", OKEIPackage);
@@ -426,68 +373,6 @@ class Search : BarcodeDataReceiver() {
         }
         FNotAcceptedItems.Merge(DT, false, MissingSchemaAction.Ignore);
 */
-
-        //Теперь принятый товар
-   /*     TextQuery =
-            "SELECT " +
-                    "right(Journ.docno,5) as DOCNO," +
-                    "Supply.iddoc as iddoc," +
-                    "Goods.id as id," +
-                    "Goods.Descr as ItemName," +
-                    "Goods.$Спр.Товары.ИнвКод as InvCode," +
-                    "Goods.$Спр.Товары.Артикул as Article," +
-                    "Goods.$Спр.Товары.АртикулНаУпаковке as ArticleOnPack," +
-                    "Goods.$Спр.Товары.Прих_Цена as Price," +
-                    "Goods.$Спр.Товары.КоличествоДеталей as Details, " +
-                    "CASE WHEN round(Supply.$АдресПоступление.Количество /ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.$АдресПоступление.Количество " +
-                    "THEN ISNULL(Package.Coef, 1) ELSE 1 END as Coef, " +
-                    "CASE WHEN round(Supply.$АдресПоступление.Количество /ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.$АдресПоступление.Количество " +
-                    "THEN round(Supply.$АдресПоступление.Количество /ISNULL(Package.Coef, 1), 0) " +
-                    "ELSE Supply.$АдресПоступление.Количество END as CountPackage, " +
-                    "Supply.$АдресПоступление.Количество as Count," +
-                    "Supply.$АдресПоступление.ЕдиницаШК as Unit," +
-                    "Supply.$АдресПоступление.КоличествоЭтикеток as LabelCount," +
-                    "Supply.$АдресПоступление.НомерСтрокиДока as Number," +
-                    "Supply.$АдресПоступление.ГруппаСезона as SeasonGroup," +
-                    "SypplyHeader.$АдресПоступление.ДальнийСклад as FlagFarWarehouse," +
-                    "Supply.LineNO_ as LineNO_, " +
-                    //"isnull(GS.$Спр.ТоварныеСекции.РазмерХранения , 0) StoregeSize " +
-                    "isnull(GS.$Спр.ТоварныеСекции.РасчетныйРХ , 0) StoregeSize " +
-                    "FROM DT$АдресПоступление as Supply (nolock) " +
-                    "LEFT JOIN $Спр.Товары as Goods (nolock) " +
-                    "ON Goods.ID = Supply.$АдресПоступление.Товар " +
-                    "LEFT JOIN DH$АдресПоступление as SypplyHeader (nolock) " +
-                    "ON SypplyHeader.iddoc = Supply.iddoc " +
-                    "LEFT JOIN _1sjourn as Journ (nolock) " +
-                    "ON Journ.iddoc = Right(SypplyHeader.$АдресПоступление.ДокументОснование , 9) " +
-                    "LEFT JOIN ( " +
-                    "SELECT " +
-                    "Units.parentext as ItemID, " +
-                    "min(Units.$Спр.ЕдиницыШК.Коэффициент ) as Coef " +
-                    "FROM " +
-                    "$Спр.ЕдиницыШК as Units (nolock) " +
-                    "WHERE " +
-                    "Units.$Спр.ЕдиницыШК.ОКЕИ = :OKEIPackage " +
-                    "and Units.ismark = 0 " +
-                    "and not Units.$Спр.ЕдиницыШК.Коэффициент = 0 " +
-                    "GROUP BY " +
-                    "Units.parentext " +
-                    ") as Package " +
-                    "ON Package.ItemID = Goods.ID " +
-                    "LEFT JOIN $Спр.ТоварныеСекции as GS (nolock) " +
-                    "on GS.parentext = goods.id and gs.$Спр.ТоварныеСекции.Склад = :Warehouse " +
-                    "WHERE Supply.IDDOC in (:Docs) " +
-                    "and Supply.$АдресПоступление.Состояние0 = 1 " +
-                    "and Supply.$АдресПоступление.ФлагПечати = 1 " +
-                    "and Supply.$АдресПоступление.Сотрудник0 = :Employer " +
-                    "ORDER BY Journ.docno, Supply.$АдресПоступление.Дата0 , Supply.$АдресПоступление.Время0 ";  */
-
-    /*
-        TextQuery = TextQuery.Replace(":Docs", Docs);
-        QuerySetParam(ref TextQuery, "Employer", Employer.ID);
-        QuerySetParam(ref TextQuery, "OKEIPackage", OKEIPackage);
-        QuerySetParam(ref TextQuery, "Warehouse", Const.MainWarehouse);
-        DT.Clear(); */
 
     /*
         if (!ExecuteWithRead(TextQuery, out DT))
@@ -569,118 +454,6 @@ class Search : BarcodeDataReceiver() {
     FCurrentMode = Mode.Acceptance;
     return true;
 } // ToModeAcceptance */
-
-  //  private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode)
-/*{
-    return ToModeAcceptedItem(ItemID, IDDoc, ToMode, 0, false);
-} */
-
- // private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int InPartyCount, bool OnShelf)
- /* {
-    //проверяем наличие отсканированной паллеты
-    if ((FPalletID == "") && (ToMode == Mode.Acceptance))
-    {
-        FExcStr = "Не выбрана паллета";
-        return false;
-    }
-    AdressConditionItem = null;
-    //Если был дисконнект, то это проявиться после нижеследующего запроса
-    //и дальше будет, не приемка, а редактирование карточки, для этого запрос и помещен в начало
-    if (!LoadUnits(ItemID))
-    {
-        return false;
-    }
-
-    //FExcStr - несет смысл
-    AcceptedItem = new StructItem();
-    AcceptedItem.GenerateBarcode = false;
-    if (NewBarcodes == null)
-    {
-        NewBarcodes = new List<string>();
-    }
-    else
-    {
-        NewBarcodes.Clear();
-    }
-
-    //Определяем имеется ли данный товар в списке принимаемых
-    CurrentRowAcceptedItem = null;
-    int AllCount = 0;
-    DataRow[] DR;
-
-    if (ToMode == Mode.Acceptance)
-    {
-        DR = FNotAcceptedItems.Select("ID = '" + ItemID + "'");
-        if (DR.Length > 1 && IDDoc != "")
-        {
-            foreach (DataRow dr in DR)
-            {
-                if (dr["IDDOC"].ToString() == IDDoc)
-                {
-                    if (CurrentRowAcceptedItem == null)
-                    {
-                        CurrentRowAcceptedItem = dr;
-                    }
-                }
-                AllCount += (int)dr["Count"];
-            }
-        }
-        else if (DR.Length > 0) //Один товар или не указана строка документа
-        {
-            CurrentRowAcceptedItem = DR[0];
-            foreach (DataRow dr in DR)
-            {
-                AllCount += (int)dr["Count"];
-            }
-        }
-        //иначе это скан товара не из списка!
-    }
-    else if ( ToMode == Mode.AcceptanceCross)
-    {
-        DR = FNotAcceptedItems.Select("ID = '" + ItemID + "'");
-        if (DR.Length > 1 && IDDoc != "")
-        {
-            foreach (DataRow dr in DR)
-            {
-                if (dr["IDDOC"].ToString() == IDDoc && dr["OrderID"].ToString() == FOrderID)
-                {
-                    if (CurrentRowAcceptedItem == null)
-                    {
-                        CurrentRowAcceptedItem = dr;
-                    }
-                }
-                AllCount += (int)dr["Count"];
-            }
-        }
-        else if (DR.Length > 0) //Один товар или не указана строка документа
-        {
-            CurrentRowAcceptedItem = DR[0];
-            foreach (DataRow dr in DR)
-            {
-                AllCount += (int)dr["Count"];
-            }
-        }
-        //иначе это скан товара не из списка!
-    }
-    //БЛОКИРУЕМ ТОВАР
-    if (!LockItem(ItemID))
-    {
-        return false;
-    }
-    RefWarehouse WorkWarehouse = new RefWarehouse(this);
-
-    if (WarehouseForAddressItem == null)
-    {
-        WorkWarehouse.FoundID(Const.MainWarehouse);
-    }
-    else if (WarehouseForAddressItem.Selected)
-    {
-        WorkWarehouse.FoundID(WarehouseForAddressItem.ID);
-    }
-    else
-    {
-        WorkWarehouse.FoundID(Const.MainWarehouse);
-    } */
 
     //ОПРЕДЕЛЯЕМ ОСТАТКИ И АДРЕСА
   /*  string TextQuery =
@@ -1139,11 +912,6 @@ class Search : BarcodeDataReceiver() {
     return true;
 } // ToModeAcceptedItem
 */
-
-//private bool ToModeAcceptedItem(string ItemID, string IDDoc)
-/*{
-    return ToModeAcceptedItem(ItemID, IDDoc, FCurrentMode == Mode.AcceptanceCross ? Mode.AcceptanceCross : Mode.Acceptance);
-}*/
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 

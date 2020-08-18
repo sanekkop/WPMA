@@ -12,8 +12,10 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.Model.Model
 import com.intek.wpma.ParentForm
 import com.intek.wpma.R
+import com.intek.wpma.SQL.SQL1S.Const
 import kotlinx.android.synthetic.main.activity_none_item.*
 
 
@@ -73,6 +75,88 @@ class NoneItem : BarcodeDataReceiver() {
         }
         else {
             printPal.text = "'принтер не выбран' НЕТ ПАЛЛЕТЫ"
+        }
+
+        noneItem()
+    }
+
+    fun noneItem() {
+
+        /*
+        * здесь
+        * шапка
+        * №, Накл., Артикул, Арт. на, Кол-во, Коэф.
+        * таблицы
+        */
+
+        var textQuery = "SELECT " +
+                "right(Journ.docno,5) as DOCNO," +
+                "Supply.iddoc as iddoc," +
+                "Goods.id as id," +
+                "Goods.Descr as ItemName," +
+                "Goods.\$Спр.Товары.ИнвКод as InvCode," +
+                "Goods.\$Спр.Товары.Артикул as Article," +
+                "Goods.\$Спр.Товары.АртикулНаУпаковке as ArticleOnPack," +
+                "Goods.\$Спр.Товары.Прих_Цена as Price," +
+                "Goods.\$Спр.Товары.КоличествоДеталей as Details, " +
+                "CASE WHEN round(Supply.\$АдресПоступление.Количество " +
+                "/ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.\$АдресПоступление.Количество " +
+                "THEN ISNULL(Package.Coef, 1) ELSE 1 END as Coef, " +
+                "CASE WHEN round(Supply.\$АдресПоступление.Количество " +
+                "/ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.\$АдресПоступление.Количество " +
+                "THEN round(Supply.\$АдресПоступление.Количество /ISNULL(Package.Coef, 1), 0) " +
+                "ELSE Supply.\$АдресПоступление.Количество END as CountPackage, " +
+                "Supply.\$АдресПоступление.Количество as Count," +
+                "Supply.\$АдресПоступление.ЕдиницаШК as Unit," +
+                "Supply.\$АдресПоступление.КоличествоЭтикеток as LabelCount," +
+                "Supply.\$АдресПоступление.НомерСтрокиДока as Number," +
+                "Supply.\$АдресПоступление.ГруппаСезона as SeasonGroup, " +
+                "SypplyHeader.\$АдресПоступление.ДальнийСклад as FlagFarWarehouse," +
+                " Supply.LineNO_ as LineNO_, " +
+                //isnull(GS.\$Спр.ТоварныеСекции.РазмерХранения , 0) as StoregeSize " +
+                "isnull(GS.\$Спр.ТоварныеСекции.РасчетныйРХ , 0) as StoregeSize " +
+                "FROM " +
+                "DT\$АдресПоступление as Supply (nolock) " +
+                "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
+                "ON Goods.ID = Supply.\$АдресПоступление.Товар " +
+                "LEFT JOIN DH\$АдресПоступление as SypplyHeader (nolock) " +
+                "ON SypplyHeader.iddoc = Supply.iddoc " +
+                "LEFT JOIN _1sjourn as Journ (nolock) " +
+                "ON Journ.iddoc = Right(SypplyHeader.\$АдресПоступление.ДокументОснование , 9) " +
+                "LEFT JOIN ( " +
+                "SELECT " +
+                "Units.parentext as ItemID, " +
+                "min(Units.\$Спр.ЕдиницыШК.Коэффициент ) as Coef " +
+                "FROM \$Спр.ЕдиницыШК as Units (nolock) " +
+                "WHERE " +
+                "Units.\$Спр.ЕдиницыШК.ОКЕИ = :OKEIPackage " +
+                "and Units.ismark = 0 " +
+                "and not Units.\$Спр.ЕдиницыШК.Коэффициент = 0 " +
+                "GROUP BY " +
+                "Units.parentext) as Package " +
+                "ON Package.ItemID = Goods.ID " +
+                "LEFT JOIN \$Спр.ТоварныеСекции as GS (nolock) " +
+                "on GS.parentext = goods.id and gs.\$Спр.ТоварныеСекции.Склад = :Warehouse " +
+                "WHERE Supply.IDDOC in ($iddoc) " +
+                "and Supply.\$АдресПоступление.Состояние0 = 0 " +
+                "ORDER BY Journ.docno, Supply.LineNO_"
+
+        val model = Model()
+        textQuery = ss.querySetParam(textQuery, "$iddoc", iddoc)
+        textQuery = ss.querySetParam(textQuery, "OKEIPackage", model.okeiPackage)
+        textQuery = ss.querySetParam(textQuery, "Warehouse", Const.MainWarehouse)
+        var dT = ss.executeWithReadNew(textQuery) ?: return
+
+        if (dT.isNotEmpty()) {
+
+            for (DR in dT) {
+                 /*
+                 * здесь
+                 * заполнение
+                 * таблицы
+                 * DR - Number, DOCNO, Article, ArticleOnPack, Count, Coef
+                 */
+            }
         }
     }
 

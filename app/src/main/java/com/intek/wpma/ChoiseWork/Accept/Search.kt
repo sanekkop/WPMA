@@ -8,20 +8,14 @@ import android.content.IntentFilter
 import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
-import android.view.Gravity
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
-import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.ParentForm
-import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_accept.*
 import kotlinx.android.synthetic.main.activity_accept.table
-import android.view.KeyEvent
-import com.intek.wpma.ScanActivity
+import com.intek.wpma.*
 
 class Search : BarcodeDataReceiver() {
 
@@ -57,12 +51,25 @@ class Search : BarcodeDataReceiver() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_accept)
-        iddoc = intent.extras!!.getString("Doc")!!
-        number = intent.extras!!.getString("Number")!!
+
         ParentForm = intent.extras!!.getString("ParentForm")!!
 
         title = ss.title
-
+        var oldx : Float = 0F
+        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                oldx = event.x
+                true
+            } else if (event.action == MotionEvent.ACTION_MOVE) {
+                if (event.x < oldx) {
+                    val backAcc = Intent(this, AccMenu::class.java)
+                    backAcc.putExtra("ParentForm", "ShowInfoNewComp")
+                    startActivity(backAcc)
+                    finish()
+                }
+            }
+            return true
+        })
         if (ss.isMobile){
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
@@ -72,15 +79,30 @@ class Search : BarcodeDataReceiver() {
             }
         }
 
-        val linearLayout = LinearLayout(this)
-        val rowTitle = TableRow(this)
+        if (ss.FPrinter.path == null) {
+            printPal.text = ss.FPrinter.path
+        }
+         else {
+            printPal.text = "'принтер не выбран' НЕТ ПАЛЛЕТЫ"
+        }
+
+
+        toModeAcceptance()
+    }
+
+
+    @SuppressLint("ClickableViewAccessibility")
+    fun toModeAcceptance() {
+
+        val linearLayout1 = LinearLayout(this)
+        val rowTitle1 = TableRow(this)
 
         //добавим столбцы
         val number = TextView(this)
         number.text = "№"
         number.typeface = Typeface.SERIF
         number.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.09).toInt(),
+            (ss.widthDisplay * 0.05).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         number.gravity = Gravity.CENTER
         number.textSize = 12F
@@ -98,7 +120,7 @@ class Search : BarcodeDataReceiver() {
         address.text = "Дата"
         address.typeface = Typeface.SERIF
         address.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.35).toInt(),
+            (ss.widthDisplay * 0.25).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         address.gravity = Gravity.CENTER
         address.textSize = 12F
@@ -107,7 +129,7 @@ class Search : BarcodeDataReceiver() {
         boxes.text = "Осталось"
         boxes.typeface = Typeface.SERIF
         boxes.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.14).toInt(),
+            (ss.widthDisplay * 0.17).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         boxes.gravity = Gravity.CENTER
         boxes.textSize = 12F
@@ -116,46 +138,43 @@ class Search : BarcodeDataReceiver() {
         boxesfact.text = "Поставщик"
         boxesfact.typeface = Typeface.SERIF
         boxesfact.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.14).toInt(),
+            (ss.widthDisplay * 0.25).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         boxesfact.gravity = Gravity.CENTER
         boxesfact.textSize = 12F
         boxesfact.setTextColor(-0x1000000)
 
-        linearLayout.addView(number)
-        linearLayout.addView(docum)
-        linearLayout.addView(address)
-        linearLayout.addView(boxes)
-        linearLayout.addView(boxesfact)
+        linearLayout1.addView(number)
+        linearLayout1.addView(docum)
+        linearLayout1.addView(address)
+        linearLayout1.addView(boxes)
+        linearLayout1.addView(boxesfact)
 
-        rowTitle.addView(linearLayout)
-        table.addView(rowTitle)
+        rowTitle1.addView(linearLayout1)
+        table.addView(rowTitle1)
 
-        toModeAcceptance()
-    }
-
-
-    @SuppressLint("ClickableViewAccessibility")
-    private fun toModeAcceptance() {
+        getDocsAccept()
 
         var textQuery = "SELECT " +
-                "identity(int, 1, 1) as Number, " +
-                "AC.iddoc as ACID," +
-                "journ.iddoc as ParentIDD," +
-                "Clients.descr as Client," +
-                "AC.\$АдресПоступление.КолСтрок as CountRow," +
-                "journ.docno as DocNo," +
-                "CAST(LEFT(journ.date_time_iddoc, 8) as datetime) as DateDoc," +
+                "identity(int, 1, 1) as Number , " +
+                "AC.iddoc as ACID , " +
+                "journ.iddoc as ParentIDD , " +
+                "Clients.descr as Client , " +
+                "AC.\$АдресПоступление.КолСтрок as CountRow , " +
+                "journ.docno as DocNo , " +
+                "CAST(LEFT(journ.date_time_iddoc, 8) as datetime) as DateDoc , " +
                 "CONVERT(char(8), CAST(LEFT(journ.date_time_iddoc,8) as datetime), 4) as DateDocText " +
                 "into #temp " +
-                "FROM DH\$АдресПоступление as AC (nolock) " +
+                "FROM" +
+                " DH\$АдресПоступление as AC (nolock) " +
                 "LEFT JOIN _1sjourn as journ (nolock) " +
                 "     ON journ.iddoc = right(AC.\$АдресПоступление.ДокументОснование , 9) " +
                 "LEFT JOIN DH\$ПриходнаяКредит as PK (nolock) " +
                 "     ON journ.iddoc = PK.iddoc " +
                 "LEFT JOIN \$Спр.Клиенты as Clients (nolock) " +
                 "     ON PK.\$ПриходнаяКредит.Клиент = Clients.id " +
-                "WHERE AC.iddoc in (:Docs) " +
+                "WHERE" +
+                " AC.iddoc in (:Docs) " +
                 " select * from #temp " +
                 " drop table #temp "
 
@@ -167,6 +186,7 @@ class Search : BarcodeDataReceiver() {
         if (dataTable.isNotEmpty()) {
 
             for (DR in dataTable) {
+
                 val linearLayout = LinearLayout(this)
                 val rowTitle = TableRow(this)
 
@@ -175,7 +195,7 @@ class Search : BarcodeDataReceiver() {
                 numb.text = DR["Number"]
                 numb.typeface = Typeface.SERIF
                 numb.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.09).toInt(),
+                    (ss.widthDisplay * 0.05).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 numb.gravity = Gravity.CENTER
                 numb.textSize = 12F
@@ -193,7 +213,7 @@ class Search : BarcodeDataReceiver() {
                 addr.text = DR["ParentIDD"]
                 addr.typeface = Typeface.SERIF
                 addr.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.35).toInt(),
+                    (ss.widthDisplay * 0.25).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 addr.gravity = Gravity.CENTER
                 addr.textSize = 12F
@@ -202,7 +222,7 @@ class Search : BarcodeDataReceiver() {
                 box.text = DR["CountRow"]
                 box.typeface = Typeface.SERIF
                 box.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.14).toInt(),
+                    (ss.widthDisplay * 0.17).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 box.gravity = Gravity.CENTER
                 box.textSize = 12F
@@ -211,7 +231,7 @@ class Search : BarcodeDataReceiver() {
                 boxf.text = DR["Client"]
                 boxf.typeface = Typeface.SERIF
                 boxf.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.14).toInt(),
+                    (ss.widthDisplay * 0.25).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 boxf.gravity = Gravity.CENTER
                 boxf.textSize = 12F
@@ -229,6 +249,16 @@ class Search : BarcodeDataReceiver() {
         }
     }
 
+    private fun getDocsAccept() {
+
+        var textQuery = "SELECT " +
+            "QuestAcceptance as QuestAccept " +
+                "FROM "
+
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        val dataTable = ss.executeWithReadNew(textQuery)
+    }
 
     override fun onResume() {
         super.onResume()
@@ -257,25 +287,23 @@ class Search : BarcodeDataReceiver() {
     }
 
 
-/*
-
-private bool ToModeAcceptance()
+ /* private bool ToModeAcceptance()
 {
     if (FConsignment == null)
     {
         FConsignment = new DataTable();
-        FConsignment.Columns.Add("Number", Type.GetType("System.Int32"));
-        FConsignment.Columns.Add("ACID", Type.GetType("System.String"));
-        FConsignment.Columns.Add("ParentIDD", Type.GetType("System.String"));
+        FConsignment.Columns.Add("Number", Type.GetType("System.Int32")); е
+        FConsignment.Columns.Add("ACID", Type.GetType("System.String"));  е
+        FConsignment.Columns.Add("ParentIDD", Type.GetType("System.String")); е
         FConsignment.Columns.Add("DOCNO", Type.GetType("System.String"));
         FConsignment.Columns.Add("DateDoc", Type.GetType("System.DateTime"));
         FConsignment.Columns.Add("DateDocText", Type.GetType("System.String"));
-        FConsignment.Columns.Add("Client", Type.GetType("System.String"));
-        FConsignment.Columns.Add("CountRow", Type.GetType("System.Int32"));
+        FConsignment.Columns.Add("Client", Type.GetType("System.String"));  е
+        FConsignment.Columns.Add("CountRow", Type.GetType("System.Int32"));  е
         FConsignment.Columns.Add("CountNotAcceptRow", Type.GetType("System.Int32"));
-    }
+    } */
 
-    if (FNotAcceptedItems == null)
+  /*  if (FNotAcceptedItems == null)
     {
         FNotAcceptedItems = new DataTable();
         FNotAcceptedItems.Columns.Add("ID", Type.GetType("System.String"));
@@ -302,10 +330,10 @@ private bool ToModeAcceptance()
         FNotAcceptedItems.Columns.Add("FlagFarWarehouse", Type.GetType("System.Int32"));
         FNotAcceptedItems.Columns.Add("StoregeSize", Type.GetType("System.Int32"));
         FAcceptedItems = FNotAcceptedItems.Clone();
-    }
+    } */
 
         //Непринятый товар
-        var textQuery = "SELECT " +
+  /*      var textQuery = "SELECT " +
                 "right(Journ.docno,5) as DOCNO," +
                 "Supply.iddoc as iddoc," +
                 "Goods.id as id," +
@@ -355,19 +383,32 @@ private bool ToModeAcceptance()
                 "on GS.parentext = goods.id and gs.\$Спр.ТоварныеСекции.Склад = :Warehouse " +
                 "WHERE Supply.IDDOC in (:Docs) " +
                 "and Supply.\$АдресПоступление.Состояние0 = 0 " +
-                "ORDER BY Journ.docno, Supply.LineNO_ ";
+                "ORDER BY Journ.docno, Supply.LineNO_ "; */
+
+    /*
         TextQuery = TextQuery.Replace(":Docs", Docs);
         QuerySetParam(ref TextQuery, "OKEIPackage", OKEIPackage);
         QuerySetParam(ref TextQuery, "Warehouse", Const.MainWarehouse);
         DataTable DT;
-        if (!ExecuteWithRead(TextQuery, out DT))
+
+     */
+
+    /*    if (!ExecuteWithRead(TextQuery, out DT))
         {
             return false;
         }
+
+     */
+
+    /*
         DT.Columns.Add("ArticleFind", Type.GetType("System.String"));
         DT.Columns.Add("ArticleOnPackFind", Type.GetType("System.String"));
         DT.Columns.Add("ItemNameFind", Type.GetType("System.String"));
         DT.Columns.Add("CoefView", Type.GetType("System.String"));
+
+     */
+
+    /*
         for (int row = 0; row < DT.Rows.Count; row++)
         {
             DT.Rows[row]["ArticleFind"] = Helper.SuckDigits(DT.Rows[row]["Article"].ToString().Trim());
@@ -377,9 +418,10 @@ private bool ToModeAcceptance()
             + ((int)(decimal)DT.Rows[row]["Coef"]).ToString();
         }
         FNotAcceptedItems.Merge(DT, false, MissingSchemaAction.Ignore);
+*/
 
         //Теперь принятый товар
-        TextQuery =
+   /*     TextQuery =
             "SELECT " +
                     "right(Journ.docno,5) as DOCNO," +
                     "Supply.iddoc as iddoc," +
@@ -431,22 +473,30 @@ private bool ToModeAcceptance()
                     "and Supply.$АдресПоступление.Состояние0 = 1 " +
                     "and Supply.$АдресПоступление.ФлагПечати = 1 " +
                     "and Supply.$АдресПоступление.Сотрудник0 = :Employer " +
-                    "ORDER BY Journ.docno, Supply.$АдресПоступление.Дата0 , Supply.$АдресПоступление.Время0 ";
+                    "ORDER BY Journ.docno, Supply.$АдресПоступление.Дата0 , Supply.$АдресПоступление.Время0 ";  */
+
+    /*
         TextQuery = TextQuery.Replace(":Docs", Docs);
         QuerySetParam(ref TextQuery, "Employer", Employer.ID);
         QuerySetParam(ref TextQuery, "OKEIPackage", OKEIPackage);
         QuerySetParam(ref TextQuery, "Warehouse", Const.MainWarehouse);
-        DT.Clear();
+        DT.Clear(); */
+
+    /*
         if (!ExecuteWithRead(TextQuery, out DT))
         {
             return false;
-        }
+        } */
+
+    /*
         DT.Columns.Add("CoefView", Type.GetType("System.String"));
         for (int row = 0; row < DT.Rows.Count; row++)
         {
             DT.Rows[row]["CoefView"] = ((int)(decimal)DT.Rows[row]["Coef"] == 1 ? "??  " : "")
             + ((int)(decimal)DT.Rows[row]["Coef"]).ToString();
-        }
+        } */
+
+    /*
         FAcceptedItems.Merge(DT, false, MissingSchemaAction.Ignore);
         if (FPallets.Rows.Count == 0)
         {
@@ -467,15 +517,22 @@ private bool ToModeAcceptance()
                         "GROUP BY " +
                         "Supply.$АдресПоступление.Паллета " +
                         "ORDER BY " +
-                        "Supply.$АдресПоступление.Паллета ";
+                        "Supply.$АдресПоступление.Паллета "; */
+
+    /*
             TextQuery = TextQuery.Replace(":Docs", Docs);
             QuerySetParam(ref TextQuery, "Employer", Employer.ID);
-            DT.Clear();
+            DT.Clear(); */
+
+    /*
             if (!ExecuteWithRead(TextQuery, out DT))
             {
                 return false;
             }
-            FPallets.Merge(DT, false, MissingSchemaAction.Ignore);
+
+     */
+
+            /* FPallets.Merge(DT, false, MissingSchemaAction.Ignore);
             if (DT.Rows.Count > 0)
             {
                 FPalletID = FPallets.Rows[DT.Rows.Count - 1]["ID"].ToString();
@@ -487,6 +544,10 @@ private bool ToModeAcceptance()
                 FBarcodePallet = "";
             }
         }
+
+             */
+
+    /*
         //Расчитываем строчечки
         DR = FConsignment.Select();
         foreach (DataRow dr in DR)
@@ -495,16 +556,20 @@ private bool ToModeAcceptance()
             dr["CountNotAcceptRow"] = tmpDR.Length;
         }
     }
+*/
 
+    /*
     FCurrentMode = Mode.Acceptance;
     return true;
-} // ToModeAcceptance
-private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode)
-{
+} // ToModeAcceptance */
+
+  //  private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode)
+/*{
     return ToModeAcceptedItem(ItemID, IDDoc, ToMode, 0, false);
-}
-private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int InPartyCount, bool OnShelf)
-{
+} */
+
+ // private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int InPartyCount, bool OnShelf)
+ /* {
     //проверяем наличие отсканированной паллеты
     if ((FPalletID == "") && (ToMode == Mode.Acceptance))
     {
@@ -608,9 +673,10 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
     else
     {
         WorkWarehouse.FoundID(Const.MainWarehouse);
-    }
+    } */
+
     //ОПРЕДЕЛЯЕМ ОСТАТКИ И АДРЕСА
-    string TextQuery =
+  /*  string TextQuery =
     "DECLARE @curdate DateTime; " +
             "SELECT @curdate = DATEADD(DAY, 1 - DAY(curdate), curdate) FROM _1ssystem (nolock); " +
             "SELECT " +
@@ -663,12 +729,16 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
             "SELECT " +
             ":MainWarehouse, :Item, 0 " +
             ") as Main " +
-            "GROUP BY Main.Item";
+            "GROUP BY Main.Item"; */
+
+    /*
     QuerySetParam(ref TextQuery, "DateNow", DateTime.Now);
     QuerySetParam(ref TextQuery, "Item", ItemID);
     QuerySetParam(ref TextQuery, "BufferWarehouse", BufferWarehouse);
     QuerySetParam(ref TextQuery, "MainWarehouse", WorkWarehouse.ID);
+*/
 
+    /*
     DataTable DT;
     if (!ExecuteWithRead(TextQuery, out DT))
     {
@@ -680,11 +750,16 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
     AcceptedItem.AdressBuffer = DT.Rows[0]["AdressBuffer"].ToString();
     AcceptedItem.IsRepeat = false;
 
-    Dictionary<string, object> DataMapWrite = new Dictionary<string, object>();
-    if (CurrentRowAcceptedItem == null)
+
+     */
+
+
+   // Dictionary<string, object> DataMapWrite = new Dictionary<string, object>();
+
+  /*  if (CurrentRowAcceptedItem == null)
     {
         //Подсосем остатки в разрезе адресов и состояний
-        TextQuery =
+    /*    TextQuery =
             "DECLARE @curdate DateTime; " +
                     "SELECT @curdate = DATEADD(DAY, 1 - DAY(curdate), curdate) FROM _1ssystem (nolock); " +
                     "SELECT " +
@@ -725,6 +800,12 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
                     "RegAOT.$Рег.АдресОстаткиТоваров.Состояние " +
                     "HAVING sum(RegAOT.$Рег.АдресОстаткиТоваров.Количество ) <> 0 " +
                     "ORDER BY Adress, Condition";
+
+   */
+
+   */
+
+   /*
         QuerySetParam(ref TextQuery, "DateNow", DateTime.Now);
         QuerySetParam(ref TextQuery, "ItemID", ItemID);
         QuerySetParam(ref TextQuery, "Warehouse", WorkWarehouse.ID);
@@ -732,7 +813,9 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
         {
             AdressConditionItem = null;
         }
+*/
 
+    /*
         //Я не знаю что это...
         TextQuery =
             "SELECT " +
@@ -748,7 +831,9 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
                 "FROM $Спр.Товары as Goods (nolock) " +
                 "left join $Спр.ТоварныеСекции as RefSections (nolock) " +
                 "on RefSections.parentext = Goods.id and RefSections.$Спр.ТоварныеСекции.Склад = :warehouse " +
-                "WHERE Goods.id = :Item ";
+                "WHERE Goods.id = :Item "; */
+
+    /*
         QuerySetParam(ref TextQuery, "Item", ItemID);
         QuerySetParam(ref TextQuery, "warehouse", WorkWarehouse.ID);
         DT.Clear();
@@ -771,25 +856,28 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
         AcceptedItem.ToMode = ToMode;
         AcceptedItem.BindingAdressFlag = false;
         AcceptedItem.StoregeSize = (int)(decimal)DT.Rows[0]["StoregeSize"];
-        if (AcceptedItem.ToMode == Mode.AcceptanceCross)
-        {
-            CurrentPalletAcceptedItem = new RefPalleteMove(this);
 
-        }
+     */
+
+
+    //    if (AcceptedItem.ToMode == Mode.AcceptanceCross)
+      /*  {
+            CurrentPalletAcceptedItem = new RefPalleteMove(this);
+        } */
 
         //Если это необходимо, то определяем количество товара для склада инвентаризации
-        if (AcceptedItem.ToMode != Mode.Inventory || InventoryWarehouse.ID == Const.MainWarehouse)
-        {
+  //      if (AcceptedItem.ToMode != Mode.Inventory || InventoryWarehouse.ID == Const.MainWarehouse)
+    /*    {
             AcceptedItem.CurrentBalance = AcceptedItem.BalanceMain;
-        }
-        else if (InventoryWarehouse.ID == BufferWarehouse)
-        {
+        } */
+  //      else if (InventoryWarehouse.ID == BufferWarehouse)
+       /* {
             AcceptedItem.CurrentBalance = AcceptedItem.BalanceBuffer;
-        }
-        else
-        {
+        }*/
+   //     else
+   //     {
             //Остатков этого склада нет!
-            TextQuery =
+   /*         TextQuery =
                 "DECLARE @curdate DateTime; " +
                         "SELECT @curdate = DATEADD(DAY, 1 - DAY(curdate), curdate) FROM _1ssystem (nolock); " +
                         "SELECT sum(Main.Balance) as Balance " +
@@ -806,7 +894,9 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
                         "UNION ALL " +
                         "SELECT :ItemID, 0 " +
                         ") as Main " +
-                        "GROUP BY Main.Item;";
+                        "GROUP BY Main.Item;"; */
+
+    /*
             QuerySetParam(ref TextQuery, "DateNow", DateTime.Now);
             QuerySetParam(ref TextQuery, "ItemID", ItemID);
             QuerySetParam(ref TextQuery, "Warehouse", InventoryWarehouse.ID);
@@ -816,6 +906,9 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
             }
             AcceptedItem.CurrentBalance = (int)(decimal)DT.Rows[0]["Balance"];
         }
+        */
+
+    /*
         //А теперь имя склада!
         if (AcceptedItem.ToMode != Mode.Inventory)
         {
@@ -832,7 +925,9 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
         {
             AcceptedItem.CurrentWarehouseName = InventoryWarehouse.Name;
         }
+*/
 
+    /*
         //
         if (ToMode == Mode.Transfer)
         {
@@ -881,7 +976,8 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
                 }
             }
         }
-
+*/
+    /*
 
         if (AcceptedItem.ToMode == Mode.Acceptance || AcceptedItem.ToMode == Mode.AcceptanceCross)
         {
@@ -950,7 +1046,8 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
             AcceptedItem.Count = InPartyCount;
             AcceptedItem.OnShelf = OnShelf;
         }
-
+*/
+    /*
         FCurrentMode = Mode.AcceptedItem;
         //begin internal command
         DataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ExtendID(Employer.ID, "Спр.Сотрудники");
@@ -963,7 +1060,8 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
         //end internal command
         return true;
     }
-
+*/
+    /*
     AcceptedItem.ID = CurrentRowAcceptedItem["ID"].ToString();
     AcceptedItem.Name = CurrentRowAcceptedItem["ItemName"].ToString();
     AcceptedItem.InvCode = CurrentRowAcceptedItem["InvCode"].ToString();
@@ -978,6 +1076,8 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
     AcceptedItem.SeasonGroup = (int)CurrentRowAcceptedItem["SeasonGroup"];
     AcceptedItem.FlagFarWarehouse = (int)CurrentRowAcceptedItem["FlagFarWarehouse"];
     AcceptedItem.StoregeSize = (int)CurrentRowAcceptedItem["StoregeSize"];
+    */
+    /*
     if (AcceptedItem.ToMode == Mode.AcceptanceCross)
     {
         CurrentPalletAcceptedItem = new RefPalleteMove(this);
@@ -1016,6 +1116,8 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
         }
         FExcStr += " " + GetStrPackageCount(AcceptedItem.Count, Coef) + " из " + GetStrPackageCount(AllCount, Coef);
     }
+    */
+    /*
     //begin internal command
     DataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ExtendID(Employer.ID, "Спр.Сотрудники");
     DataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = ExtendID(ItemID, "Спр.Товары");
@@ -1029,12 +1131,12 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc, Mode ToMode, int In
     FCurrentMode = Mode.AcceptedItem;
     return true;
 } // ToModeAcceptedItem
-private bool ToModeAcceptedItem(string ItemID, string IDDoc)
-{
-    return ToModeAcceptedItem(ItemID, IDDoc, FCurrentMode == Mode.AcceptanceCross ? Mode.AcceptanceCross : Mode.Acceptance);
-}
+*/
 
- */
+//private bool ToModeAcceptedItem(string ItemID, string IDDoc)
+/*{
+    return ToModeAcceptedItem(ItemID, IDDoc, FCurrentMode == Mode.AcceptanceCross ? Mode.AcceptanceCross : Mode.Acceptance);
+}*/
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
@@ -1045,7 +1147,6 @@ private bool ToModeAcceptedItem(string ItemID, string IDDoc)
         var scanRes: String? = null
         var scanCodeId: String? = null
     }
-    //endregion
 
     private fun reactionBarcode(Barcode: String): Boolean {
 

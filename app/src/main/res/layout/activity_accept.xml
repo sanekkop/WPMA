@@ -9,33 +9,38 @@
 
     <TextView
         android:id="@+id/head"
-        android:layout_width="408dp"
-        android:layout_height="44dp"
-        android:layout_marginBottom="506dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:gravity="center_horizontal"
         android:text="Приемка (накладные)"
         android:textColor="#000"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/btnScan"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toTopOf="@+id/printPal"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.1"
+        app:layout_constraintHeight_percent="0.05"
+        app:layout_constraintWidth_percent="0.99"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.068" />
+        app:layout_constraintVertical_bias="0.3" />
+
 
     <TextView
-        android:layout_width="match_parent"
+        android:id="@+id/printPal"
+        android:layout_width="0dp"
+        android:height="0dp"
+        android:text=""
+        android:textColor="#228B22"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="506dp"
-        app:layout_constraintBottom_toTopOf= "@id/FExcStr"
+        android:textSize="20sp"
+        android:gravity="center_horizontal"
+        app:layout_constraintBottom_toTopOf= "@id/scroll"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.1"
+        app:layout_constraintHeight_percent="0.05"
+        app:layout_constraintWidth_percent="0.99"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/head"
-        app:layout_constraintVertical_bias="0.35" />
+        app:layout_constraintVertical_bias="0.6" />
 
     <ScrollView
         android:id="@+id/scroll"
@@ -47,7 +52,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.345"
+        app:layout_constraintVertical_bias="0.3"
         app:layout_constraintWidth_percent="0.99">
 
 
@@ -96,7 +101,7 @@
         android:layout_width="322dp"
         android:layout_height="98dp"
         android:gravity="center"
-        android:text="Ожидание команды"
+        android:text="Выберите режим работы"
         android:textColor="#070AA0"
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"

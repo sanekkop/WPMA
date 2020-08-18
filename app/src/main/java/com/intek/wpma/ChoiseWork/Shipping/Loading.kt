@@ -902,7 +902,5 @@ class Loading : BarcodeDataReceiver() {
             table.addView(rowTitle)
             linenom++
         }
-
     }
-
 }

@@ -49,7 +49,6 @@ class SetComplete : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set_complete)
 
-        terminalView.text = ss.terminal
         title = ss.title
 
         if (ss.FPrinter.selected) {

@@ -133,8 +133,6 @@ class WatchTablePart : BarcodeDataReceiver() {
         rowTitle.addView(linearLayout)
         table.addView(rowTitle)
         getTablePart(iddoc)
-
-        //scroll.setOnTouchListener(@this)
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -182,10 +180,8 @@ class WatchTablePart : BarcodeDataReceiver() {
         textQuery = ss.querySetParam(textQuery, "addressID", addressID)
         val dataTable = ss.executeWithRead(textQuery) ?: return false
 
-        //var oldx = 0F
-       // var currentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
-
         if(dataTable.isNotEmpty()){
+
             for (i in 1 until dataTable.size){
                 val row = TableRow(this)
                 val number = TextView(this)
@@ -232,13 +228,9 @@ class WatchTablePart : BarcodeDataReceiver() {
                     row.setBackgroundColor(Color.YELLOW)
                 }
                 table.addView(row)
-
             }
-           // sum.text = dataTable[1][5]
         }
         return true
-
-
     }
 
     override fun onResume() {

@@ -126,10 +126,11 @@ class Menu : BarcodeDataReceiver() {
                 finish()
             }
             1 -> {
-                val accInit = Intent(this, AccMenu::class.java)
+                return
+               /* val accInit = Intent(this, AccMenu::class.java)
                 accInit.putExtra("ParentForm","Menu")
                 startActivity(accInit)
-                finish()
+                finish()*/
             }
         }
     }

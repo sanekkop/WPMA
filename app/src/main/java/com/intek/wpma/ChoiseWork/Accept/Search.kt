@@ -18,6 +18,7 @@ import androidx.core.view.isVisible
 import kotlinx.android.synthetic.main.activity_accept.*
 import kotlinx.android.synthetic.main.activity_accept.table
 import com.intek.wpma.*
+import com.intek.wpma.Ref.RefPalleteMove
 import com.intek.wpma.SQL.SQL1S.sqlToDateTime
 import kotlinx.android.synthetic.main.activity_accept.FExcStr
 import kotlinx.android.synthetic.main.activity_set.*
@@ -67,11 +68,13 @@ class Search : BarcodeDataReceiver() {
                 if (event.x < oldx) {
                     val backAcc = Intent(this, YapItem::class.java)
                     backAcc.putExtra("ParentForm", "ShowInfoNewComp")
+                    backAcc.putExtra("Docs", iddoc)
                     startActivity(backAcc)
                     finish()
                 } else if (event.x > oldx) {
                     val backAcc = Intent(this, NoneItem::class.java)
                     backAcc.putExtra("ParentForm", "ShowInfoNewComp")
+                    backAcc.putExtra("Docs", iddoc)
                     startActivity(backAcc)
                     finish()
                 }
@@ -87,8 +90,10 @@ class Search : BarcodeDataReceiver() {
             }
         }
 
-        if (ss.FPrinter.path == null) {
-            printPal.text = ss.FPrinter.path
+        val palet = RefPalleteMove()
+
+        if (ss.FPrinter.path == null) { // && palet.pallete == "") {
+            printPal.text = ss.FPrinter.path //+ palet.pallete
         }
          else {
             printPal.text = "'принтер не выбран' НЕТ ПАЛЛЕТЫ"
@@ -339,14 +344,6 @@ class Search : BarcodeDataReceiver() {
         FAcceptedItems = FNotAcceptedItems.Clone();
     } */
 
-    /*
-        TextQuery = TextQuery.Replace(":Docs", Docs);
-        QuerySetParam(ref TextQuery, "OKEIPackage", OKEIPackage);
-        QuerySetParam(ref TextQuery, "Warehouse", Const.MainWarehouse);
-        DataTable DT;
-
-     */
-
     /*    if (!ExecuteWithRead(TextQuery, out DT))
         {
             return false;
@@ -532,7 +529,6 @@ class Search : BarcodeDataReceiver() {
 
 
      */
-
 
    // Dictionary<string, object> DataMapWrite = new Dictionary<string, object>();
 

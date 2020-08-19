@@ -149,13 +149,13 @@ object SQL1S : SQLSynchronizer() {
     <param name="Value"></param>
     Устанавливает значение параметра в запросе
      */
+
     fun querySetParam(TextQuery: String, NameParam: String, Value: Any): String {
         return TextQuery.replace(":$NameParam", valueToQuery(Value))
     }
 
     /*
      <param name="Value"></param>
-
      */
     fun valueToQuery(Value: Any): String {
         var result = Value.toString()

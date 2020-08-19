@@ -20,6 +20,7 @@ import com.intek.wpma.ParentForm
 import com.intek.wpma.R
 import com.intek.wpma.SQL.SQL1S.Const
 import com.intek.wpma.Model.Model
+import com.intek.wpma.Ref.RefPalleteMove
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_yap_item.*
 import kotlinx.android.synthetic.main.activity_yap_item.FExcStr
@@ -58,7 +59,7 @@ class YapItem : BarcodeDataReceiver() {
         setContentView(R.layout.activity_yap_item)
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
-
+        iddoc = intent.extras!!.getString("Docs")!!
         title = ss.title
         var oldx : Float = 0F
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
@@ -94,8 +95,10 @@ class YapItem : BarcodeDataReceiver() {
             false
         }
 
-        if (ss.FPrinter.path == null) {
-            printPal.text = ss.FPrinter.path
+        val palet = RefPalleteMove()
+
+        if (ss.FPrinter.path == null) { // && palet.pallete == "") {
+            printPal.text = ss.FPrinter.path //+ palet.pallete
         }
         else {
             printPal.text = "'принтер не выбран' НЕТ ПАЛЛЕТЫ"
@@ -327,7 +330,7 @@ class YapItem : BarcodeDataReceiver() {
                 linearLayout2.addView(etiks)
 
                 rowTitle2.addView(linearLayout2)
-                rowTitle2.setBackgroundColor(Color.GRAY)
+                rowTitle2.setBackgroundColor(Color.WHITE)
                 table.addView(rowTitle2)
             }
         }

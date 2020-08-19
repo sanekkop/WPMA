@@ -1,6 +1,5 @@
 package com.intek.wpma.ChoiseWork.Set
 
-
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -26,7 +25,6 @@ import kotlinx.android.synthetic.main.activity_set.*
 import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
-
 
 class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
@@ -587,7 +585,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     private fun whatUNeed(): String {
         return whatUNeed(ss.CurrentAction)
     }  // WhatUNeed
-
 
     private fun quitModesSet(): Boolean {
         for (id in docsSet) {

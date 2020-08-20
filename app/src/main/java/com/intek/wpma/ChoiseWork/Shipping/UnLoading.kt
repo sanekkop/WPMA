@@ -153,7 +153,8 @@ class UnLoading : BarcodeDataReceiver() {
                 }
 
                 currentAction = Global.ActionSet.ScanBox
-            } else {
+            }
+            else {
                 val doc = ss.getDoc(idd, false)
                 if (doc == null) {
                     FExcStr.text =
@@ -193,11 +194,9 @@ class UnLoading : BarcodeDataReceiver() {
                     badVoise()
                     return false
                 }
-
             }
-
-
-        } else if (typeBarcode == "6") {
+        }
+        else if (typeBarcode == "6") {
             val id = barcoderes["ID"].toString()
             if (ss.isSC(id, "МестаПогрузки")) {
                 if (currentAction != Global.ActionSet.ScanBox) {
@@ -215,7 +214,8 @@ class UnLoading : BarcodeDataReceiver() {
                 badVoise()
                 return false
             }
-        } else {
+        }
+        else {
             FExcStr.text =
                 "Нет действий с данным ШК! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
             badVoise()

@@ -627,11 +627,45 @@ class NewComplectation : BarcodeDataReceiver() {
                     return false
                 }
                 val id = section.id
-
                 if (needAdressComplete != ss.getVoidID()) {
                     if (id != needAdressComplete) {
                         FExcStr.text = "Неверный адрес!"
                         return false
+                    }
+                }
+                else {
+                    //нужно проверить зону ворот, к тем ли воротам он относится
+                    var textQuery =
+                        "Select " +
+                                "Zone.\$Спр.ЗоныВорот.Секция as Section, " +
+                                "Gate.descr as Gate " +
+                                "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                                "inner join DH\$КонтрольНабора as DocCC (nolock) " +
+                                "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
+                                "inner join DH\$КонтрольРасходной as DocCB (nolock) " +
+                                "on DocCB.iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
+                                "inner join \$Спр.Ворота as Gate (nolock) " +
+                                "on Gate.id = DocCB.\$КонтрольРасходной.Ворота " +
+                                "inner join \$Спр.ЗоныВорот as Zone (nolock) " +
+                                "on Gate.id = Zone.parentext " +
+                                "where Ref.id = :id"
+                    textQuery = ss.querySetParam(textQuery, "id", scaningBox)
+                    val dt = ss.executeWithReadNew(textQuery) ?: return false
+                    if (dt.isNotEmpty()) {
+                        //зона задана, надо проверять адреса
+                        var findAdres = false
+                        for (dr in dt) {
+                            if (id == dr["Section"].toString()) {
+                                findAdres = true
+                                break
+                            }
+                        }
+
+                        if (!findAdres) {
+                            //нет такого адреса в зоне
+                            FExcStr.text = "Нужен адрес из зоны " + dt[0]["Gate"].toString().trim()
+                            return false
+                        }
                     }
                 }
                 var textQuery =

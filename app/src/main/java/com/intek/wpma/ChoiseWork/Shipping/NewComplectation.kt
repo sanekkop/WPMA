@@ -10,13 +10,10 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
-import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.MainActivity
-import com.intek.wpma.R
+import com.intek.wpma.*
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.SQL.SQL1S
-import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_new_complectation.*
 
 
@@ -36,6 +33,7 @@ class NewComplectation : BarcodeDataReceiver() {
     private var remain = 0
     private var lastGoodAdress = ""
     private var nameLastGoodAdress = ""
+    private var ccrp: MutableList<MutableMap<String, String>> = mutableListOf()
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -109,7 +107,8 @@ class NewComplectation : BarcodeDataReceiver() {
         setContentView(R.layout.activity_new_complectation)
 
         title = ss.title
-
+        val oldMode = ss.CurrentMode
+        ss.CurrentMode = Global.Mode.NewComplectation
         if (ss.isMobile) {
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
@@ -155,7 +154,6 @@ class NewComplectation : BarcodeDataReceiver() {
                 refreshActivity()
             }
         }
-        newComplectationGetFirstOrder()
         var oldx = 0F
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
@@ -163,6 +161,8 @@ class NewComplectation : BarcodeDataReceiver() {
                 true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
+                    if (!loadCC()) return true
+
                     FExcStr.text = "Подгружаю состояние..."
                     val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
                     shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
@@ -171,9 +171,22 @@ class NewComplectation : BarcodeDataReceiver() {
                     startActivity(shoiseWorkInit)
                     finish()
                 }
+                if (event.x > oldx) {
+                    FExcStr.text = "Подгружаю маршрут..."
+                    val showRouteInit = Intent(this, ShowRoute::class.java)
+                    startActivity(showRouteInit)
+                    finish()
+                }
             }
             return true
         })
+        //если пришлииз выбора режима, то получаем первое задание
+        if (oldMode == Global.Mode.ChoiseDown) {
+            newComplectationGetFirstOrder()
+        }
+        else {
+            toModeNewComplectation()
+        }
 
     }
 
@@ -212,6 +225,7 @@ class NewComplectation : BarcodeDataReceiver() {
     private fun toModeNewComplectation() {
 
         curentAction = Action.Complectation
+        ss.CurrentMode = Global.Mode.NewComplectation
         docDown = mutableMapOf()
         var textQuery = "select * from dbo.WPM_fn_ToModeNewComplectation(:Employer)"
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
@@ -273,12 +287,13 @@ class NewComplectation : BarcodeDataReceiver() {
             finish()
             return
         }
+        //Подсосем маршруты
         FExcStr.text = "Сканируйте коробки и адрес комплектации!"
         scaningBox = ""
         curentAction = Action.ComplectationComplete
+        ss.CurrentMode = Global.Mode.NewComplectationComplete
         refreshActivity()
     }
-
     private fun loadBadDoc(ID: String) {
         var textQuery =
             "Select " +
@@ -455,7 +470,7 @@ class NewComplectation : BarcodeDataReceiver() {
                         return false
                     }
 
-                    //Лютый пиздец начинается!
+                    //начинается!
                     textQuery =
                         "begin tran; " +
                                 "UPDATE \$Спр.МестаПогрузки " +
@@ -639,21 +654,6 @@ class NewComplectation : BarcodeDataReceiver() {
                 checkFullNewComplete(scaningBox)
                 toModeNewComplectationComplete()
 
-                /*if (downSituation[0]["NumberOfOrder"].toString() == "0") {
-                    FExcStr.text = "Не присвоен номер задания! Напечатайте этикетку!"
-                    return false
-                }
-                var textQuery =
-                    "declare @res int; exec WPM_CompletePallete :employer, :adress, @res output; "
-                textQuery = ss.querySetParam(textQuery, "employer", ss.FEmployer.id)
-                textQuery = ss.querySetParam(textQuery, "adress", id)
-                if (!ss.executeWithoutRead(textQuery)) {
-                    return false
-                }
-
-                 */
-                // FlagPrintPallete = false;
-                // ToModeDown()
                 return true
             }
         } else {
@@ -791,6 +791,8 @@ class NewComplectation : BarcodeDataReceiver() {
             return true
         }
         if (ss.helper.whatDirection(keyCode) == "Left") {
+            if (!loadCC()) return true
+
             FExcStr.text = "Подгружаю состояние..."
             val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
             shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
@@ -801,8 +803,27 @@ class NewComplectation : BarcodeDataReceiver() {
             finish()
             return true
         }
+        else if (ss.helper.whatDirection(keyCode) == "Right") {
+            FExcStr.text = "Подгружаю маршрут..."
+            val showRouteInit = Intent(this, ShowRoute::class.java)
+            startActivity(showRouteInit)
+            finish()
+            return true
+        }
         return false
     }
 
+    fun loadCC():Boolean {
+        if (badDoc["ID"] == null)
+        {
+            FExcStr.text = "Нет текущего сборочного!"
+            return false
+        }
+        var textQuery = "select * from WPM_fn_ViewBillStatus(:iddoc)"
 
+        textQuery = ss.querySetParam(textQuery, "iddoc", badDoc["ID"].toString())
+        ccrp.clear()
+        ccrp = ss.executeWithReadNew(textQuery) ?: return false
+        return true
+    }
 }

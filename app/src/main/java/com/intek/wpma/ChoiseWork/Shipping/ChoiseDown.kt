@@ -11,6 +11,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.Global
 import com.intek.wpma.MainActivity
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
@@ -86,7 +87,7 @@ class ChoiseDown : BarcodeDataReceiver() {
 
         title = ss.title
         btn9.isEnabled = false
-
+        ss.CurrentMode = Global.Mode.ChoiseDown
         btnCancel.setOnClickListener {
             val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
             shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")

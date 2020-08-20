@@ -94,120 +94,103 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
         title = ss.title
         badDoc["ID"] = intent.extras!!.getString("BadDocID")!!
         badDoc["View"] = intent.extras!!.getString("BadDocView")!!
-
-        refreshRoute()
-
-
-    }
-
-    private fun refreshRoute() {
-        var textQuery =
-            "select " +
-                    "right(min(journForBill.docno), 5) as Bill, " +
-                    "rtrim(min(isnull(Sections.descr, 'Пу'))) + '-' + cast(min(DocCC.\$КонтрольНабора.НомерЛиста ) as char) as CC, " +
-                    "max(AllTab.CountAllBox) as Boxes, " +
-                    "rtrim(max(RefAdress9.descr)) as Adress, " +
-                    "max(Gate.descr) as Gate " +
-                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
-                    "inner join DH\$КонтрольНабора as DocCC (nolock) " +
-                    "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
-                    "left join \$Спр.Секции as Sections (nolock) " +
-                    "on Sections.id = DocCC.\$КонтрольНабора.Сектор " +
-                    "inner join DH\$КонтрольРасходной as DocCB (nolock) " +
-                    "on DocCB .iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
-                    "inner JOIN DH\$Счет as Bill (nolock) " +
-                    "on Bill.iddoc = DocCB.\$КонтрольРасходной.ДокументОснование " +
-                    "inner join _1sjourn as journForBill (nolock) " +
-                    "on journForBill.iddoc = Bill.iddoc " +
-                    "left join \$Спр.Секции as RefAdress9 (nolock) " +
-                    "on RefAdress9.id = dbo.WMP_fn_GetAdressComplete(Ref.id) " +
-                    "left join \$Спр.Ворота as Gate (nolock) " +
-                    "on Gate.id = DocCB.\$КонтрольРасходной.Ворота " +
-                    "inner join ( " +
-                    "select " +
-                    "DocCC.iddoc as iddoc, " +
-                    "count(*) as CountAllBox " +
-                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
-                    "inner join DH\$КонтрольНабора as DocCC (nolock) " +
-                    "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
-                    "where " +
-                    "Ref.ismark = 0 " +
-                    "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
-                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
-                    "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
-                    "group by DocCC.iddoc ) as AllTab " +
-                    "on AllTab.iddoc = DocCC.iddoc " +
-                    "where " +
-                    "Ref.ismark = 0 " +
-                    "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
-                    "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
-                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
-                    "group by DocCC.iddoc"
-
-        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-        textQuery = "select * from WPM_fn_ViewBillStatus(:iddoc)"
-        textQuery = ss.querySetParam(textQuery, "iddoc", badDoc["ID"].toString())
-        textQuery =  ss.querySetParam(textQuery, "View", badDoc["Veiw"].toString())
-        ccrp = ss.executeWithReadNew(textQuery) ?: return
-
-        var oldx = 0F
-        var cvet = Color.rgb(192,192,192)
-
-        Shapka.text = "Комплектация в тележку (новая)" + "\n" + badDoc["View"].toString() //SS.QueryParser("lblDocInfo")
-
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+            var oldx = 0F
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
-                true
+                return true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x > oldx) {
                     val shoiseWorkInit = Intent(this, NewComplectation::class.java)
-                    shoiseWorkInit.putExtra("ParentForm", "ShowInfoNewComp")
                     startActivity(shoiseWorkInit)
                     finish()
                 }
             }
             return true
         })
+        refreshRoute()
+    }
 
-        if(ccrp.isNotEmpty()){
+    private fun refreshRoute() {
 
-            for (DR in ccrp){
+        var textQuery = "select * from WPM_fn_ViewBillStatus(:iddoc)"
+        textQuery = ss.querySetParam(textQuery, "iddoc", badDoc["ID"].toString())
+        textQuery =  ss.querySetParam(textQuery, "View", badDoc["Veiw"].toString())
+        ccrp = ss.executeWithReadNew(textQuery) ?: return
+        refreshActivity()
+    }
+
+    private fun reactionBarcode(Barcode: String): Boolean {
+
+        refreshActivity()
+        return true
+    }
+
+    private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
+
+        // нажали назад, выйдем
+        if (keyCode == 4 || ss.helper.whatDirection(keyCode) == "Right") {
+            FExcStr.text = "Секунду..."
+            val shoiseWorkInit = Intent(this, NewComplectation::class.java)
+            startActivity(shoiseWorkInit)
+            finish()
+            return true
+        }
+        return false
+
+    }
+
+    private fun refreshActivity() {
+
+        var cvet = Color.rgb(192, 192, 192)
+        Shapka.text =
+            "Комплектация в " + (if (ss.CurrentMode == Global.Mode.NewComplectation) "тележку" else "адрес") + " (новая)" + "\n" + badDoc["View"].toString() //SS.QueryParser("lblDocInfo")
+        if (ccrp.isNotEmpty()) {
+
+            for (DR in ccrp) {
 
                 val row1 = TableRow(this)
                 val number = TextView(this)
                 val linearLayout1 = LinearLayout(this)
 
                 number.text = DR["sector"]
-                number.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.1).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
+                number.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.1).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 number.gravity = Gravity.CENTER_HORIZONTAL
                 number.textSize = 16F
 
                 val nmest = TextView(this)
                 nmest.text = DR["cond"]
-                nmest.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.05).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+                nmest.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.05).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 nmest.gravity = Gravity.CENTER_HORIZONTAL
                 nmest.textSize = 16F
                 nmest.setBackgroundColor(Color.GREEN)
 
                 val address = TextView(this)
                 address.text = " " + ss.helper.getShortFIO(DR["employer"].toString())
-                address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.4).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
+                address.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.4).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 address.gravity = Gravity.START
                 address.textSize = 16F
 
                 val count = TextView(this)
                 count.text = DR["adress"]
                 if (DR["adress"] == "null") count.text = ""
-                count.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.45).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
+                count.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.45).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 count.gravity = Gravity.START
                 count.textSize = 16F
 
-                linearLayout1.setPadding(3,3,3,3)
+                linearLayout1.setPadding(3, 3, 3, 3)
                 linearLayout1.addView(number)
                 linearLayout1.addView(nmest)
                 linearLayout1.addView(address)
@@ -221,48 +204,63 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
 
                 val mest = TextView(this)
                 mest.text = " -" + DR["number"]
-                mest.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.1).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
+                mest.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.1).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 mest.gravity = Gravity.CENTER
                 mest.textSize = 16F
 
                 val kmest = TextView(this)
                 kmest.text = " "
-                kmest.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.05).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+                kmest.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.05).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 kmest.gravity = Gravity.CENTER_HORIZONTAL
                 kmest.textSize = 16F
 
                 val code = TextView(this)
-                code.text =  " " +
+                code.text = " " +
                         if (ss.isVoidDate((DR["date2"].toString()))) ss.helper.shortDate(DR["date1"].toString())
-                        else {ss.helper.shortDate(DR["date2"].toString())} +
+                        else {
+                            ss.helper.shortDate(DR["date2"].toString())
+                        } +
                         " " + ss.helper.timeToString(DR["time1"].toString().toInt()) +
-                        " - " + if (DR["time2"] != "0") ss.helper.timeToString(DR["time2"].toString().toInt()) else "..."
-                code.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.4).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
+                        " - " + if (DR["time2"] != "0") ss.helper.timeToString(
+                    DR["time2"].toString().toInt()
+                ) else "..."
+                code.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.4).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 code.gravity = Gravity.START
                 code.textSize = 16F
 
                 val sum = TextView(this)
                 sum.text = " _ _ "
-                sum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.25).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
+                sum.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.25).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 sum.gravity = Gravity.CENTER_HORIZONTAL
                 sum.textSize = 16F
 
                 val nstrok = TextView(this)
-                nstrok.text =  DR["boxes"] + " "
-                nstrok.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.2).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
+                nstrok.text = DR["boxes"] + " "
+                nstrok.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.2).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 nstrok.gravity = Gravity.CENTER_HORIZONTAL
                 nstrok.textSize = 16F
 
                 if (DR["iddoc"] == badDoc["ID"]) {
-                    number.setBackgroundColor(Color.rgb(128,128,128))
-                    mest.setBackgroundColor(Color.rgb(128,128,128))
+                    number.setBackgroundColor(Color.rgb(128, 128, 128))
+                    mest.setBackgroundColor(Color.rgb(128, 128, 128))
                 }
 
-                if (DR["time2"] == "0")  {
+                if (DR["time2"] == "0") {
                     number.setTextColor(Color.RED)
                     nmest.setTextColor(Color.RED)
                     address.setTextColor(Color.RED)
@@ -272,8 +270,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                     code.setTextColor(Color.RED)
                     sum.setTextColor(Color.RED)
                     nstrok.setTextColor(Color.RED)
-                }
-                else {
+                } else {
                     number.setTextColor(Color.BLACK)
                     nmest.setTextColor(Color.BLACK)
                     address.setTextColor(Color.BLACK)
@@ -285,7 +282,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                     nstrok.setTextColor(Color.BLUE)
                 }
 
-                linearLayout2.setPadding(3,3,3,3)
+                linearLayout2.setPadding(3, 3, 3, 3)
                 linearLayout2.addView(mest)
                 linearLayout2.addView(kmest)
                 linearLayout2.addView(code)
@@ -298,35 +295,10 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 table.addView(row1)
                 table.addView(row2)
 
-                cvet = if (cvet == Color.rgb(192,192,192)) Color.WHITE else Color.rgb(192,192,192)
+                cvet =
+                    if (cvet == Color.rgb(192, 192, 192)) Color.WHITE else Color.rgb(192, 192, 192)
             }
         }
-        return
-    }
-
-    private fun reactionBarcode(Barcode: String): Boolean {
-
-                    refreshActivity()
-                    return true
-                }
-
-    private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
-
-        // нажали назад, выйдем
-        if (keyCode == 4|| ss.helper.whatDirection(keyCode) == "Right") {
-            FExcStr.text = "Секунду..."
-            val shoiseWorkInit = Intent(this, NewComplectation::class.java)
-            shoiseWorkInit.putExtra("ParentForm", "ShowInfoNewComp")
-            startActivity(shoiseWorkInit)
-            finish()
-            return true
-        }
-        return false
-
-    }
-
-    private fun refreshActivity() {
-
     }
 
 }

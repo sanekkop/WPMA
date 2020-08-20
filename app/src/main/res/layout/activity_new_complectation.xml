@@ -69,7 +69,7 @@
         android:gravity="center"
         android:textColor="#000000"
         android:textColorHint="#000000"
-        android:textSize="24sp"
+        android:textSize="30sp"
         android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

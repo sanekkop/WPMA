@@ -17,7 +17,8 @@ import java.util.*
 
 object SQL1S : SQLSynchronizer() {
 
-    private val SynhMap: MutableMap<String, String> = mutableMapOf()       //хеш-таблица, сопоставляет имена 1С с именами SQL
+    private val SynhMap: MutableMap<String, String> =
+        mutableMapOf()       //хеш-таблица, сопоставляет имена 1С с именами SQL
     private val ExclusionFields: MutableList<String> = mutableListOf()
     var helper: Helper = Helper()
     var terminal: String = ""
@@ -26,9 +27,9 @@ object SQL1S : SQLSynchronizer() {
     var FEmployer: RefEmployer = RefEmployer()
     var FPrinter: RefPrinter = RefPrinter()
     val Const: ConstantsDepot = ConstantsDepot
-    var widthDisplay:Int = 400
-    var heightDisplay:Int = 800
-    var title:String = vers
+    var widthDisplay: Int = 400
+    var heightDisplay: Int = 800
+    var title: String = vers
     var CurrentAction: Global.ActionSet? = null
     var CurrentMode: Global.Mode? = null
 
@@ -103,10 +104,11 @@ object SQL1S : SQLSynchronizer() {
             val columnArray: MutableMap<String, String> = mutableMapOf()
             while (i <= myReader!!.metaData.columnCount) {
                 //заполним наименования колонок
-                columnArray[myReader!!.metaData.getColumnName(i)] = if (myReader!!.getString(myReader!!.metaData.getColumnName(i)) == null) {
-                    "null"
-                } else
-                    myReader!!.getString(myReader!!.metaData.getColumnName(i))
+                columnArray[myReader!!.metaData.getColumnName(i)] =
+                    if (myReader!!.getString(myReader!!.metaData.getColumnName(i)) == null) {
+                        "null"
+                    } else
+                        myReader!!.getString(myReader!!.metaData.getColumnName(i))
                 i++
             }
             myArr.add(columnArray)
@@ -315,7 +317,7 @@ object SQL1S : SQLSynchronizer() {
                  /// <param name="TextQuery"></param>
                  /// <returns></returns>
                  */
-    fun executeScalar(textQuery:String): String? {
+    fun executeScalar(textQuery: String): String? {
         var result: String? = null
 
         if (!executeQuery(queryParser(textQuery))) {
@@ -334,10 +336,10 @@ object SQL1S : SQLSynchronizer() {
 
     } // ExecuteScalar
 
-     /// Преобразует имя поля или таблицы SQL в имя 1С
+    /// Преобразует имя поля или таблицы SQL в имя 1С
     fun to1CName(SQLName: String): String {
-         val result: String
-         for (pair in SynhMap) {
+        val result: String
+        for (pair in SynhMap) {
             if (pair.value == SQLName) {
                 result = pair.key
                 return result
@@ -350,7 +352,7 @@ object SQL1S : SQLSynchronizer() {
         textQuery = querySetParam(textQuery, "SQLName", SQLName)
         val dt = executeWithReadNew(textQuery)
             ?: throw Exception("Cant connect for load this SQL name! Sheet!")
-         if (dt.isEmpty()) {
+        if (dt.isEmpty()) {
             throw Exception("Cant find this SQL name! Sheet!")
         }
         result = dt[0]["Name1C"].toString().trim()
@@ -501,7 +503,8 @@ object SQL1S : SQLSynchronizer() {
         return if (myReader!!.next()) {
             var i = 1
             while (i <= myReader!!.metaData.columnCount) {
-                DataMap[FieldList[i - 1]] = myReader!!.getString(myReader!!.metaData.getColumnName(i))
+                DataMap[FieldList[i - 1]] =
+                    myReader!!.getString(myReader!!.metaData.getColumnName(i))
                 i++
             }
             myReader!!.close()
@@ -599,66 +602,27 @@ object SQL1S : SQLSynchronizer() {
         dataMap["Тип"] = to1CName(dt[0]["IDDOCDEF"].toString())
         return dataMap
     }
-/*
 
-                 public bool GetDoc(string IDDorID, out Dictionary<string, object> DataDoc, bool ThisID)
-                 {
-                     DataDoc = new Dictionary<string, object>();
-                     if (ThisID)
-                     {
-                         //Если ID - расширенный, то переведем его в обычный, 9-и символьный
-                         if (IDDorID.Length > 9)
-                         {
-                             IDDorID = IDDorID.Substring(4);
-                         }
-                     }
-                     if (!ExecuteQuery("SELECT IDDOC, IDDOCDEF, DATE_TIME_IDDOC, DOCNO, ISMARK, " + GetSynh("IDD").ToString() +
-                                 " FROM _1SJOURN (nolock) WHERE " + (ThisID ? "IDDOC" : GetSynh("IDD")) + "='" + IDDorID + "'"))
-                     {
-                         return false;
-                     }
-                     bool result = false;
-                     if (MyReader.Read())
-                     {
-                         DataDoc["ID"] = MyReader[0].ToString();
-                         DataDoc["IDDOCDEF"] = To1CName(MyReader[1].ToString());
-                         DataDoc["DATE_TIME_IDDOC"] = SQLToDateTime((MyReader[2].ToString()).Substring(0, 14));
-                         DataDoc["DOCNO"] = MyReader[3].ToString();
-                         DataDoc["ISMARK"] = MyReader[4];
-                         DataDoc["IDD"] = MyReader[5];
-                         result = true;
-                     }
-                     else
-                     {
-                         FExcStr = "Не найден документ!";
-                         result = false;
-                     }
-                     MyReader.Close();
-                     return result;
-                 } // GetDoc
-                 public bool GetDocData(string IDDoc, string DocType, List<string> FieldList, out Dictionary<string, object> DataMap)
-                 {
-                     bool result = false;
-                     DataMap = new Dictionary<string, object>();
-
-                     if (!ExecuteQuery("SELECT " + ToFieldString(FieldList) + " FROM DH" + GetSynh(DocType) + " (nolock) WHERE IDDOC='" + IDDoc + "'"))
-                     {
-                         return false;
-                     }
-                     if (MyReader.Read())
-                     {
-                         for (int i = 0; i < MyReader.FieldCount; i++)
-                         {
-                             DataMap[FieldList[i]] = MyReader[i];
-                         }
-                         result = true;
-                     }
-                     MyReader.Close();
-                     return result;
-                 } // GetDocData
-
-             }//class SQLSynhronizer
-         }
-     */
-}
+    fun getDocData(
+        iddoc: String,
+        docType: String,
+        fieldList: MutableList<String>
+    ): MutableMap<String, String>? {
+        val dataMap: MutableMap<String, String> = mutableMapOf()
+        if (!executeQuery("SELECT " + toFieldString(fieldList) + " FROM DH" + getSynh(docType) + " (nolock) WHERE IDDOC='" + iddoc + "'")) {
+            return null
+        }
+        return if (myReader!!.next()) {
+            var i = 1
+            while (i <= myReader!!.metaData.columnCount) {
+                dataMap[fieldList[i - 1]] =
+                    myReader!!.getString(myReader!!.metaData.getColumnName(i))
+                i++
+            }
+            myReader!!.close()
+            dataMap
+        }
+        else null
+    }
+}//class SQLSynhronizer
 

@@ -45,6 +45,7 @@
         <activity android:name=".ChoiseWork.Accept.AccMenu" />
         <activity android:name=".ChoiseWork.Accept.YapItem" />
         <activity android:name=".ChoiseWork.Accept.NoneItem"/>
+        <activity android:name=".ChoiseWork.Accept.ItemCard"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

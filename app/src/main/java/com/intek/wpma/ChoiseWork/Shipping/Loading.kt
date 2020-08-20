@@ -33,6 +33,7 @@ class Loading : BarcodeDataReceiver() {
     private var currentLine:Int = 2 //информация начинается с 3 строки в таблице
     private var currentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
     private var oldx:Float = 0F
+
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов

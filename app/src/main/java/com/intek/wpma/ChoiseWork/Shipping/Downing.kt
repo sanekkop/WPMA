@@ -135,11 +135,13 @@ class Downing : BarcodeDataReceiver() {
         //проверим полученный сектор
         ss.FEmployer.refresh()
         val sectorPriory = RefSection()
-        if (sectorPriory.foundID(ss.FEmployer.getAttribute("ПосланныйСектор").toString())) {
-            if (dt[0]["ParentSector"].toString().trim() != sectorPriory.name.trim()) {
-                FExcStr.text = "Нельзя! Можно только " + sectorPriory.name.trim() + " сектор!"
-                toModeDownComplete()
-                return
+        if (ss.FEmployer.getAttribute("ПосланныйСектор").toString() != ss.getVoidID()) {
+            if (sectorPriory.foundID(ss.FEmployer.getAttribute("ПосланныйСектор").toString())) {
+                if (dt[0]["ParentSector"].toString().trim() != sectorPriory.name.trim()) {
+                    FExcStr.text = "Нельзя! Можно только " + sectorPriory.name.trim() + " сектор!"
+                    toModeDownComplete()
+                    return
+                }
             }
         }
         docDown["ID"] = dt[0]["iddoc"].toString()

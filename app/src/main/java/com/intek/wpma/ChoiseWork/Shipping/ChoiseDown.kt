@@ -280,13 +280,15 @@ class ChoiseDown : BarcodeDataReceiver() {
         }
         ss.FEmployer.refresh()
         val sectorPriory = RefSection()
-        if (sectorPriory.foundID(ss.FEmployer.getAttribute("ПосланныйСектор").toString())) {
-            if (downSituation[ChoiseLine - 1]["Sector"].toString()
-                    .trim() != sectorPriory.name.trim()
-            ) {
-                ss.excStr = "Нельзя! Можно только " + sectorPriory.name.trim() + " сектор!"
-                FExcStr.text = ss.excStr
-                return false
+        if (ss.FEmployer.getAttribute("ПосланныйСектор").toString() != ss.getVoidID()) {
+            if (sectorPriory.foundID(ss.FEmployer.getAttribute("ПосланныйСектор").toString())) {
+                if (downSituation[ChoiseLine - 1]["Sector"].toString()
+                        .trim() != sectorPriory.name.trim()
+                ) {
+                    ss.excStr = "Нельзя! Можно только " + sectorPriory.name.trim() + " сектор!"
+                    FExcStr.text = ss.excStr
+                    return false
+                }
             }
         }
         return choiseDownComplete(downSituation[ChoiseLine - 1]["Sector"].toString().trim())

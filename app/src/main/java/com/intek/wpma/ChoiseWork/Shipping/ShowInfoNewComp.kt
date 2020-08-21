@@ -142,7 +142,6 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
 
     private fun refreshActivity() {
 
-        var cvet = Color.rgb(192, 192, 192)
         Shapka.text =
             "Комплектация в " + (if (ss.CurrentMode == Global.Mode.NewComplectation) "тележку" else "адрес") + " (новая)" + "\n" + badDoc["View"].toString() //SS.QueryParser("lblDocInfo")
         if (ccrp.isNotEmpty()) {
@@ -152,7 +151,12 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 val row1 = TableRow(this)
                 val number = TextView(this)
                 val linearLayout1 = LinearLayout(this)
-
+                val colorRow = when(DR["cond"]) {
+                    "H" -> Color.LTGRAY
+                    "C" -> Color.WHITE
+                    "K" -> Color.YELLOW
+                    else -> Color.WHITE
+                }
                 number.text = DR["sector"]
                 number.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.1).toInt(),
@@ -196,7 +200,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 linearLayout1.addView(address)
                 linearLayout1.addView(count)
 
-                row1.setBackgroundColor(cvet)
+                row1.setBackgroundColor(colorRow)
                 row1.addView(linearLayout1)
 
                 val row2 = TableRow(this)
@@ -289,14 +293,11 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 linearLayout2.addView(sum)
                 linearLayout2.addView(nstrok)
 
-                row2.setBackgroundColor(cvet)
+                row2.setBackgroundColor(colorRow)
                 row2.addView(linearLayout2)
 
                 table.addView(row1)
                 table.addView(row2)
-
-                cvet =
-                    if (cvet == Color.rgb(192, 192, 192)) Color.WHITE else Color.rgb(192, 192, 192)
             }
         }
     }

@@ -135,11 +135,11 @@ class UnLoading : BarcodeDataReceiver() {
                             "\$Спр.МестаПогрузки.Адрес9 = :AdressID ," +
                             "\$Спр.МестаПогрузки.Сотрудник8 = :EmployerID ," +
                             "\$Спр.МестаПогрузки.Дата9 = :NowDate ," +
-                            "\$Спр.МестаПогрузки.Время9 = :NowTime "
+                            "\$Спр.МестаПогрузки.Время9 = :NowTime " +
+                            "WHERE "
                 if (docUnload.selected) {
-
-                    textQuery += " \$Спр.МестаПогрузки .КонтрольНабора = :DocUnload "
-                    textQuery = ss.querySetParam(textQuery, "ID", docUnload.id)
+                    textQuery += " \$Спр.МестаПогрузки.КонтрольНабора = :DocUnload "
+                    textQuery = ss.querySetParam(textQuery, "DocUnload", docUnload.id)
                 } else {
                     textQuery += " \$Спр.МестаПогрузки .ID = :ID "
                     textQuery = ss.querySetParam(textQuery, "ID", boxUnLoad)

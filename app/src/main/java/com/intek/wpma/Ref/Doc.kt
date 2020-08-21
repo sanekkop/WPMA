@@ -11,20 +11,19 @@ class Doc
     private var headerAttributes: MutableMap<String,String> = mutableMapOf()  //Атрибуты ШАПКИ, известные на данный момент.
     private var commonAttributes: MutableMap<String,String> = mutableMapOf() //Атрибуты общие, из таблицы _1sjourn
     private var fModified = false
-
     val id: String get() {return fID}
     val idd: String get() {return commonAttributes["IDD"].toString()}
-    val typeDoc: String get() {return commonAttributes["IDDOCDEF"].toString()}
-    val isMark: Boolean get() {return commonAttributes["ISMARK"].toString() == "1"}
-    val dateDoc: String get() {return commonAttributes["DATE_TIME_IDDOC"].toString()}
-    val numberDoc: String get() {return commonAttributes["DOCNO"].toString()}
+    val typeDoc: String get() {return commonAttributes["Тип"].toString()}
+    val isMark: Boolean get() {return commonAttributes["ПометкаУдаления"].toString() == "1"}
+    val dateDoc: String get() {return commonAttributes["ДатаДок"].toString()}
+    val numberDoc: String get() {return commonAttributes["НомерДок"].toString()}
     val selected: Boolean get() {return fID != ""}
-    val view: String get() {return commonAttributes["IDDOCDEF"].toString()+ " " + commonAttributes["DOCNO"].toString() + " (" +  commonAttributes["DATE_TIME_IDDOC"].toString() + ")"}
+    val view: String get() {return commonAttributes["Тип"].toString()+ " " + commonAttributes["НомерДок"].toString() + " (" +  commonAttributes["ДатаДок"].toString() + ")"}
     val rowCount: Int get() {
         checkSelect()
         var textQuery =
         "select count(*) row_count " +
-                "from DT$" + commonAttributes["IDDOCDEF"].toString() + " (nolock) " +
+                "from DT$" + commonAttributes["Тип"].toString() + " (nolock) " +
                 "where iddoc = :iddoc "
         textQuery = ss.querySetParam(textQuery, "iddoc", id)
         val dt = ss.executeWithReadNew(textQuery) ?: return fRowCount   //не срослось что-то, вернем сохраненное значение
@@ -33,6 +32,7 @@ class Doc
     } // RowCount
 
     val modified: Boolean get() {return fModified}
+
     fun giveDocById(id:String): Doc? {
         val result = Doc()
         if (!result.foundID(id))
@@ -52,6 +52,7 @@ class Doc
             }
         }
     } // CheckSelect
+
     private fun foundIDDorID(iddorID:String, thisID:Boolean):Boolean {
         commonAttributes = ss.getDoc(iddorID, thisID) ?: return false
         fID = commonAttributes["ID"].toString()
@@ -63,10 +64,12 @@ class Doc
         headerAttributes.clear()   //при перепозиционировании все очищается
         return foundIDDorID(idd, false)
     } // FoundIDD
-   fun foundID(id:String):Boolean    {
+
+    fun foundID(id:String):Boolean    {
        headerAttributes.clear()   //при перепозиционировании все очищается
        return foundIDDorID(id, true)
     } // FoundID
+
     fun getAttributeHeader(name:String):String  {
         checkSelect()
         if (headerAttributes.containsKey(name))
@@ -77,11 +80,13 @@ class Doc
         refresh()
         return headerAttributes["$typeDoc.$name"].toString()
     } // GetAttributeHeader
+
     fun SetAttributeHeader(name:String, value:String) {
         checkSelect()
         headerAttributes[typeDoc + "." + name] = value
         fModified = true
     } // SetAttributeHeader
+
     fun refresh() {
         checkSelect()
         fModified = false
@@ -100,7 +105,8 @@ class Doc
             headerAttributes = ss.getDocData(id,typeDoc,fieldList) ?: return
         }
     } // Refresh
-   fun save():Boolean {
+
+    fun save():Boolean {
         checkSelect()
         if (!modified)
         {

@@ -75,7 +75,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set)
         parentForm = intent.extras!!.getString("ParentForm")!!
-        ss.ANDROID_ID = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
         title = ss.title
         scanRes = null //занулим повторно для перехода между формами
         if (parentForm == "Menu") {

@@ -14,6 +14,7 @@ import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.MainActivity
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
+import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_free_complectation.*
 
@@ -213,10 +214,16 @@ class FreeComplectation : BarcodeDataReceiver() {
                         return false
                     }
 
+                    val section = RefSection()
+                    section.foundIDD(idd)
+                    if (!section.selected) {
+                        FExcStr.text = "Не найден адрес"
+                        return false
+                    }
                     //Прописываем адрес
                     var textQuery = "declare @res int; exec WPM_PutInAdress :employer, :adress, @res output; select @res as result; "
                     textQuery = ss.querySetParam(textQuery, "employer", ss.FEmployer.id)
-                    textQuery = ss.querySetParam(textQuery, "adress", barcoderes["ID"].toString())
+                    textQuery = ss.querySetParam(textQuery, "adress", section.id)
                     val dt = ss.executeWithReadNew(textQuery) ?:return false
                     if (dt[0]["result"].toString() != "1") {
                         toModeFreeDownComplete()
@@ -234,21 +241,28 @@ class FreeComplectation : BarcodeDataReceiver() {
         else if (typeBarcode == "6") {
             //это место
             val id = barcoderes["ID"].toString()
-            var textQuery = "declare @res int; exec WPM_TakeBoxFDC :employer, :box, @res output; select @res as result;"
-            textQuery = ss.querySetParam(textQuery, "employer", ss.FEmployer.id)
-            textQuery = ss.querySetParam(textQuery, "box",  id)
-            val dt = ss.executeWithReadNew(textQuery) ?:return false
+            if (ss.isSC(id, "МестаПогрузки")) {
+                var textQuery =
+                    "declare @res int; exec WPM_TakeBoxFDC :employer, :box, @res output; select @res as result;"
+                textQuery = ss.querySetParam(textQuery, "employer", ss.FEmployer.id)
+                textQuery = ss.querySetParam(textQuery, "box", id)
+                val dt = ss.executeWithReadNew(textQuery) ?: return false
 
-            loadBadDoc(id)//Подсосем данные по документу для просмотра состояния
+                loadBadDoc(id)//Подсосем данные по документу для просмотра состояния
 
-            if (dt[0]["result"].toString() != "1")
-            {
+                if (dt[0]["result"].toString() != "1") {
+                    toModeFreeDownComplete()
+                    return false
+                }
+
                 toModeFreeDownComplete()
+                refreshActivity()
+            }
+            else {
+                FExcStr.text = "Нет действий с данным штрихкодом!"
                 return false
             }
 
-            toModeFreeDownComplete()
-            refreshActivity()
         }
         return true
     }

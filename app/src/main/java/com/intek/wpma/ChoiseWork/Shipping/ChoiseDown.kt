@@ -88,6 +88,7 @@ class ChoiseDown : BarcodeDataReceiver() {
         title = ss.title
         btn9.isEnabled = false
         ss.CurrentMode = Global.Mode.ChoiseDown
+
         btnCancel.setOnClickListener {
             val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
             shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
@@ -168,12 +169,15 @@ class ChoiseDown : BarcodeDataReceiver() {
         }
         //Сам запрос
         var textQuery = "select * from WPM_fn_GetChoiseDown()"
-        downSituation = ss.executeWithReadNew(textQuery) ?: return
-
-        if (downSituation.isEmpty()) {
+        val down = ss.executeWithReadNew(textQuery)
+        if (down == null){
+            val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
+            shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
+            startActivity(shoiseWorkInit)
+            finish()
             return
         }
-
+        downSituation = down
         textQuery = "select * from dbo.WPM_fn_ComplectationInfo()"
         val dt = ss.executeWithReadNew(textQuery)
         rreviousAction = if (dt == null) {
@@ -182,7 +186,7 @@ class ChoiseDown : BarcodeDataReceiver() {
             dt[0]["pallets"].toString() + " п, " + dt[0]["box"].toString() + " м, " + dt[0]["CountEmployers"].toString() + " с"
         }
 
-        if (downSituation.count() == 0) {
+        if (downSituation.isEmpty()) {
             FExcStr.text = "Нет заданий к спуску..."
         } else {
             FExcStr.text = "Выберите сектор спуска..."
@@ -367,6 +371,11 @@ class ChoiseDown : BarcodeDataReceiver() {
             finish()
             return true
         }
+        //Если Нажали DEL
+        else if (keyCode == 67) {
+            toModeChoiseDown()
+            return true
+        }
         val choise = ss.helper.whatInt(keyCode)
         if (choise in 1..7) {
             FExcStr.text = "Получаю задание..."
@@ -377,8 +386,12 @@ class ChoiseDown : BarcodeDataReceiver() {
             if (!newComplectationGetFirstOrder()) badVoise()
             return true
 
-        } else if (choise == 9 && ss.FEmployer.canComplectation) {
-            //отгрузка пока не работает
+        } else if (choise == 0) {
+            //0 - отмена
+            val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
+            shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
+            startActivity(shoiseWorkInit)
+            finish()
             return true
         }
         return false

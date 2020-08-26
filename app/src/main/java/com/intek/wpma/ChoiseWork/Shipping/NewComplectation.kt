@@ -184,6 +184,10 @@ class NewComplectation : BarcodeDataReceiver() {
         if (oldMode == Global.Mode.ChoiseDown) {
             newComplectationGetFirstOrder()
         }
+        else if (oldMode == Global.Mode.ChoiseDown) {
+            toModeNewComplectation()
+            reactionBarcode(intent.extras!!.getString("Barcode")!!)
+        }
         else {
             toModeNewComplectation()
         }
@@ -601,13 +605,15 @@ class NewComplectation : BarcodeDataReceiver() {
                     return true
 
                 }
-            } else {
+            }
+            else {
                 FExcStr.text = "Нет действий с данным ШК в данном режиме!"
                 badVoise()
                 return false
             }
 
-        } else if (typeBarcode == "113") {
+        }
+        else if (typeBarcode == "113") {
             //справочники типовые
             val idd = barcoderes["IDD"].toString()
             if (ss.isSC(idd, "Сотрудники")) {
@@ -616,7 +622,8 @@ class NewComplectation : BarcodeDataReceiver() {
                 mainInit.putExtra("ParentForm", "NewComplectation")
                 startActivity(mainInit)
                 finish()
-            } else if (curentAction == Action.ComplectationComplete && ss.isSC(idd, "Секции")) {
+            }
+            else if (curentAction == Action.ComplectationComplete && ss.isSC(idd, "Секции")) {
                 if (scaningBox == "") {
                     FExcStr.text = "Отсканируйте место!"
                     return false
@@ -690,7 +697,8 @@ class NewComplectation : BarcodeDataReceiver() {
 
                 return true
             }
-        } else {
+        }
+        else {
             FExcStr.text = "Нет действий с данным ШК в данном режиме!"
             badVoise()
             return false

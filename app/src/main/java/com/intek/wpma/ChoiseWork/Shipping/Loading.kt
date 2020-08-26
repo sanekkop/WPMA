@@ -278,6 +278,7 @@ class Loading : BarcodeDataReceiver() {
         }
         toModeLoading(wayBill["ID"].toString())
     }
+
     private fun completeLodading() {
         var idSchet = "   " + trans.decTo36(ss.getSynh("Счет"))
         idSchet = idSchet.substring(idSchet.length - 4)
@@ -423,6 +424,7 @@ class Loading : BarcodeDataReceiver() {
         refreshActivity()
         return
     }
+
     private fun toModeLoading(iddoc:String) {
         //Если wayBill еще не выбран, то испавим это недоразумение
 
@@ -708,6 +710,18 @@ class Loading : BarcodeDataReceiver() {
             table.getChildAt(currentLine).isFocusable = true
             return true
         }
+        //Если Нажали DEL
+        else if (keyCode == 67) {
+            //еслинажали финиш, значит переходим в режим погрузки
+            if (curentAction == Action.Inicialization) {
+                completeLoadingInicialization()
+            }
+            else
+            {
+                completeLodading()
+            }
+            return true
+        }
         return false
     }
 
@@ -737,62 +751,47 @@ class Loading : BarcodeDataReceiver() {
             lblPlacer.visibility = View.VISIBLE
             return
         }
-        lblPlacer.visibility = View.INVISIBLE
+        lblPlacer.visibility = View.VISIBLE
+        lblPlacer.text = wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ")"
 
         table.removeAllViewsInLayout()
-
-        //строка с шапкой
-        val linearLayoutDoc = LinearLayout(this)
-        val rowTitleDoc = TableRow(this)
-
-        val documName = TextView(this)
-        documName.text = wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ")"
-        documName.gravity = Gravity.START
-        documName.textSize = 20F
-        documName.setTextColor(-0x1000000)
-        documName.layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-        linearLayoutDoc.addView(documName)
-        rowTitleDoc.addView(linearLayoutDoc)
-        table.addView(rowTitleDoc)
-
         val linearLayout = LinearLayout(this)
         val rowTitle = TableRow(this)
-
         //добавим столбцы
         val number = TextView(this)
         number.text = "№"
         number.typeface = Typeface.SERIF
         number.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.09).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         number.gravity = Gravity.CENTER
-        number.textSize = 12F
+        number.textSize = 20F
         number.setTextColor(-0x1000000)
         val docum = TextView(this)
         docum.text = "Документ"
         docum.typeface = Typeface.SERIF
         docum.gravity = Gravity.CENTER
-        docum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.28).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
-        docum.textSize = 12F
+        docum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.32).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        docum.textSize = 20F
         docum.setTextColor(-0x1000000)
         val address = TextView(this)
         address.text = "Адрес"
         address.typeface = Typeface.SERIF
-        address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.35).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.33).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         address.gravity = Gravity.CENTER
-        address.textSize = 12F
+        address.textSize = 20F
         address.setTextColor(-0x1000000)
         val boxes = TextView(this)
         boxes.text = "Мест"
         boxes.typeface = Typeface.SERIF
-        boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.13).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         boxes.gravity = Gravity.CENTER
-        boxes.textSize = 12F
+        boxes.textSize = 20F
         boxes.setTextColor(-0x1000000)
         val boxesfact = TextView(this)
         boxesfact.text = "Факт"
         boxesfact.typeface = Typeface.SERIF
-        boxesfact.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        boxesfact.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.13).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         boxesfact.gravity = Gravity.CENTER
-        boxesfact.textSize = 12F
+        boxesfact.textSize = 20F
         boxesfact.setTextColor(-0x1000000)
 
         linearLayout.addView(number)
@@ -837,7 +836,7 @@ class Loading : BarcodeDataReceiver() {
                     }
                     true
                 } else if (event.action == MotionEvent.ACTION_MOVE) {
-                    if (event.x > oldx) {
+                    if (event.x > oldx + 200) {
                         val showInfo = Intent(this, ShowInfo::class.java)
                         showInfo.putExtra("ParentForm", "Loading")
                         showInfo.putExtra("Number",currentLineWayBillDT["ProposalNumber"].toString())
@@ -861,35 +860,35 @@ class Loading : BarcodeDataReceiver() {
             number.typeface = Typeface.SERIF
             number.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.09).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             number.gravity = Gravity.CENTER
-            number.textSize = 12F
+            number.textSize = 20F
             number.setTextColor(-0x1000000)
             val docum = TextView(this)
             docum.text = rowDT["ProposalNumber"]
             docum.typeface = Typeface.SERIF
-            docum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.28).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+            docum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.32).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             docum.gravity = Gravity.CENTER
-            docum.textSize = 12F
+            docum.textSize = 20F
             docum.setTextColor(-0x1000000)
             val address = TextView(this)
             address.text = rowDT["AdressCompl"]?.trim()
             address.typeface = Typeface.SERIF
-            address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.35).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+            address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.33).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             address.gravity = Gravity.CENTER
-            address.textSize = 12F
+            address.textSize = 20F
             address.setTextColor(-0x1000000)
             val boxes = TextView(this)
             boxes.text = rowDT["Boxes"]
             boxes.typeface = Typeface.SERIF
             boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             boxes.gravity = Gravity.CENTER
-            boxes.textSize = 12F
+            boxes.textSize = 20F
             boxes.setTextColor(-0x1000000)
             val boxesfact = TextView(this)
             boxesfact.text = rowDT["BoxesFact"]
             boxesfact.typeface = Typeface.SERIF
             boxesfact.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             boxesfact.gravity = Gravity.CENTER
-            boxesfact.textSize = 12F
+            boxesfact.textSize = 20F
             boxesfact.setTextColor(-0x1000000)
 
             linearLayout.addView(number)

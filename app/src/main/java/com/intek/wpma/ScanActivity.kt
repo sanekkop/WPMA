@@ -6,6 +6,7 @@ import com.google.zxing.Result
 import com.intek.wpma.ChoiseWork.Accept.NoneItem
 import com.intek.wpma.ChoiseWork.Accept.Search
 import com.intek.wpma.ChoiseWork.Accept.YapItem
+import com.intek.wpma.ChoiseWork.Revise.ReviseMark
 import com.intek.wpma.ChoiseWork.Set.Correct
 import com.intek.wpma.ChoiseWork.Set.SetComplete
 import com.intek.wpma.ChoiseWork.Set.SetInitialization
@@ -108,6 +109,10 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
             "NoneItem" -> {
                 NoneItem.scanRes = rawResult.text
                 NoneItem.scanCodeId = codeId
+            }
+            "ReviseMark" -> {
+                ReviseMark.scanRes = rawResult.text
+                ReviseMark.scanCodeId = codeId
             }
         }
 

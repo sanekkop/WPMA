@@ -13,6 +13,10 @@ import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
 import com.intek.wpma.*
+import com.intek.wpma.Ref.RefEmployer
+import com.intek.wpma.Ref.RefSection
+import kotlinx.android.synthetic.main.activity_loading.*
+import kotlinx.android.synthetic.main.activity_new_complectation.*
 import kotlinx.android.synthetic.main.activity_show_info_new_comp.*
 import kotlinx.android.synthetic.main.activity_show_info_new_comp.FExcStr
 import kotlinx.android.synthetic.main.activity_show_info_new_comp.table
@@ -93,7 +97,7 @@ class ShowRoute: BarcodeDataReceiver() {
         setContentView(R.layout.activity_show_route)
         title = ss.title
         var oldx = 0F
-
+        ss.CurrentMode = Global.Mode.ShowRoute
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
@@ -165,9 +169,46 @@ class ShowRoute: BarcodeDataReceiver() {
 
     private fun reactionBarcode(Barcode: String): Boolean {
 
-                    refreshActivity()
-                    return true
-                }
+        val barcoderes = ss.helper.disassembleBarcode(Barcode)
+        val typeBarcode = barcoderes["Type"].toString()
+        if (typeBarcode == "6") {
+            val id = barcoderes["ID"].toString()
+            if (ss.isSC(id, "МестаПогрузки")) {
+                val newcomp = Intent(this, NewComplectation::class.java)
+                newcomp.putExtra("Barcode", Barcode)
+                startActivity(newcomp)
+                finish()
+
+            } else {
+                FExcStr.text = "Нет действий с данным ШК в данном режиме!"
+                badVoise()
+                return false
+            }
+        }
+        else if (typeBarcode == "113") {
+            //справочники типовые
+            val idd = barcoderes["IDD"].toString()
+            if (ss.isSC(idd, "Сотрудники")) {
+                ss.FEmployer = RefEmployer()
+                val mainInit = Intent(this, MainActivity::class.java)
+                mainInit.putExtra("ParentForm", "ShowRoute")
+                startActivity(mainInit)
+                finish()
+            }
+            if (ss.isSC(idd, "Секции")) {
+                val newcomp = Intent(this, NewComplectation::class.java)
+                newcomp.putExtra("Barcode", Barcode)
+                startActivity(newcomp)
+                finish()
+            }
+        }
+            else {
+                FExcStr.text = "Нет действий с данным ШК в данном режиме!"
+                badVoise()
+                return false
+            }
+        return true
+    }
 
     private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
@@ -185,6 +226,8 @@ class ShowRoute: BarcodeDataReceiver() {
 
     private fun refreshActivity() {
 
+        table.removeAllViewsInLayout()
+
         var cvet = Color.rgb(192, 192, 192)
         Shapka.text =
             """Комплектация в ${if (ss.CurrentMode == Global.Mode.NewComplectation) "тележку" else "адрес"} (новая)"""
@@ -198,7 +241,8 @@ class ShowRoute: BarcodeDataReceiver() {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         gate.gravity = Gravity.CENTER_HORIZONTAL
-        gate.textSize = 16F
+        gate.textSize = 20F
+        gate.setTextColor(Color.BLACK)
 
         var num = TextView(this)
         num.text = "Заявка"
@@ -207,7 +251,8 @@ class ShowRoute: BarcodeDataReceiver() {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         num.gravity = Gravity.CENTER_HORIZONTAL
-        num.textSize = 16F
+        num.textSize = 20F
+        num.setTextColor(Color.BLACK)
 
         var sector = TextView(this)
         sector.text = "Лист"
@@ -216,7 +261,8 @@ class ShowRoute: BarcodeDataReceiver() {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         sector.gravity = Gravity.START
-        sector.textSize = 16F
+        sector.textSize = 20F
+        sector.setTextColor(Color.BLACK)
 
         var count = TextView(this)
         count.text = "М"
@@ -225,7 +271,8 @@ class ShowRoute: BarcodeDataReceiver() {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         count.gravity = Gravity.START
-        count.textSize = 16F
+        count.textSize = 20F
+        count.setTextColor(Color.BLACK)
 
         var address = TextView(this)
         address.text = "Адрес"
@@ -234,7 +281,8 @@ class ShowRoute: BarcodeDataReceiver() {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         address.gravity = Gravity.START
-        address.textSize = 16F
+        address.textSize = 20F
+        address.setTextColor(Color.BLACK)
 
 
         linearLayout.setPadding(3, 3, 3, 3)
@@ -261,7 +309,8 @@ class ShowRoute: BarcodeDataReceiver() {
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
             gate.gravity = Gravity.CENTER_HORIZONTAL
-            gate.textSize = 16F
+            gate.textSize = 20F
+            gate.setTextColor(Color.BLACK)
 
             num = TextView(this)
             num.text = dr["Bill"]
@@ -270,7 +319,8 @@ class ShowRoute: BarcodeDataReceiver() {
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
             num.gravity = Gravity.CENTER_HORIZONTAL
-            num.textSize = 16F
+            num.textSize = 20F
+            num.setTextColor(Color.BLACK)
 
             sector = TextView(this)
             sector.text = dr["CC"]
@@ -279,7 +329,8 @@ class ShowRoute: BarcodeDataReceiver() {
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
             sector.gravity = Gravity.START
-            sector.textSize = 16F
+            sector.textSize = 20F
+            sector.setTextColor(Color.BLACK)
 
             count = TextView(this)
             count.text = dr["Boxes"]
@@ -288,7 +339,8 @@ class ShowRoute: BarcodeDataReceiver() {
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
             count.gravity = Gravity.START
-            count.textSize = 16F
+            count.textSize = 20F
+            count.setTextColor(Color.BLACK)
 
             address = TextView(this)
             address.text = dr["Adress"]
@@ -297,7 +349,8 @@ class ShowRoute: BarcodeDataReceiver() {
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
             address.gravity = Gravity.START
-            address.textSize = 16F
+            address.textSize = 20F
+            address.setTextColor(Color.BLACK)
 
 
             linearLayout.setPadding(3, 3, 3, 3)

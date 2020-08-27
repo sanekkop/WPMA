@@ -60,7 +60,10 @@ class YapItem : BarcodeDataReceiver() {
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
         iddoc = intent.extras!!.getString("Docs")!!
+        val prIN = intent.extras!!.getString("FPrinter")!!
+        val paLL = intent.extras!!.getString("FPallet")!!
         title = ss.title
+
         var oldx : Float = 0F
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
@@ -69,7 +72,7 @@ class YapItem : BarcodeDataReceiver() {
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x > oldx) {
                     val backHead = Intent(this, Search::class.java)
-                    backHead.putExtra("ParentForm", "ShowInfoNewComp")
+                    backHead.putExtra("ParentForm", "YapItem")
                     startActivity(backHead)
                     finish()
                 }
@@ -95,14 +98,11 @@ class YapItem : BarcodeDataReceiver() {
             false
         }
 
-        val palet = RefPalleteMove()
+        printPal.text = "'принтер не выбран'"
+        palletPal.text = "НЕТ ПАЛЛЕТЫ"
 
-        if (ss.FPrinter.path == null) { // && palet.pallete == "") {
-            printPal.text = ss.FPrinter.path //+ palet.pallete
-        }
-        else {
-            printPal.text = "'принтер не выбран' НЕТ ПАЛЛЕТЫ"
-        }
+        printPal.text = prIN
+        palletPal.text = paLL
 
         yapItem()
     }
@@ -374,7 +374,20 @@ class YapItem : BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
+        val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
+        if (ss.isSC(idd, "Принтеры")) {
+            if(!ss.FPrinter.foundIDD(idd))
+            {
+                return false
+            }
+            printPal.text = ss.FPrinter.path
+            return true
+        }
+        if (!ss.FPrinter.selected) {
+            FExcStr.text = "Не выбран принтер!"
+            return false
+        }
         return true
     }
 
@@ -382,9 +395,19 @@ class YapItem : BarcodeDataReceiver() {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
-            val accMen = Intent(this, AccMenu::class.java)
-            startActivity(accMen)
+            val acBack = Intent(this, Search::class.java)
+            acBack.putExtra("ParentForm", "YapItem")
+            startActivity(acBack)
             finish()
+            return true
+        }
+
+        if (ss.helper.whatDirection(keyCode) == "Left") {
+            val backHead = Intent(this, Search::class.java)
+            backHead.putExtra("ParentForm", "YapItem")
+            startActivity(backHead)
+            finish()
+            return true
         }
         return false
     }

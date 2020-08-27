@@ -26,6 +26,8 @@ object SQL1S : SQLSynchronizer() {
     var ANDROID_ID: String = "Android_ID"
     var FEmployer: RefEmployer = RefEmployer()
     var FPrinter: RefPrinter = RefPrinter()
+    var FPallet : String = ""
+    var FBarcodePallet = ""
     val Const: ConstantsDepot = ConstantsDepot
     var widthDisplay: Int = 400
     var heightDisplay: Int = 800
@@ -624,5 +626,8 @@ object SQL1S : SQLSynchronizer() {
         }
         else null
     }
+
+
+
 }//class SQLSynhronizer
 

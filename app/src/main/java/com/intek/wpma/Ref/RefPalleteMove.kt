@@ -20,7 +20,7 @@ class RefPalleteMove : ARef() {
         get() {
             return getAttribute("ТипДвижения").toString().toInt()
         }
-    private val palleteBarcode: String
+    val palleteBarcode: String
         get() {
             return getAttribute("ШКПаллеты").toString()
         }

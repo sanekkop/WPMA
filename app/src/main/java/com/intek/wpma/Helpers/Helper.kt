@@ -21,6 +21,11 @@ class Helper {
         return result
     }
 
+    fun byeTheNull(nule : String) : String {
+        val nuLev = nule
+        return nuLev.substring(0, nuLev.length -4)
+    }
+
     fun getShortFIO(FIO:String):String    {
         var result = ""
         val fio = FIO.trim()

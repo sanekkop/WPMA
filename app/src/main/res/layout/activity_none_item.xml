@@ -27,19 +27,35 @@
     <TextView
         android:id="@+id/printPal"
         android:layout_width="0dp"
-        android:height="0dp"
-        android:text=""
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:textColor="#228B22"
-        android:layout_height="0dp"
-        android:textSize="20sp"
-        android:gravity="center_horizontal"
-        app:layout_constraintBottom_toTopOf= "@id/scroll"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@id/scroll"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.05"
-        app:layout_constraintWidth_percent="0.99"
+        app:layout_constraintHeight_percent="0.07"
+        app:layout_constraintHorizontal_bias="0.004"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/head"
-        app:layout_constraintVertical_bias="0.6" />
+        app:layout_constraintTop_toBottomOf="@id/head"
+        app:layout_constraintVertical_bias="0.6"
+        app:layout_constraintWidth_percent="0.6" />
+
+    <TextView
+        android:id="@+id/palletPal"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:height="0dp"
+        android:gravity="center"
+        android:textColor="#228B22"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@id/scroll"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.07"
+        app:layout_constraintHorizontal_bias="0.985"
+        app:layout_constraintStart_toStartOf="@id/printPal"
+        app:layout_constraintTop_toBottomOf="@id/head"
+        app:layout_constraintVertical_bias="0.603"
+        app:layout_constraintWidth_percent="0.39" />
 
     <ScrollView
         android:id="@+id/scroll"
@@ -94,30 +110,65 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/scroll"
         app:layout_constraintVertical_bias="0.0"
-        app:layout_constraintWidth_percent="0.45" />
+        app:layout_constraintWidth_percent="0.3" />
+
+    <EditText
+        android:id="@+id/enterSearchArt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="226dp"
+        android:layout_marginRight="226dp"
+        android:ems="10"
+        android:focusable="auto"
+        android:focusableInTouchMode="true"
+        android:inputType="number"
+        android:singleLine="true"
+        android:visibility="visible"
+        app:layout_constraintBottom_toTopOf="@id/FExcStr"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.059"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/scroll"
+        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintWidth_percent="0.3" />
+
 
     <TextView
         android:id="@+id/nadp"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
         android:gravity="center"
         android:text="&lt;-- поиск по артикулам"
         android:textColor="#000"
         android:textSize="14sp"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
         app:layout_constraintBottom_toTopOf="@id/FExcStr"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.05"
-        app:layout_constraintHorizontal_bias="0.818"
+        app:layout_constraintHorizontal_bias="0.544"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/scroll"
         app:layout_constraintVertical_bias="0.0"
         app:layout_constraintWidth_percent="0.45" />
 
+    <Button
+        android:id="@+id/btnScan"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="Scan"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@id/ItemName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.987"
+        app:layout_constraintStart_toEndOf="@id/nadp"
+        app:layout_constraintTop_toBottomOf="@id/scroll"
+        app:layout_constraintVertical_bias="0.0"
+        app:layout_constraintHeight_percent="0.05"
+        app:layout_constraintWidth_percent="0.25"/>
 
-
-        <TextView
+    <TextView
             android:id="@+id/ItemName"
             android:layout_width="0dp"
             android:textColor="#000"

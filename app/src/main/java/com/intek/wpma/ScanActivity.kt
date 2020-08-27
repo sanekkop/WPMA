@@ -3,6 +3,9 @@ package com.intek.wpma
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.Result
+import com.intek.wpma.ChoiseWork.Accept.NoneItem
+import com.intek.wpma.ChoiseWork.Accept.Search
+import com.intek.wpma.ChoiseWork.Accept.YapItem
 import com.intek.wpma.ChoiseWork.Set.Correct
 import com.intek.wpma.ChoiseWork.Set.SetComplete
 import com.intek.wpma.ChoiseWork.Set.SetInitialization
@@ -93,6 +96,18 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
             "NewComplectation" -> {
                 NewComplectation.scanRes = rawResult.text
                 NewComplectation.scanCodeId = codeId
+            }
+            "Search" -> {
+                Search.scanRes = rawResult.text
+                Search.scanCodeId = codeId
+            }
+            "YapItem" -> {
+                YapItem.scanRes = rawResult.text
+                YapItem.scanCodeId = codeId
+            }
+            "NoneItem" -> {
+                NoneItem.scanRes = rawResult.text
+                NoneItem.scanCodeId = codeId
             }
         }
 

@@ -28,19 +28,35 @@
     <TextView
         android:id="@+id/printPal"
         android:layout_width="0dp"
-        android:height="0dp"
-        android:text=""
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:textColor="#228B22"
-        android:layout_height="0dp"
-        android:textSize="20sp"
-        android:gravity="center_horizontal"
-        app:layout_constraintBottom_toTopOf= "@id/scroll"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@id/scroll"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.05"
-        app:layout_constraintWidth_percent="0.99"
+        app:layout_constraintHeight_percent="0.07"
+        app:layout_constraintHorizontal_bias="0.004"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/head"
-        app:layout_constraintVertical_bias="0.6" />
+        app:layout_constraintTop_toBottomOf="@id/head"
+        app:layout_constraintVertical_bias="0.6"
+        app:layout_constraintWidth_percent="0.6" />
+
+    <TextView
+        android:id="@+id/palletPal"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:height="0dp"
+        android:gravity="center"
+        android:textColor="#228B22"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@id/scroll"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.07"
+        app:layout_constraintHorizontal_bias="0.985"
+        app:layout_constraintStart_toStartOf="@id/printPal"
+        app:layout_constraintTop_toBottomOf="@id/head"
+        app:layout_constraintVertical_bias="0.603"
+        app:layout_constraintWidth_percent="0.39" />
 
     <ScrollView
         android:id="@+id/scroll"

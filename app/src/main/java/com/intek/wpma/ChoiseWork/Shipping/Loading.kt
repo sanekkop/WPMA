@@ -709,6 +709,9 @@ class Loading : BarcodeDataReceiver() {
             table.getChildAt(currentLine).isFocusable = true
             return true
         }
+        if (keyCode == 66) {
+               FExcStr.text = "Enter ПАШЕТ"
+            } else FExcStr.text = "Enter HE ПАШЕТ"+ keyCode
         return false
     }
 

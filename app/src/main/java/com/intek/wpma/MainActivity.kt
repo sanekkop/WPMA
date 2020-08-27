@@ -87,6 +87,8 @@ class MainActivity :  BarcodeDataReceiver() {
         ss.CurrentMode = Global.Mode.Main
         ss.isMobile = checkCameraHardware(this)
         ss.FEmployer = RefEmployer()
+        ss.badvoise.load(this,R.raw.bad,1)
+        ss.goodvoise.load(this,R.raw.good,1)
         if(ss.isMobile) {
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
@@ -143,12 +145,14 @@ class MainActivity :  BarcodeDataReceiver() {
         //если это не типовой справочник, то выходим
         if (typeBarcode != "113")   {
             actionLbl.text = "Нет действий с этим ШК в данном режиме"
+            badVoise()
             return
         }
         val idd = barcoderes["IDD"].toString()
         //если это не сотрудник выходим
         if (!ss.isSC(idd, "Сотрудники")) {
             actionLbl.text = "Нет действий с этим ШК в данном режиме"
+            badVoise()
             return
         }
         //по идее тут всегда он должен попадать не логированный, так как при создании он создает новый объект
@@ -157,24 +161,28 @@ class MainActivity :  BarcodeDataReceiver() {
             //а вот и не угадали, он логирован, разлогиним нашего сотрудника
             if (!logout(ss.FEmployer.id)) {
                 resLbl.text = "Ошибка выхода из системы!"
+                badVoise()
                 return
             }
             scanRes = null      //если выходят с телефона, переприсвоим
             val main = Intent(this, MainActivity::class.java)
             startActivity(main)
             finish()
+            goodVoise()
             return
         }
         else {
             //не логирован
            if (!ss.FEmployer.foundIDD(idd)) {
                 actionLbl.text = "Нет действий с ШК в данном режиме!"
-                return
+               badVoise()
+               return
             }
             ss.title = ss.vers + " " + ss.terminal.trim() + " " + ss.helper.getShortFIO(ss.FEmployer.name)
             //инициализация входа
             if (!login(ss.FEmployer.id)) {
                 actionLbl.text = "Ошибка входа в систему!"
+                badVoise()
                 return
             }
         }
@@ -199,6 +207,7 @@ class MainActivity :  BarcodeDataReceiver() {
         }
         startActivity(newMode)
         finish()
+        goodVoise()
 
     }
     private fun updateProgram() :Boolean {

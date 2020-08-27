@@ -99,6 +99,10 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
                 ReviseMark.scanRes = rawResult.text
                 ReviseMark.scanCodeId = codeId
             }
+            "ShowRoute" -> {
+                ShowRoute.scanRes = rawResult.text
+                ShowRoute.scanCodeId = codeId
+            }
         }
 
         onBackPressed()

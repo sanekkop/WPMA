@@ -1,5 +1,7 @@
 package com.intek.wpma.SQL
 
+import android.media.AudioManager
+import android.media.SoundPool
 import com.intek.wpma.Global
 import com.intek.wpma.Helpers.ConstantsDepot
 import com.intek.wpma.Helpers.Helper
@@ -32,7 +34,8 @@ object SQL1S : SQLSynchronizer() {
     var title: String = vers
     var CurrentAction: Global.ActionSet? = null
     var CurrentMode: Global.Mode? = null
-
+    val badvoise = SoundPool(1, AudioManager.STREAM_MUSIC,0)
+    val goodvoise = SoundPool(1, AudioManager.STREAM_MUSIC,0)
     /*Конструктор класса
 
      */

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Camera
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +15,7 @@ import com.intek.wpma.SQL.SQL1S
 import kotlinx.android.synthetic.main.activity_set.*
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 abstract class BarcodeDataReceiver: AppCompatActivity() {
 
@@ -92,13 +94,11 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
     }
 
     fun badVoise() {
-        val bad = MediaPlayer.create(this, R.raw.bad)
-        bad.start()
+        ss.badvoise.play(1, 1F, 1F, 1, 0, 1F)
     }
 
     fun goodVoise() {
-        val good = MediaPlayer.create(this, R.raw.good)
-        good.start()
+       ss.goodvoise.play(1, 1F, 1F, 1, 0, 1F)
     }
 
     /// <summary>
@@ -154,7 +154,12 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         return true
     }
 
-    fun execCommand(Command: String, DataMapWrite: MutableMap<String, Any>, FieldList: MutableList<String>, DataMapRead: MutableMap<String, Any>): MutableMap<String, Any> {
+    fun execCommand(
+        Command: String,
+        DataMapWrite: MutableMap<String, Any>,
+        FieldList: MutableList<String>,
+        DataMapRead: MutableMap<String, Any>
+    ): MutableMap<String, Any> {
         //тк в котлине нельзя переприсвоить значение переданному в фун параметру, создаю еще 1 перем
         var commandID = ""
         var beda = 0
@@ -215,7 +220,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
 
     }
 
-    private fun sendCommand(Command: String, DataMapWrite: MutableMap<String, Any> ): String {
+    private fun sendCommand(Command: String, DataMapWrite: MutableMap<String, Any>): String {
         val commandID: String
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
         val currentDate = sdf.format(Date()).substring(0, 10) + " 00:00:00.000"

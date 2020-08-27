@@ -331,7 +331,7 @@ class Loading : BarcodeDataReceiver() {
         textQuery =
             "UPDATE DH\$ПутевойЛист " +
                     "SET " +
-                    "\$ПутевойЛист.Дата2 = :NowData, " +
+                    "\$ПутевойЛист.Дата2 = :NowDate, " +
                     "\$ПутевойЛист.Время2 = :NowTime " +
                     "WHERE " +
                     "DH\$ПутевойЛист .iddoc = :iddoc"

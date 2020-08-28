@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.view.View.INVISIBLE
 import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.TableRow
@@ -32,6 +33,7 @@ class NoneItem : BarcodeDataReceiver() {
     var barcode: String = ""
     private var currentLine:Int = 2
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
+    var artNeed : String = ""
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -111,6 +113,8 @@ class NoneItem : BarcodeDataReceiver() {
         printPal.text = prIN
         palletPal.text = paLL
 
+        enterSearchArt.visibility = INVISIBLE
+
         val linearLayout = LinearLayout(this)
         val rowTitle = TableRow(this)
 
@@ -178,11 +182,10 @@ class NoneItem : BarcodeDataReceiver() {
         linearLayout.addView(kof)
 
         rowTitle.addView(linearLayout)
-        rowTitle.setBackgroundColor(Color.GRAY)
+        rowTitle.setBackgroundColor(Color.rgb(192,192,192))
         table.addView(rowTitle)
 
         noneItem()
-     //   filter() //для поиска товара по артиклю
     }
 
     //непринятый товар, табличка
@@ -241,6 +244,7 @@ class NoneItem : BarcodeDataReceiver() {
                 "and Supply.\$АдресПоступление.Состояние0 = 0 " +
                 "ORDER BY Journ.docno, Supply.LineNO_ "
 
+
         val model = Model()
         textQuery = ss.querySetParam(textQuery, "$iddoc", iddoc)
         textQuery = ss.querySetParam(textQuery, "OKEIPackage", model.okeiPackage)
@@ -273,8 +277,7 @@ class NoneItem : BarcodeDataReceiver() {
                 }
 
                 var colorline =  Color.WHITE
-                if (linenom == currentLine)
-                {
+                if (linenom == currentLine) {
                     colorline = Color.GRAY
                 }
                 rowTitle1.setBackgroundColor(colorline)
@@ -326,7 +329,7 @@ class NoneItem : BarcodeDataReceiver() {
                 boxesfact.textSize = 18F
                 boxesfact.setTextColor(-0x1000000)
                 val kof = TextView(this)
-                kof.text = ss.helper.byeTheNull(DR["Coef"].toString())
+                kof.text = ss.helper.byeTheNull(DR["Coef"].toString()) //обрежем нулики и точку
                 kof.typeface = Typeface.SERIF
                 kof.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.13).toInt(),
@@ -346,19 +349,22 @@ class NoneItem : BarcodeDataReceiver() {
                 rowTitle1.setBackgroundColor(Color.WHITE)
                 table.addView(rowTitle1)
 
-
+                artNeed = DR["Article"].toString()
             }
         }
+/*
+        if (enterSearchArt.isFocusable == true) {
+            val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
+        } */
     }
 
+    //ввод цифр для поиска схожих артиклей
     fun enterSearchArt() {
         enterSearchArt.visibility = View.VISIBLE
+        enterSearchArt.isFocusable = true
         enterSearchArt.setOnKeyListener { v: View, keyCode: Int, event ->
-            enterSearchArt.isFocusable = true
-            //enterSearchArt.showSoftInputOnFocus
-            //val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            /*inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)*/
-            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
+            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER || keyCode == 66) {
                 if (ss.isMobile){  //спрячем клаву
                     val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
                     inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
@@ -369,16 +375,16 @@ class NoneItem : BarcodeDataReceiver() {
                     enterSearchArt.visibility = View.INVISIBLE
                     searchArt.text = "$count"
                     searchArt.visibility = View.VISIBLE
-                    //FExcStr.text = "Ожидание команды"
+                    filterArt()    //поиск похожих артиклей с введенными цифрами
                 } catch (e: Exception) {
                 }
             }
             false
         }
     }
+
     //тут поиск товара по артиклю
-  // @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
-    fun filter() {
+    fun filterArt() {
         val textQuery = "SELECT " +
                 "Goods.\$Спр.Товары.Артикул as Article like  ('%' + ('${searchArt}') + '%') , " +   //эта шляпа должна сравнивать артикли с заданным, но это не точно
                 "isnull(GS.\$Спр.ТоварныеСекции.РасчетныйРХ , 0) as StoregeSize " +
@@ -400,9 +406,9 @@ class NoneItem : BarcodeDataReceiver() {
                 "ORDER BY Journ.docno, Supply.LineNO_ "
 
         val dataTable = ss.executeWithRead(textQuery) ?: return
+        var artSearch = searchArt.toString()
 
-        if (dataTable.isNotEmpty()) {
-
+        if (artSearch in artNeed) {
             table.removeAllViewsInLayout()
 
             for (DR in dataTable) {
@@ -411,22 +417,20 @@ class NoneItem : BarcodeDataReceiver() {
                 val rowFil = TableRow(this)
 
                 val findArt = TextView(this)
-                findArt.text = "" //DR["Article"]
+                findArt.text = artNeed
                 findArt.typeface = Typeface.SERIF
                 findArt.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.13).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 findArt.gravity = Gravity.CENTER
-                findArt.textSize = 12F
+                findArt.textSize = 18F
                 findArt.setTextColor(-0x1000000)
-
 
                 filSear.addView(findArt)
 
                 rowFil.addView(filSear)
                 rowFil.setBackgroundColor(Color.GRAY)
                 table.addView(rowFil)
-
             }
         }
     }
@@ -494,6 +498,7 @@ class NoneItem : BarcodeDataReceiver() {
             finish()
             return true
         }
+
         if (ss.helper.whatDirection(keyCode) == "Right") {
             val backHead = Intent(this, Search::class.java)
             backHead.putExtra("ParentForm", "NoneItem")
@@ -502,7 +507,7 @@ class NoneItem : BarcodeDataReceiver() {
             return true
         }
 
-        if (keyCode in 7..16) {
+        if (keyCode in 0 ..9) {
             enterSearchArt()
         }
 
@@ -514,6 +519,7 @@ class NoneItem : BarcodeDataReceiver() {
             finish()
             return true
         }*/
+
         return false
     }
 }

@@ -30,7 +30,7 @@ class Loading : BarcodeDataReceiver() {
     private var curentAction:Action = Action.Inicialization
     private var placer:String = ""
     private val trans = Translation()
-    private var currentLine:Int = 2 //информация начинается с 3 строки в таблице
+    private var currentLine:Int = 1 //информация начинается с 2 строки в таблице
     private var currentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
     private var oldx:Float = 0F
 
@@ -331,7 +331,7 @@ class Loading : BarcodeDataReceiver() {
         textQuery =
             "UPDATE DH\$ПутевойЛист " +
                     "SET " +
-                    "\$ПутевойЛист.Дата2 = :NowData, " +
+                    "\$ПутевойЛист.Дата2 = :NowDate, " +
                     "\$ПутевойЛист.Время2 = :NowTime " +
                     "WHERE " +
                     "DH\$ПутевойЛист .iddoc = :iddoc"
@@ -498,7 +498,7 @@ class Loading : BarcodeDataReceiver() {
         textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
         textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
         wayBillDT = ss.executeWithReadNew(textQuery)!!
-        currentLine = 2
+        currentLine = 1
         currentLineWayBillDT["ProposalNumber"] = wayBillDT[0]["ProposalNumber"].toString()
         currentLineWayBillDT["Doc"] = wayBillDT[0]["Doc"].toString()
         currentLineWayBillDT["AdressCounter"] = wayBillDT[0]["AdressCounter"].toString()
@@ -696,18 +696,18 @@ class Loading : BarcodeDataReceiver() {
             table.getChildAt(currentLine).setBackgroundColor(Color.WHITE)
             if (ss.helper.whatDirection(keyCode) == "Down")
             {
-                if (currentLine -1 < wayBillDT.count()) currentLine++ else currentLine = 2
+                if (currentLine < wayBillDT.count()) currentLine++ else currentLine = 1
             }
             else {
-                if (currentLine > 2) currentLine-- else currentLine = wayBillDT.count()+1
+                if (currentLine > 1) currentLine-- else currentLine = wayBillDT.count()
             }
-            currentLineWayBillDT["ProposalNumber"] = wayBillDT[currentLine-2]["ProposalNumber"].toString()
-            currentLineWayBillDT["Doc"] = wayBillDT[currentLine-2]["Doc"].toString()
-            currentLineWayBillDT["AdressCounter"] = wayBillDT[currentLine-2]["AdressCounter"].toString()
+            currentLineWayBillDT["ProposalNumber"] = wayBillDT[currentLine-1]["ProposalNumber"].toString()
+            currentLineWayBillDT["Doc"] = wayBillDT[currentLine-1]["Doc"].toString()
+            currentLineWayBillDT["AdressCounter"] = wayBillDT[currentLine-1]["AdressCounter"].toString()
             //теперь подкрасим строку серым
             table.getChildAt(currentLine).setBackgroundColor(Color.GRAY)
             table.getChildAt(currentLine).isFocusable = true
-            return true
+            return false
         }
         //Если Нажали DEL
         else if (keyCode == 67) {
@@ -801,7 +801,7 @@ class Loading : BarcodeDataReceiver() {
 
         rowTitle.addView(linearLayout)
         table.addView(rowTitle)
-        var linenom = 2 //2 строки шапки не считаем
+        var linenom = 1 //1 строку шапки не считаем
 
         for (rowDT in wayBillDT)
         {

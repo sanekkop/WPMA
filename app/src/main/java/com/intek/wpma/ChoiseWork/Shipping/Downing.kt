@@ -9,24 +9,19 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
-import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.MainActivity
-import com.intek.wpma.R
+import com.intek.wpma.*
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefPrinter
 import com.intek.wpma.Ref.RefSection
-import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_downing.*
 
 
 class Downing : BarcodeDataReceiver() {
 
-    private var docDown:MutableMap<String, String> = mutableMapOf()
+    private var docDown: MutableMap<String, String> = mutableMapOf()
     private var remain = 0
-    enum class Action {Down,DownComplete}
-    private var curentAction:Action = Action.Down
-    private var downSituation:MutableList<MutableMap<String, String>> = mutableListOf()
-    private var flagPrintPallete:Boolean = false
+    private var downSituation: MutableList<MutableMap<String, String>> = mutableListOf()
+    private var flagPrintPallete: Boolean = false
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -41,8 +36,7 @@ class Downing : BarcodeDataReceiver() {
                     try {
                         barcode = intent.getStringExtra("data")
                         reactionBarcode(barcode)
-                    }
-                    catch (e: Exception) {
+                    } catch (e: Exception) {
                         val toast = Toast.makeText(
                             applicationContext,
                             "Не удалось отсканировать штрихкод!",
@@ -55,18 +49,18 @@ class Downing : BarcodeDataReceiver() {
             }
         }
     }
+
     override fun onResume() {
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
         Log.d("IntentApiSample: ", "onResume")
-        if(scanRes != null){
+        if (scanRes != null) {
             try {
                 barcode = scanRes.toString()
                 codeId = scanCodeId.toString()
                 reactionBarcode(barcode)
-            }
-            catch (e: Exception){
+            } catch (e: Exception) {
                 val toast = Toast.makeText(
                     applicationContext,
                     "Ошибка! Возможно отсутствует соединение с базой!",
@@ -76,16 +70,19 @@ class Downing : BarcodeDataReceiver() {
             }
         }
     }
+
     override fun onPause() {
         super.onPause()
         unregisterReceiver(barcodeDataReceiver)
         releaseScanner()
         Log.d("IntentApiSample: ", "onPause")
     }
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
         return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
     }
+
     companion object {
         var scanRes: String? = null
         var scanCodeId: String? = null
@@ -96,9 +93,10 @@ class Downing : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_downing)
 
+        ss.CurrentMode = Global.Mode.Down
         title = ss.title
 
-        if (ss.isMobile){
+        if (ss.isMobile) {
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
                 val scanAct = Intent(this@Downing, ScanActivity::class.java)
@@ -110,15 +108,14 @@ class Downing : BarcodeDataReceiver() {
             repealDown()
         }
         btnKey1.setOnClickListener {
-            if (curentAction == Action.DownComplete) {
+            if (ss.CurrentMode == Global.Mode.DownComplete) {
                 if (!flagPrintPallete) {
                     printPallete()
                     refreshActivity()
                 }
-            }
-            else
-            {
-                remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
+            } else {
+                remain =
+                    docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
                 if (docDown["MaxStub"].toString().toInt() <= remain) {
                     //Можно завершить
                     FExcStr.text = "Закрываю остальные $remain места..."
@@ -129,9 +126,10 @@ class Downing : BarcodeDataReceiver() {
 
         toModeDown()
     }
+
     private fun toModeDown() {
 
-        curentAction = Action.Down
+        ss.CurrentMode = Global.Mode.Down
         docDown = mutableMapOf()
         var textQuery = "select * from dbo.WPM_fn_ToModeDown(:Employer)"
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
@@ -155,7 +153,8 @@ class Downing : BarcodeDataReceiver() {
         }
         docDown["ID"] = dt[0]["iddoc"].toString()
         docDown["Boxes"] = dt[0]["CountBox"].toString()
-        docDown["View"] = dt[0]["Sector"].toString().trim() + "-" + dt[0]["Number"].toString() + " Заявка " + dt[0]["docno"].toString() + " (" + dt[0]["DateDoc"].toString() + ")"
+        docDown["View"] = dt[0]["Sector"].toString()
+            .trim() + "-" + dt[0]["Number"].toString() + " Заявка " + dt[0]["docno"].toString() + " (" + dt[0]["DateDoc"].toString() + ")"
         docDown["AdressCollect"] = dt[0]["AdressCollect"].toString()
         docDown["Sector"] = dt[0]["ParentSector"].toString()
         docDown["MaxStub"] = dt[0]["MaxStub"].toString()
@@ -172,21 +171,20 @@ class Downing : BarcodeDataReceiver() {
 
         //В этот режим попадает только если нечего собирать по Дате4, так что если и тут нет ничего - то уходит на режим ChoiseDown
         var textQuery =
-        "select " +
-                "min(Ref.\$Спр.МестаПогрузки.НомерЗадания5 ) as NumberOfOrder, " +
-                "Count(*) as AllBox " +
-                "from \$Спр.МестаПогрузки as Ref (nolock) " +
-                "where " +
-                "Ref.ismark = 0 " +
-                "and Ref.\$Спр.МестаПогрузки.Сотрудник4 = :Employer " +
-                "and not Ref.\$Спр.МестаПогрузки.Дата4 = :EmptyDate " +
-                "and Ref.\$Спр.МестаПогрузки.Дата5 = :EmptyDate "
+            "select " +
+                    "min(Ref.\$Спр.МестаПогрузки.НомерЗадания5 ) as NumberOfOrder, " +
+                    "Count(*) as AllBox " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "where " +
+                    "Ref.ismark = 0 " +
+                    "and Ref.\$Спр.МестаПогрузки.Сотрудник4 = :Employer " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата4 = :EmptyDate " +
+                    "and Ref.\$Спр.МестаПогрузки.Дата5 = :EmptyDate "
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-        downSituation = ss.executeWithReadNew(textQuery) ?:return
+        downSituation = ss.executeWithReadNew(textQuery) ?: return
 
-        if (downSituation[0]["AllBox"] == "0")
-        {
+        if (downSituation[0]["AllBox"] == "0") {
             //Нету ничего!
             val shoiseDown = Intent(this, ChoiseDown::class.java)
             shoiseDown.putExtra("ParentForm", "ChoiseDown")
@@ -196,69 +194,31 @@ class Downing : BarcodeDataReceiver() {
         }
         FExcStr.text = "Напечатать этикетку, отсканировать адрес паллеты"
         //тут надо переходить в режим downComplete
-        curentAction = Action.DownComplete
+        ss.CurrentMode = Global.Mode.DownComplete
         refreshActivity()
     }
 
-    private fun refreshActivity(){
-
-        remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
-        lblPrinter.text = ss.FPrinter.description
-        if (curentAction == Action.Down){
-            lblState.text = docDown["View"].toString()
-            lblInfo1.text =
-                "Отобрано " + remain.toString() + " из " + docDown["AllBoxes"].toString()
-            lblNumber.text = docDown["NumberBill"].toString().substring(
-                docDown["NumberBill"].toString().length - 5,
-                docDown["NumberBill"].toString().length - 3
-            ) + " " +
-                    docDown["NumberBill"].toString()
-                        .substring(docDown["NumberBill"].toString().length - 3) +
-                    " сектор: " + docDown["MainSectorName"].toString()
-                .trim() + "-" + docDown["NumberCC"].toString()
-            lblAdress.text = docDown["AdressCollect"].toString()
-            lblSetter.text = "отборщик: " + ss.helper.getShortFIO(docDown["SetterName"].toString())
-            lblAdress.visibility = View.VISIBLE
-            lblSetter.visibility = View.VISIBLE
-            btnKey1.visibility = if (docDown["MaxStub"].toString()
-                    .toInt() <= remain
-            ) View.VISIBLE else View.INVISIBLE
-            btnKey1.text = "TAB-Все"
-        }
-        else if (curentAction == Action.DownComplete) {
-            btnKey1.visibility = if (flagPrintPallete) View.INVISIBLE else View.VISIBLE
-            btnKey1.text = "TAB-Печать"
-            if (downSituation[0]["NumberOfOrder"].toString() != "0") {
-                val number: String = downSituation[0]["NumberOfOrder"].toString()
-                lblNumber.text = number.substring(if (number.length > 4) number.length - 4 else 0)
-            }
-            lblInfo1.text = "Всего " + downSituation[0]["AllBox"].toString() + " мест"
-            lblAdress.visibility = View.INVISIBLE
-            lblSetter.visibility = View.INVISIBLE
-
-        }
-    }
 
     private fun repealDown() {
         var textQuery =
-        "declare @res int; exec WPM_RepealSetDown :iddoc, @res output; " +
-                "select @res as result" +
-                ""
+            "declare @res int; exec WPM_RepealSetDown :iddoc, @res output; " +
+                    "select @res as result" +
+                    ""
         textQuery = ss.querySetParam(textQuery, "iddoc", docDown["ID"].toString())
         if (!ss.executeWithoutRead(textQuery)) return
         toModeDown()
     }
 
-    private fun printPallete():Boolean    {
+    private fun printPallete(): Boolean {
         if (!ss.FPrinter.selected) {
             FExcStr.text = "Принтер не выбран!"
             return false
         }
         if (downSituation[0]["NumberOfOrder"].toString() == "0") {
             var textQuery =
-            "declare @res int; exec WPM_GetNumberOfOrder :employer, @res output; " +
-                    "select @res as result" +
-                    ""
+                "declare @res int; exec WPM_GetNumberOfOrder :employer, @res output; " +
+                        "select @res as result" +
+                        ""
             textQuery = ss.querySetParam(textQuery, "employer", ss.FEmployer.id)
             if (!ss.executeWithoutRead(textQuery)) {
                 return false
@@ -279,7 +239,8 @@ class Downing : BarcodeDataReceiver() {
                 "Спр.Принтеры"
             )
             dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = "LabelRT.ert"
-            dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = no.substring(if (no.length < 4) 0 else no.length - 4)
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] =
+                no.substring(if (no.length < 4) 0 else no.length - 4)
             if (!execCommandNoFeedback("Print", dataMapWrite)) {
                 return false
             }
@@ -288,29 +249,28 @@ class Downing : BarcodeDataReceiver() {
         return true
     }
 
-    private fun endCC():Boolean{
+    private fun endCC(): Boolean {
         var textQuery =
-        "begin tran; " +
-                "UPDATE \$Спр.МестаПогрузки " +
-                "SET " +
-                "\$Спр.МестаПогрузки.Дата4 = :NowDate , " +
-                "\$Спр.МестаПогрузки.Время4 = :NowTime " +
-                "WHERE " +
-                "ismark = 0 and \$Спр.МестаПогрузки.КонтрольНабора = :iddoc ; " +
-                "if @@rowcount = 0 rollback tran " +
-                "else begin " +
-                "declare @res int; " +
-                "exec WPM_GetOrderDown :Employer, :NameParent, @res OUTPUT; " +
-                "if @res = 0 rollback tran " +
-                "else commit tran " +
-                "end "
+            "begin tran; " +
+                    "UPDATE \$Спр.МестаПогрузки " +
+                    "SET " +
+                    "\$Спр.МестаПогрузки.Дата4 = :NowDate , " +
+                    "\$Спр.МестаПогрузки.Время4 = :NowTime " +
+                    "WHERE " +
+                    "ismark = 0 and \$Спр.МестаПогрузки.КонтрольНабора = :iddoc ; " +
+                    "if @@rowcount = 0 rollback tran " +
+                    "else begin " +
+                    "declare @res int; " +
+                    "exec WPM_GetOrderDown :Employer, :NameParent, @res OUTPUT; " +
+                    "if @res = 0 rollback tran " +
+                    "else commit tran " +
+                    "end "
 
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
         textQuery = ss.querySetParam(textQuery, "iddoc", docDown["ID"].toString())
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         textQuery = ss.querySetParam(textQuery, "NameParent", docDown["Sector"].toString().trim())
-        if (!ss.executeWithoutRead(textQuery))
-        {
+        if (!ss.executeWithoutRead(textQuery)) {
             return false
         }
         toModeDown()
@@ -321,7 +281,7 @@ class Downing : BarcodeDataReceiver() {
 
         val barcoderes = ss.helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
-        if (typeBarcode == "6" && curentAction == Action.Down) {
+        if (typeBarcode == "6" && ss.CurrentMode == Global.Mode.Down) {
             val id = barcoderes["ID"].toString()
             if (ss.isSC(id, "МестаПогрузки")) {
 
@@ -391,8 +351,7 @@ class Downing : BarcodeDataReceiver() {
                 return false
             }
 
-        }
-        else if (typeBarcode == "113") {
+        } else if (typeBarcode == "113") {
             //справочники типовые
             val idd = barcoderes["IDD"].toString()
             if (ss.isSC(idd, "Сотрудники")) {
@@ -401,19 +360,15 @@ class Downing : BarcodeDataReceiver() {
                 mainInit.putExtra("ParentForm", "ChoiseDown")
                 startActivity(mainInit)
                 finish()
-            }
-            else if (ss.isSC(idd, "Принтеры")) {
+            } else if (ss.isSC(idd, "Принтеры")) {
                 if (ss.FPrinter.selected) {
                     ss.FPrinter = RefPrinter()
-                }
-                else ss.FPrinter.foundIDD(idd)
+                } else ss.FPrinter.foundIDD(idd)
                 refreshActivity()
-            }
-            else if (curentAction == Action.DownComplete && ss.isSC(idd, "Секции")) {
+            } else if (ss.CurrentMode == Global.Mode.DownComplete && ss.isSC(idd, "Секции")) {
                 val section = RefSection()
                 section.foundIDD(barcoderes["IDD"].toString())
-                if (!section.selected)
-                {
+                if (!section.selected) {
                     FExcStr.text = "Не найден адрес!"
                     return false
                 }
@@ -433,8 +388,7 @@ class Downing : BarcodeDataReceiver() {
                 toModeDown()
                 return true
             }
-        }
-        else {
+        } else {
             FExcStr.text = "Нет действий с данным ШК в данном режиме!"
             badVoise()
             return false
@@ -442,37 +396,79 @@ class Downing : BarcodeDataReceiver() {
         return true
     }
 
-    private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
         // нажали назад, выйдем и разблокируем доки 67 - это делит
-        if (keyCode == 4|| keyCode == 67){
+        if (keyCode == 4 || keyCode == 67) {
             repealDown()
-            return  true
+            return true
 
         }
         //это таб кнопка
-        if (keyCode == 61){
-            if (curentAction == Action.DownComplete) {
+        if (keyCode == 61) {
+            if (ss.CurrentMode == Global.Mode.DownComplete) {
                 if (!flagPrintPallete) {
                     printPallete()
                     refreshActivity()
                 }
             }
-            else
-            {
-                remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
+            else {
+                remain =
+                    docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
                 if (docDown["MaxStub"].toString().toInt() <= remain) {
                     //Можно завершить
                     FExcStr.text = "Закрываю остальные $remain места..."
                     endCC()
                 }
             }
-            return  true
+            return true
 
         }
 
         //не наши кнопки вернем ложь
-        return  false
+        return false
+    }
+
+    private fun refreshActivity() {
+
+        lblPrinter.text = ss.FPrinter.description
+        if (ss.CurrentMode == Global.Mode.Down) {
+            remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
+            lblState.text = docDown["View"].toString()
+            lblInfo1.text =
+                "Отобрано " + remain.toString() + " из " + docDown["AllBoxes"].toString()
+            lblNumber.text = docDown["NumberBill"].toString().substring(
+                docDown["NumberBill"].toString().length - 5,
+                docDown["NumberBill"].toString().length - 3
+            ) + " " +
+                    docDown["NumberBill"].toString()
+                        .substring(docDown["NumberBill"].toString().length - 3) +
+                    " сектор: " + docDown["MainSectorName"].toString()
+                .trim() + "-" + docDown["NumberCC"].toString()
+            lblAdress.text = docDown["AdressCollect"].toString()
+            lblSetter.text = "отборщик: " + ss.helper.getShortFIO(docDown["SetterName"].toString())
+            lblAdress.visibility = View.VISIBLE
+            lblSetter.visibility = View.VISIBLE
+            btnKey1.visibility = if (docDown["MaxStub"].toString()
+                    .toInt() <= remain
+            ) View.VISIBLE else View.INVISIBLE
+            btnKey1.text = "TAB-Все"
+        }
+        else if (ss.CurrentMode == Global.Mode.DownComplete) {
+            btnKey1.visibility = if (flagPrintPallete) View.INVISIBLE else View.VISIBLE
+            btnKey1.text = "TAB-Печать"
+            if (downSituation[0]["NumberOfOrder"].toString() != "0") {
+                val number: String = downSituation[0]["NumberOfOrder"].toString()
+                lblNumber.text = number.substring(if (number.length > 4) number.length - 4 else 0)
+            }
+            else {
+                lblNumber.text = ""
+            }
+            lblInfo1.text = "Всего " + downSituation[0]["AllBox"].toString() + " мест"
+            lblAdress.visibility = View.INVISIBLE
+            lblSetter.visibility = View.INVISIBLE
+
+        }
     }
 
 

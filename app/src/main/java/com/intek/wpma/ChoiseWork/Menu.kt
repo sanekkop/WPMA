@@ -72,15 +72,18 @@ class Menu : BarcodeDataReceiver() {
         //если это не типовой справочник, то выходим
         if (typeBarcode != "113")   {
             FExcStr.text = "Нет действий с этим ШК в данном режиме"
+            badVoise()
         }
         val idd = barcoderes["IDD"].toString()
         //если это не сотрудник выходим
         if (!ss.isSC(idd, "Сотрудники")) {
             FExcStr.text = "Нет действий с этим ШК в данном режиме"
+            badVoise()
         }
         if(ss.FEmployer.idd == idd){
             if(!logout(ss.FEmployer.id)){
                 FExcStr.text = "Ошибка выхода из системы!"
+                badVoise()
                 return
             }
             val main = Intent(this, MainActivity::class.java)
@@ -89,6 +92,7 @@ class Menu : BarcodeDataReceiver() {
         }
         else  {
             FExcStr.text = "Нет действий с ШК в данном режиме!"
+            badVoise()
         }
     }
 

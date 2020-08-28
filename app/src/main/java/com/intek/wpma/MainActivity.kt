@@ -168,7 +168,6 @@ class MainActivity :  BarcodeDataReceiver() {
             val main = Intent(this, MainActivity::class.java)
             startActivity(main)
             finish()
-            goodVoise()
             return
         }
         else {
@@ -207,7 +206,6 @@ class MainActivity :  BarcodeDataReceiver() {
         }
         startActivity(newMode)
         finish()
-        goodVoise()
 
     }
     private fun updateProgram() :Boolean {

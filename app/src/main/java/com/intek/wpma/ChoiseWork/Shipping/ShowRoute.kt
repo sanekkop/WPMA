@@ -327,6 +327,7 @@ class ShowRoute: BarcodeDataReceiver() {
                         badVoise()
                         return false
                     }
+                    goodVoise()
                     return true
 
                 }
@@ -411,6 +412,7 @@ class ShowRoute: BarcodeDataReceiver() {
                     needAdressComplete = dt[0]["Adress9"].toString()
                     FExcStr.text = "Отсканируйте адрес!"
                     refreshActivity()
+                    goodVoise()
                     return true
 
                 }
@@ -511,6 +513,7 @@ class ShowRoute: BarcodeDataReceiver() {
                 newcomp.putExtra("scaningBox", scaningBox)
                 startActivity(newcomp)
                 finish()
+                goodVoise()
                 return true
             }
         }
@@ -519,6 +522,7 @@ class ShowRoute: BarcodeDataReceiver() {
             badVoise()
             return false
         }
+        goodVoise()
         return true
     }
 

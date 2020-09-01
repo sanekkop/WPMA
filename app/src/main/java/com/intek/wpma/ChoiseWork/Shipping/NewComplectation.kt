@@ -449,6 +449,7 @@ class NewComplectation : BarcodeDataReceiver() {
                         return false
                     }
                     toModeNewComplectation()
+                    goodVoise()
                     return true
 
                 } else {
@@ -535,6 +536,7 @@ class NewComplectation : BarcodeDataReceiver() {
                     needAdressComplete = dt[0]["Adress9"].toString()
                     FExcStr.text = "Отсканируйте адрес!"
                     refreshActivity()
+                    goodVoise()
                     return true
 
                 }
@@ -634,7 +636,7 @@ class NewComplectation : BarcodeDataReceiver() {
 
                 checkFullNewComplete(scaningBox)
                 toModeNewComplectationComplete()
-
+                goodVoise()
                 return true
             } else {
                 FExcStr.text = "Нет действий с данным ШК в данном режиме!"
@@ -646,6 +648,7 @@ class NewComplectation : BarcodeDataReceiver() {
             badVoise()
             return false
         }
+        goodVoise()
         return true
     }
 
@@ -978,13 +981,12 @@ class NewComplectation : BarcodeDataReceiver() {
             btnKey1.visibility = if (lastGoodAdress == "") View.INVISIBLE else View.VISIBLE
             if (lastGoodAdress != "") {
                 lblAdress.text = ""
-                lblNumber.text = ""
                 lblSetter.text = ""
             }
             btnKey1.text = "TAB - Все"
             if (downSituation[0]["NumberOfOrder"].toString() != "0") {
                 val number: String = downSituation[0]["NumberOfOrder"].toString()
-                lblNumber.text = number.substring(if (number.length > 4) number.length - 4 else 0)
+                lblNumber.text = lblNumber.text.toString().trim() + " задание " + number.substring(if (number.length > 4) number.length - 4 else 0)
             }
             lblInfo1.text = "Всего " + downSituation[0]["AllBox"].toString() + " мест"
             lblAdress.visibility = View.VISIBLE

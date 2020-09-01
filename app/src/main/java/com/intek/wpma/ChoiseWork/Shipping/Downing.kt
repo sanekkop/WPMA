@@ -344,6 +344,7 @@ class Downing : BarcodeDataReceiver() {
                     return false
                 }
                 toModeDown()
+                goodVoise()
                 return true
             } else {
                 FExcStr.text = "Нет действий с данным ШК в данном режиме!"
@@ -370,22 +371,26 @@ class Downing : BarcodeDataReceiver() {
                 section.foundIDD(barcoderes["IDD"].toString())
                 if (!section.selected) {
                     FExcStr.text = "Не найден адрес!"
+                    badVoise()
                     return false
                 }
                 val id = section.id
                 if (downSituation[0]["NumberOfOrder"].toString() == "0") {
                     FExcStr.text = "Не присвоен номер задания! Напечатайте этикетку!"
-                    return false
+                    badVoise()
+                    false
                 }
                 var textQuery =
                     "declare @res int; exec WPM_CompletePallete :employer, :adress, @res output; "
                 textQuery = ss.querySetParam(textQuery, "employer", ss.FEmployer.id)
                 textQuery = ss.querySetParam(textQuery, "adress", id)
                 if (!ss.executeWithoutRead(textQuery)) {
+                    badVoise()
                     return false
                 }
                 flagPrintPallete = false
                 toModeDown()
+                goodVoise()
                 return true
             }
         } else {
@@ -393,6 +398,7 @@ class Downing : BarcodeDataReceiver() {
             badVoise()
             return false
         }
+        goodVoise()
         return true
     }
 

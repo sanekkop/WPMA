@@ -183,6 +183,7 @@ class UnLoading : BarcodeDataReceiver() {
                     if (dt.isEmpty()) {
                         FExcStr.text =
                             "Не найдено место! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
+                        badVoise()
                         return false
                     }
                     boxUnLoad = dt[0]["ID"].toString()

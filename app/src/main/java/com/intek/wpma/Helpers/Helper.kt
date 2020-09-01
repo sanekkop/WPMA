@@ -21,6 +21,11 @@ class Helper {
         return result
     }
 
+    fun filterArt(needArt : String, foundArt : String) : String {
+        val resulTate : String = Regex(needArt.substring(0)).find(foundArt.substring(0..4)).toString()
+        return resulTate
+    }
+
     fun byeTheNull(nule : String) : String {
         val nuLev = nule
         return nuLev.substring(0, nuLev.length -4)

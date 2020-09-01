@@ -25,6 +25,9 @@ import com.intek.wpma.R
 import com.intek.wpma.SQL.SQL1S.Const
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_none_item.*
+import kotlinx.android.synthetic.main.activity_none_item.FExcStr
+import kotlinx.android.synthetic.main.activity_set.*
+import java.time.temporal.TemporalAdjusters.next
 
 class NoneItem : BarcodeDataReceiver() {
 
@@ -33,7 +36,9 @@ class NoneItem : BarcodeDataReceiver() {
     var barcode: String = ""
     private var currentLine:Int = 2
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
+    var noneAccItem : MutableList<MutableMap<String, String>> = mutableListOf()
     var artNeed : String = ""
+    var artSearch : String = ""
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -48,6 +53,7 @@ class NoneItem : BarcodeDataReceiver() {
                         reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
+                        badVoise()
                         val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
                         toast.show()
                     }
@@ -113,12 +119,84 @@ class NoneItem : BarcodeDataReceiver() {
         printPal.text = prIN
         palletPal.text = paLL
 
-        enterSearchArt.visibility = INVISIBLE
+        //сначала все подтянем, потом нарисуем
+        noneItem()
+    }
 
+    //подтягиваем данные для таблички
+    fun noneItem() {
+        var textQuery = "SELECT " +
+                "right(Journ.docno,5) as DOCNO , " +
+                "Supply.iddoc as iddoc , " +
+                "Goods.id as id , " +
+                "Goods.Descr as ItemName , " +
+                "Goods.\$Спр.Товары.ИнвКод as InvCode , " +
+                "Goods.\$Спр.Товары.Артикул as Article , " +
+                "Goods.\$Спр.Товары.АртикулНаУпаковке as ArticleOnPack ," +
+                "Goods.\$Спр.Товары.Прих_Цена as Price , " +
+                "Goods.\$Спр.Товары.КоличествоДеталей as Details , " +
+                "CASE WHEN round(Supply.\$АдресПоступление.Количество " +
+                "/ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.\$АдресПоступление.Количество " +
+                "THEN ISNULL(Package.Coef, 1) ELSE 1 END as Coef, " +
+                "CASE WHEN round(Supply.\$АдресПоступление.Количество " +
+                "/ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.\$АдресПоступление.Количество " +
+                "THEN round(Supply.\$АдресПоступление.Количество /ISNULL(Package.Coef, 1), 0) " +
+                "ELSE Supply.\$АдресПоступление.Количество END as CountPackage , " +
+                "Supply.\$АдресПоступление.Количество as Count , " +
+                "Supply.\$АдресПоступление.ЕдиницаШК as Unit , " +
+                "Supply.\$АдресПоступление.КоличествоЭтикеток as LabelCount , " +
+                "Supply.\$АдресПоступление.НомерСтрокиДока as Number , " +
+                "Supply.\$АдресПоступление.ГруппаСезона as SeasonGroup , " +
+                "SypplyHeader.\$АдресПоступление.ДальнийСклад as FlagFarWarehouse , " +
+                " Supply.LineNO_ as LineNO_ , " +
+                //isnull(GS.\$Спр.ТоварныеСекции.РазмерХранения , 0) as StoregeSize " +
+                "isnull(GS.\$Спр.ТоварныеСекции.РасчетныйРХ , 0) as StoregeSize " +
+                "FROM " +
+                "DT\$АдресПоступление as Supply (nolock) " +
+                "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
+                "ON Goods.ID = Supply.\$АдресПоступление.Товар " +
+                "LEFT JOIN DH\$АдресПоступление as SypplyHeader (nolock) " +
+                "ON SypplyHeader.iddoc = Supply.iddoc " +
+                "LEFT JOIN _1sjourn as Journ (nolock) " +
+                "ON Journ.iddoc = Right(SypplyHeader.\$АдресПоступление.ДокументОснование , 9) " +
+                "LEFT JOIN ( " +
+                "SELECT " +
+                "Units.parentext as ItemID , " +
+                "min(Units.\$Спр.ЕдиницыШК.Коэффициент ) as Coef " +
+                "FROM \$Спр.ЕдиницыШК as Units (nolock) " +
+                "WHERE " +
+                "Units.\$Спр.ЕдиницыШК.ОКЕИ = :OKEIPackage " +
+                "and Units.ismark = 0 " +
+                "and not Units.\$Спр.ЕдиницыШК.Коэффициент = 0 " +
+                "GROUP BY " +
+                "Units.parentext) as Package " +
+                "ON Package.ItemID = Goods.ID " +
+                "LEFT JOIN \$Спр.ТоварныеСекции as GS (nolock) " +
+                "on GS.parentext = goods.id and gs.\$Спр.ТоварныеСекции.Склад = :Warehouse " +
+                "WHERE Supply.IDDOC in ($iddoc) " +
+                "and Supply.\$АдресПоступление.Состояние0 = 0 " +
+                "ORDER BY Journ.docno, Supply.LineNO_ "
+        val model = Model()
+        textQuery = ss.querySetParam(textQuery, "$iddoc", iddoc)
+        textQuery = ss.querySetParam(textQuery, "OKEIPackage", model.okeiPackage)
+        textQuery = ss.querySetParam(textQuery, "Warehouse", Const.MainWarehouse)
+        noneAccItem = ss.executeWithReadNew(textQuery) ?: return
+        refreshActivity() //теперь рисуем
+    }
+
+    //а вот и сама табличка
+    @SuppressLint("ClickableViewAccessibility") //уберешь SuppressLint, отъебнет скролл по таблице
+    fun refreshActivity() {
+        searchArt.setTextColor(Color.BLACK)
+        searchArt.textSize = 18F
+        artSearch = searchArt.text.toString()
+        val lineNom = 2
+        table.removeAllViewsInLayout()
+
+        //шапочка
         val linearLayout = LinearLayout(this)
         val rowTitle = TableRow(this)
 
-        //добавим столбцы
         val number = TextView(this)
         number.text = "№"
         number.typeface = Typeface.SERIF
@@ -185,77 +263,13 @@ class NoneItem : BarcodeDataReceiver() {
         rowTitle.setBackgroundColor(Color.rgb(192,192,192))
         table.addView(rowTitle)
 
-        noneItem()
-    }
+        //данные по товару
+        if (noneAccItem.isNotEmpty()) {
 
-    //непринятый товар, табличка
-    @SuppressLint("ClickableViewAccessibility")
-    fun noneItem() {
+            for (DR in noneAccItem) {
 
-        var textQuery = "SELECT " +
-                "right(Journ.docno,5) as DOCNO , " +
-                "Supply.iddoc as iddoc , " +
-                "Goods.id as id , " +
-                "Goods.Descr as ItemName , " +
-                "Goods.\$Спр.Товары.ИнвКод as InvCode , " +
-                "Goods.\$Спр.Товары.Артикул as Article , " +
-                "Goods.\$Спр.Товары.АртикулНаУпаковке as ArticleOnPack ," +
-                "Goods.\$Спр.Товары.Прих_Цена as Price , " +
-                "Goods.\$Спр.Товары.КоличествоДеталей as Details , " +
-                "CASE WHEN round(Supply.\$АдресПоступление.Количество " +
-                "/ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.\$АдресПоступление.Количество " +
-                "THEN ISNULL(Package.Coef, 1) ELSE 1 END as Coef, " +
-                "CASE WHEN round(Supply.\$АдресПоступление.Количество " +
-                "/ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.\$АдресПоступление.Количество " +
-                "THEN round(Supply.\$АдресПоступление.Количество /ISNULL(Package.Coef, 1), 0) " +
-                "ELSE Supply.\$АдресПоступление.Количество END as CountPackage , " +
-                "Supply.\$АдресПоступление.Количество as Count , " +
-                "Supply.\$АдресПоступление.ЕдиницаШК as Unit , " +
-                "Supply.\$АдресПоступление.КоличествоЭтикеток as LabelCount , " +
-                "Supply.\$АдресПоступление.НомерСтрокиДока as Number , " +
-                "Supply.\$АдресПоступление.ГруппаСезона as SeasonGroup , " +
-                "SypplyHeader.\$АдресПоступление.ДальнийСклад as FlagFarWarehouse , " +
-                " Supply.LineNO_ as LineNO_ , " +
-                //isnull(GS.\$Спр.ТоварныеСекции.РазмерХранения , 0) as StoregeSize " +
-                "isnull(GS.\$Спр.ТоварныеСекции.РасчетныйРХ , 0) as StoregeSize " +
-                "FROM " +
-                "DT\$АдресПоступление as Supply (nolock) " +
-                "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
-                "ON Goods.ID = Supply.\$АдресПоступление.Товар " +
-                "LEFT JOIN DH\$АдресПоступление as SypplyHeader (nolock) " +
-                "ON SypplyHeader.iddoc = Supply.iddoc " +
-                "LEFT JOIN _1sjourn as Journ (nolock) " +
-                "ON Journ.iddoc = Right(SypplyHeader.\$АдресПоступление.ДокументОснование , 9) " +
-                "LEFT JOIN ( " +
-                "SELECT " +
-                "Units.parentext as ItemID , " +
-                "min(Units.\$Спр.ЕдиницыШК.Коэффициент ) as Coef " +
-                "FROM \$Спр.ЕдиницыШК as Units (nolock) " +
-                "WHERE " +
-                "Units.\$Спр.ЕдиницыШК.ОКЕИ = :OKEIPackage " +
-                "and Units.ismark = 0 " +
-                "and not Units.\$Спр.ЕдиницыШК.Коэффициент = 0 " +
-                "GROUP BY " +
-                "Units.parentext) as Package " +
-                "ON Package.ItemID = Goods.ID " +
-                "LEFT JOIN \$Спр.ТоварныеСекции as GS (nolock) " +
-                "on GS.parentext = goods.id and gs.\$Спр.ТоварныеСекции.Склад = :Warehouse " +
-                "WHERE Supply.IDDOC in ($iddoc) " +
-                "and Supply.\$АдресПоступление.Состояние0 = 0 " +
-                "ORDER BY Journ.docno, Supply.LineNO_ "
-
-
-        val model = Model()
-        textQuery = ss.querySetParam(textQuery, "$iddoc", iddoc)
-        textQuery = ss.querySetParam(textQuery, "OKEIPackage", model.okeiPackage)
-        textQuery = ss.querySetParam(textQuery, "Warehouse", Const.MainWarehouse)
-        var dT = ss.executeWithReadNew(textQuery) ?: return
-        var linenom = 2
-
-
-        if (dT.isNotEmpty()) {
-
-            for (DR in dT) {
+                artNeed = ss.helper.suckDigits(DR["Article"].toString().trim()) //убираем сранные буковки, которые мешают при поиске
+                if (artNeed.indexOf(artSearch) == -1) continue //пока нет вхождений пропускаем, если есть рисуем
 
                 val linearLayout1 = LinearLayout(this)
                 val rowTitle1 = TableRow(this)
@@ -277,7 +291,7 @@ class NoneItem : BarcodeDataReceiver() {
                 }
 
                 var colorline =  Color.WHITE
-                if (linenom == currentLine) {
+                if (lineNom == currentLine) {
                     colorline = Color.GRAY
                 }
                 rowTitle1.setBackgroundColor(colorline)
@@ -307,7 +321,7 @@ class NoneItem : BarcodeDataReceiver() {
                 address.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.24).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                address.gravity = Gravity.CENTER
+                address.gravity = Gravity.LEFT
                 address.textSize = 18F
                 address.setTextColor(-0x1000000)
                 val boxes = TextView(this)
@@ -316,7 +330,7 @@ class NoneItem : BarcodeDataReceiver() {
                 boxes.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.24).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                boxes.gravity = Gravity.CENTER
+                boxes.gravity = Gravity.LEFT
                 boxes.textSize = 18F
                 boxes.setTextColor(-0x1000000)
                 val boxesfact = TextView(this)
@@ -348,89 +362,6 @@ class NoneItem : BarcodeDataReceiver() {
                 rowTitle1.addView(linearLayout1)
                 rowTitle1.setBackgroundColor(Color.WHITE)
                 table.addView(rowTitle1)
-
-                artNeed = DR["Article"].toString()
-            }
-        }
-/*
-        if (enterSearchArt.isFocusable == true) {
-            val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
-        } */
-    }
-
-    //ввод цифр для поиска схожих артиклей
-    fun enterSearchArt() {
-        enterSearchArt.visibility = View.VISIBLE
-        enterSearchArt.isFocusable = true
-        enterSearchArt.setOnKeyListener { v: View, keyCode: Int, event ->
-            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER || keyCode == 66) {
-                if (ss.isMobile){  //спрячем клаву
-                    val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,InputMethodManager.HIDE_NOT_ALWAYS)
-                }
-                // сохраняем текст, введенный до нажатия Enter в переменную
-                try {
-                    val count = enterSearchArt.text.toString().toInt()
-                    enterSearchArt.visibility = View.INVISIBLE
-                    searchArt.text = "$count"
-                    searchArt.visibility = View.VISIBLE
-                    filterArt()    //поиск похожих артиклей с введенными цифрами
-                } catch (e: Exception) {
-                }
-            }
-            false
-        }
-    }
-
-    //тут поиск товара по артиклю
-    fun filterArt() {
-        val textQuery = "SELECT " +
-                "Goods.\$Спр.Товары.Артикул as Article like  ('%' + ('${searchArt}') + '%') , " +   //эта шляпа должна сравнивать артикли с заданным, но это не точно
-                "isnull(GS.\$Спр.ТоварныеСекции.РасчетныйРХ , 0) as StoregeSize " +
-                "FROM DT\$АдресПоступление as Supply (nolock) " +
-                "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
-                "ON Goods.ID = Supply.\$АдресПоступление.Товар " +
-                "LEFT JOIN DH\$АдресПоступление as SypplyHeader (nolock) " +
-                "ON SypplyHeader.iddoc = Supply.iddoc " +
-                "LEFT JOIN _1sjourn as Journ (nolock) " +
-                "ON Journ.iddoc = Right(SypplyHeader.\$АдресПоступление.ДокументОснование , 9) " +
-                "LEFT JOIN ( SELECT Units.parentext as ItemID , min(Units.\$Спр.ЕдиницыШК.Коэффициент ) as Coef " +
-                "FROM \$Спр.ЕдиницыШК as Units (nolock) " +
-                "WHERE Units.\$Спр.ЕдиницыШК.ОКЕИ = :OKEIPackage and Units.ismark = 0 and not Units.\$Спр.ЕдиницыШК.Коэффициент = 0 " +
-                "GROUP BY Units.parentext) as Package " +
-                "ON Package.ItemID = Goods.ID " +
-                "LEFT JOIN \$Спр.ТоварныеСекции as GS (nolock) " +
-                "on GS.parentext = goods.id and gs.\$Спр.ТоварныеСекции.Склад = :Warehouse " +
-                "WHERE Supply.IDDOC in ($iddoc) and Supply.\$АдресПоступление.Состояние0 = 0 " +
-                "ORDER BY Journ.docno, Supply.LineNO_ "
-
-        val dataTable = ss.executeWithRead(textQuery) ?: return
-        var artSearch = searchArt.toString()
-
-        if (artSearch in artNeed) {
-            table.removeAllViewsInLayout()
-
-            for (DR in dataTable) {
-
-                val filSear = LinearLayout(this)
-                val rowFil = TableRow(this)
-
-                val findArt = TextView(this)
-                findArt.text = artNeed
-                findArt.typeface = Typeface.SERIF
-                findArt.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.13).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
-                findArt.gravity = Gravity.CENTER
-                findArt.textSize = 18F
-                findArt.setTextColor(-0x1000000)
-
-                filSear.addView(findArt)
-
-                rowFil.addView(filSear)
-                rowFil.setBackgroundColor(Color.GRAY)
-                table.addView(rowFil)
             }
         }
     }
@@ -479,10 +410,12 @@ class NoneItem : BarcodeDataReceiver() {
             {
                 return false
             }
+            goodVoise()
             printPal.text = ss.FPrinter.path
             return true
         }
         if (!ss.FPrinter.selected) {
+            badVoise()
             FExcStr.text = "Не выбран принтер!"
             return false
         }
@@ -507,8 +440,21 @@ class NoneItem : BarcodeDataReceiver() {
             return true
         }
 
-        if (keyCode in 0 ..9) {
-            enterSearchArt()
+        //артикуля, ля, ля, ля
+        if (ss.helper.whatInt(keyCode) != -1) {
+            searchArt.text =
+                searchArt.text.toString().trim() + ss.helper.whatInt(keyCode).toString()
+            refreshActivity()
+        }
+
+        //чистит артикуля
+        if (keyCode == 67) {
+            if (searchArt.text.toString().isNotEmpty()) {
+                searchArt.text = searchArt.text
+                    .toString()
+                    .substring(0, searchArt.text.toString().length - 1)
+                refreshActivity()
+            } else refreshActivity()
         }
 
         /* карточка товара

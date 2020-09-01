@@ -103,6 +103,7 @@
         android:layout_height="0dp"
         android:layout_marginEnd="226dp"
         android:layout_marginRight="226dp"
+        android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@id/FExcStr"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.05"
@@ -112,7 +113,7 @@
         app:layout_constraintVertical_bias="0.0"
         app:layout_constraintWidth_percent="0.3" />
 
-    <EditText
+    <!--    <EditText
         android:id="@+id/enterSearchArt"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -131,8 +132,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/scroll"
         app:layout_constraintVertical_bias="0.0"
-        app:layout_constraintWidth_percent="0.3" />
-
+        app:layout_constraintWidth_percent="0.3" /> -->
 
     <TextView
         android:id="@+id/nadp"

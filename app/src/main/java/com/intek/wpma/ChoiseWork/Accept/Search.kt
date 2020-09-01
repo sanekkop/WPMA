@@ -280,15 +280,18 @@ class Search : BarcodeDataReceiver() {
             dataMapRead = execCommand("QuestAcceptance", dataMapWrite, fieldList, dataMapRead)
         }
         catch (e: Exception){
+            badVoise()
             val toast = Toast.makeText(applicationContext, "Не удалось получить задание!", Toast.LENGTH_SHORT)
             toast.show()
         }
 
         if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
+            badVoise()
             FExcStr.text = "Заданий нет!"
             return false
         }
         if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() != 3) {
+            badVoise()
             FExcStr.text = "Не известный ответ робота... я озадачен..."
             return false
         }
@@ -341,10 +344,12 @@ class Search : BarcodeDataReceiver() {
             if(!ss.FPrinter.foundIDD(idd)) {
                 return false
             }
+            goodVoise()
             printPal.text = ss.FPrinter.path
             return true
         }
         if (!ss.FPrinter.selected) {
+            badVoise()
             FExcStr.text = "Не выбран принтер!"
             return false
         }
@@ -353,11 +358,13 @@ class Search : BarcodeDataReceiver() {
 
         //чет через пизду работает, вроде все так, но не то
         if (FPallet == "") {
+            goodVoise()
             scanPalletBarcode(FPallet)
             //FPallet = pal.pallete
             palletPal.text = FBarcodePallet
             }
         else {
+            badVoise()
             palletPal.text = "НЕТ ПАЛЛЕТЫ"
             FExcStr.text = "Не выбрана паллета!"
             return false

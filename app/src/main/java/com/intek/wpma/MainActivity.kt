@@ -36,6 +36,7 @@ class MainActivity :  BarcodeDataReceiver() {
                         reactionBarcode(barcode)
                     }
                     catch (e: Exception){
+                        badVoise()
                         val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
                         toast.show()
                     }
@@ -56,6 +57,7 @@ class MainActivity :  BarcodeDataReceiver() {
                 reactionBarcode(barcode)
             }
             catch (e: Exception){
+                badVoise()
                 val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
                 toast.show()
             }
@@ -107,6 +109,7 @@ class MainActivity :  BarcodeDataReceiver() {
         val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = ss.vers
         if (!execCommandNoFeedback("GetDateTime", dataMapWrite)) {
+            badVoise()
             val toast = Toast.makeText(applicationContext, "Не удалось подключиться к базе!", Toast.LENGTH_SHORT)
             toast.show()
             return

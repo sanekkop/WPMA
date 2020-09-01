@@ -14,23 +14,15 @@ import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.view.isVisible
-import kotlinx.android.synthetic.main.activity_accept.*
-import kotlinx.android.synthetic.main.activity_accept.table
-import com.intek.wpma.*
-import com.intek.wpma.Model.Model
+import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.ParentForm
+import com.intek.wpma.R
 import com.intek.wpma.Ref.RefPalleteMove
-import com.intek.wpma.SQL.SQL1S
 import com.intek.wpma.SQL.SQL1S.FBarcodePallet
 import com.intek.wpma.SQL.SQL1S.FPallet
-import com.intek.wpma.SQL.SQL1S.FPrinter
-import com.intek.wpma.SQL.SQL1S.executeWithoutRead
-import com.intek.wpma.SQL.SQL1S.getSCData
-import com.intek.wpma.SQL.SQL1S.isSC
 import com.intek.wpma.SQL.SQL1S.sqlToDateTime
-import kotlinx.android.synthetic.main.activity_accept.FExcStr
-import kotlinx.android.synthetic.main.activity_set.*
-import net.sourceforge.jtds.jdbc.DateTime
+import com.intek.wpma.ScanActivity
+import kotlinx.android.synthetic.main.activity_accept.*
 
 class Search : BarcodeDataReceiver() {
 
@@ -54,6 +46,7 @@ class Search : BarcodeDataReceiver() {
                     catch(e: Exception) {
                         val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
                         toast.show()
+                        badVoise()
                     }
 
                 }
@@ -68,11 +61,11 @@ class Search : BarcodeDataReceiver() {
         ParentForm = intent.extras!!.getString("ParentForm")!!
 
         title = ss.title
-        var oldx : Float = 0F
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        var oldx = 0F
+        FExcStr.setOnTouchListener(fun(v : View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
-                true
+                //true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
                     val backAcc = Intent(this, YapItem::class.java)
@@ -271,7 +264,6 @@ class Search : BarcodeDataReceiver() {
     }
 
     private fun getDocsAccept() : Boolean {
-
         val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(ss.FEmployer.id, "Спр.Сотрудники")
         var dataMapRead: MutableMap<String, Any> = mutableMapOf()
@@ -279,12 +271,11 @@ class Search : BarcodeDataReceiver() {
         try {
             dataMapRead = execCommand("QuestAcceptance", dataMapWrite, fieldList, dataMapRead)
         }
-        catch (e: Exception){
+        catch (e: Exception) {
             badVoise()
             val toast = Toast.makeText(applicationContext, "Не удалось получить задание!", Toast.LENGTH_SHORT)
             toast.show()
         }
-
         if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
             badVoise()
             FExcStr.text = "Заданий нет!"
@@ -296,7 +287,6 @@ class Search : BarcodeDataReceiver() {
             return false
         }
         iddoc = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
-
         return true
     }
 
@@ -354,22 +344,21 @@ class Search : BarcodeDataReceiver() {
             return false
         }
 
-        var pal = RefPalleteMove()
+        val pal = RefPalleteMove()
 
-        //чет через пизду работает, вроде все так, но не то
+        //чет через пизду работает
+        //главное работает
         if (FPallet == "") {
-            goodVoise()
             scanPalletBarcode(FPallet)
-            //FPallet = pal.pallete
-            palletPal.text = FBarcodePallet
+            pal.foundID(FPallet)
+            palletPal.text = pal.pallete
+            goodVoise()
             }
         else {
-            badVoise()
             palletPal.text = "НЕТ ПАЛЛЕТЫ"
             FExcStr.text = "Не выбрана паллета!"
+            badVoise()
             return false
-            //scanPalletBarcode(FPallet)
-
         }
         return true
     }
@@ -410,12 +399,12 @@ class Search : BarcodeDataReceiver() {
         return false
     }
 
-    fun scanPalletBarcode (strBarcode : String) {
+    private fun scanPalletBarcode (strBarcode : String) {
 
         var textQuery = "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, Employer, @result out; select @result;"
-        textQuery = ss.querySetParam(textQuery, "Barcode", strBarcode)
+        textQuery = ss.querySetParam(textQuery, "Barcode", barcode)
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-        FBarcodePallet = strBarcode
+        FBarcodePallet = barcode
         FPallet = ss.executeScalar(textQuery) ?: return
 
         textQuery =
@@ -431,26 +420,6 @@ class Search : BarcodeDataReceiver() {
         textQuery = ss.querySetParam(textQuery, "EmployerID", ss.FEmployer.id)
         textQuery = ss.querySetParam(textQuery, "Pallet", FPallet)
         var tmpDR = ss.executeWithReadNew(textQuery) ?: return
-
-
-
-      /*  if (tmpDR.isNotEmpty()) {
-
-            for(DR in tmpDR) {
-
-                if (tmpDR == 0) {
-                    //нет строки, значит надо добавить
-                    var pal = DR["ID"]
-                    strBarcode = DR["Barcode"]
-                    tmpDR["Name"] = strBarcode.Substring(8, 4)
-                    tmpDR["AdressID"] = ss.getVoidID()
-                    FPallet = pal
-                }
-            }
-            }*/
-
-       //DataRow[] DR = FPallets.Select("ID = '" + FPalletID + "'")
-
-    }
+           }
 }
 

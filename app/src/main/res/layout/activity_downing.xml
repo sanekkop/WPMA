@@ -15,6 +15,15 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <Button
+        android:id="@+id/btnCansel2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="НАЗАД-ВЫХОД"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/FExcStr"
+        app:layout_constraintStart_toEndOf="@+id/btnCansel" />
+
+    <Button
         android:id="@+id/btnKey1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -63,6 +63,9 @@ class Menu : BarcodeDataReceiver() {
         btnShipping.setOnClickListener {
             startActivity(3)
         }
+        btnRevise.setOnClickListener {
+            startActivity(5)
+        }
     }
 
     private fun reactionBarcode(Barcode: String){

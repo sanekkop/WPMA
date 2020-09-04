@@ -7,21 +7,25 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
-import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.*
 import com.intek.wpma.Helpers.Helper
-import com.intek.wpma.MainActivity
-import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
-import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_free_complectation.*
+import kotlinx.android.synthetic.main.activity_free_complectation.FExcStr
+import kotlinx.android.synthetic.main.activity_free_complectation.btnCansel
+import kotlinx.android.synthetic.main.activity_free_complectation.btnScan
+import kotlinx.android.synthetic.main.activity_free_complectation.lblInfo1
+import kotlinx.android.synthetic.main.activity_free_complectation.lblState
+import kotlinx.android.synthetic.main.activity_new_complectation.*
 
 
 class FreeComplectation : BarcodeDataReceiver() {
 
-    private var docDown:MutableMap<String,String> = mutableMapOf()
+    private var docDown:MutableMap<String, String> = mutableMapOf()
     private var badDoc: MutableMap<String, String> = mutableMapOf()
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
@@ -38,8 +42,12 @@ class FreeComplectation : BarcodeDataReceiver() {
                         barcode = intent.getStringExtra("data")
                         reactionBarcode(barcode)
                     }
-                    catch(e: Exception) {
-                        val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
+                    catch (e: Exception) {
+                        val toast = Toast.makeText(
+                            applicationContext,
+                            "Не удалось отсканировать штрихкод!",
+                            Toast.LENGTH_LONG
+                        )
                         toast.show()
                     }
 
@@ -59,7 +67,11 @@ class FreeComplectation : BarcodeDataReceiver() {
                 reactionBarcode(barcode)
             }
             catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
+                val toast = Toast.makeText(
+                    applicationContext,
+                    "Ошибка! Возможно отсутствует соединение с базой!",
+                    Toast.LENGTH_LONG
+                )
                 toast.show()
             }
         }
@@ -84,6 +96,7 @@ class FreeComplectation : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_free_complectation)
         title = ss.title
+        ss.CurrentMode = Global.Mode.FreeDownComplete
 
         if (ss.isMobile) {
             btnScan.visibility = View.VISIBLE
@@ -93,7 +106,39 @@ class FreeComplectation : BarcodeDataReceiver() {
                 startActivity(scanAct)
             }
         }
+        btnCansel.setOnClickListener {
+            ss.FEmployer = RefEmployer()
+            val mainInit = Intent(this, MainActivity::class.java)
+            startActivity(mainInit)
+            finish()
+        }
+        var oldx = 0F
+        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                oldx = event.x
+                return true
+            } else if (event.action == MotionEvent.ACTION_MOVE) {
+                if (event.x < oldx) {
+                    if (!loadCC()) return true
+
+                    FExcStr.text = "Подгружаю состояние..."
+                    val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
+                    shoiseWorkInit.putExtra("BadDocID", badDoc["ID"])
+                    shoiseWorkInit.putExtra("BadDocView", badDoc["View"])
+                    startActivity(shoiseWorkInit)
+                    finish()
+                }
+            }
+            return true
+        })
         toModeFreeDownComplete()
+    }
+    fun loadCC(): Boolean {
+        if (badDoc["ID"] == null) {
+            FExcStr.text = "Нет текущего сборочного!"
+            return false
+        }
+        return true
     }
 
     private fun toModeFreeDownComplete() {
@@ -112,10 +157,11 @@ class FreeComplectation : BarcodeDataReceiver() {
                 loadBadDoc(dt[0]["id"].toString())
             }
 
+
             docDown["ID"] = dt[0]["id"].toString()
             docDown["View"] = dt[0]["Sector"].toString()
-                .trim() + "-" + dt[0]["Number"].toString() + " Заявка " + dt[0]["docno"].toString() + " (" + dt[0]["datedoc"].toString() + ")"
-            docDown["NumberBill"] = dt[0]["DocNo"].toString().trim()
+                .trim() + "-" + dt[0]["Number"].toString() + " Заявка " + dt[0]["docno"].toString() + " (" + dt[0]["DateDoc"].toString() + ")"
+            docDown["NumberBill"] = dt[0]["docno"].toString().trim()
             docDown["NumberCC"] = dt[0]["Number"].toString()
             docDown["MainSectorName"] = dt[0]["Sector"].toString()
             docDown["SetterName"] = dt[0]["SetterName"].toString()
@@ -191,26 +237,24 @@ class FreeComplectation : BarcodeDataReceiver() {
 
     }
 
-
     private fun reactionBarcode(Barcode: String): Boolean {
 
         val helper = Helper()
         val barcoderes = helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
-        if (typeBarcode == "113")
-        {
+        if (typeBarcode == "113") {
             val idd = barcoderes["IDD"].toString()
             when {
                 ss.isSC(idd, "Сотрудники") -> {
                     ss.FEmployer = RefEmployer()
                     val mainInit = Intent(this, MainActivity::class.java)
-                    mainInit.putExtra("ParentForm", "NewComplectation")
                     startActivity(mainInit)
                     finish()
                 }
                 ss.isSC(idd, "Секции") -> {
                     if (docDown["ID"] == null) {
                         FExcStr.text = "Отсканируйте место !!!"
+                        badVoise()
                         return false
                     }
 
@@ -218,15 +262,18 @@ class FreeComplectation : BarcodeDataReceiver() {
                     section.foundIDD(idd)
                     if (!section.selected) {
                         FExcStr.text = "Не найден адрес"
+                        badVoise()
                         return false
                     }
                     //Прописываем адрес
-                    var textQuery = "declare @res int; exec WPM_PutInAdress :employer, :adress, @res output; select @res as result; "
+                    var textQuery =
+                        "declare @res int; exec WPM_PutInAdress :employer, :adress, @res output; select @res as result; "
                     textQuery = ss.querySetParam(textQuery, "employer", ss.FEmployer.id)
                     textQuery = ss.querySetParam(textQuery, "adress", section.id)
-                    val dt = ss.executeWithReadNew(textQuery) ?:return false
+                    val dt = ss.executeWithReadNew(textQuery) ?: return false
                     if (dt[0]["result"].toString() != "1") {
                         toModeFreeDownComplete()
+                        badVoise()
                         return false
                     }
                     toModeFreeDownComplete()
@@ -234,11 +281,12 @@ class FreeComplectation : BarcodeDataReceiver() {
                 }
                 else -> {
                     FExcStr.text = "Нет действий с данным штрихкодом!"
+                    badVoise()
                     return false
                 }
             }
-        }
-        else if (typeBarcode == "6") {
+
+        } else if (typeBarcode == "6") {
             //это место
             val id = barcoderes["ID"].toString()
             if (ss.isSC(id, "МестаПогрузки")) {
@@ -252,29 +300,38 @@ class FreeComplectation : BarcodeDataReceiver() {
 
                 if (dt[0]["result"].toString() != "1") {
                     toModeFreeDownComplete()
+                    badVoise()
                     return false
                 }
 
                 toModeFreeDownComplete()
                 refreshActivity()
-            }
-            else {
+            } else {
                 FExcStr.text = "Нет действий с данным штрихкодом!"
+                badVoise()
                 return false
             }
-
         }
+        goodVoise()
         return true
     }
 
     private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
-        if (keyCode == 4) {
+        if (keyCode == 4 || keyCode == 67) {
+            btnCansel.setOnClickListener {
+                ss.FEmployer = RefEmployer()
+                val mainInit = Intent(this, MainActivity::class.java)
+                startActivity(mainInit)
+                finish()
+            }
             return true
         }
         if (ss.helper.whatDirection(keyCode) == "Left") {
+            if (!loadCC()) return true
+
+            FExcStr.text = "Подгружаю состояние..."
             val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
-            shoiseWorkInit.putExtra("ParentForm", "NewComplectation")
             shoiseWorkInit.putExtra("BadDocID", badDoc["ID"])
             shoiseWorkInit.putExtra("BadDocView", badDoc["View"])
 
@@ -282,7 +339,6 @@ class FreeComplectation : BarcodeDataReceiver() {
             finish()
             return true
         }
-
         return false
     }
 

@@ -22,6 +22,7 @@ class Downing : BarcodeDataReceiver() {
     private var remain = 0
     private var downSituation: MutableList<MutableMap<String, String>> = mutableListOf()
     private var flagPrintPallete: Boolean = false
+    private var oldKey = 0
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -105,8 +106,18 @@ class Downing : BarcodeDataReceiver() {
             }
         }
         btnCansel.setOnClickListener {
-            repealDown()
+            FExcStr.text = "Для отказа удерживайте кнопку"
         }
+        btnCansel.setOnLongClickListener {
+            btnCansel2.visibility = View.VISIBLE
+            FExcStr.text = "Подтвердите выход"
+            true
+        }
+        btnCansel2.setOnClickListener {
+            repealDown()
+            btnCansel2.visibility = View.INVISIBLE
+        }
+
         btnKey1.setOnClickListener {
             if (ss.CurrentMode == Global.Mode.DownComplete) {
                 if (!flagPrintPallete) {
@@ -406,10 +417,32 @@ class Downing : BarcodeDataReceiver() {
 
         // нажали назад, выйдем и разблокируем доки 67 - это делит
         if (keyCode == 4 || keyCode == 67) {
-            repealDown()
-            return true
+            if (btnCansel2.visibility == View.VISIBLE) {
+                if (oldKey != keyCode) {
+                    repealDown()
+                    btnCansel2.visibility = View.INVISIBLE
+                }
+                else {
+                    FExcStr.text = "Для отказа подтвердите выход"
+                }
+            }
+            else {
+                oldKey = keyCode
+                btnCansel2.visibility = View.VISIBLE
+                if (keyCode == 4) {
+                    btnCansel2.text = "DEL-ВЫХОД"
+                    FExcStr.text = "Для отказа подтвердите выход кнопкой DEL"
+                }
+                else {
+                    btnCansel2.text = "НАЗАД-ВЫХОД"
+                    FExcStr.text = "Для отказа подтвердите выход кнопкой НАЗАД"
+                }
 
+            }
+
+            return true
         }
+
         //это таб кнопка
         if (keyCode == 61) {
             if (ss.CurrentMode == Global.Mode.DownComplete) {

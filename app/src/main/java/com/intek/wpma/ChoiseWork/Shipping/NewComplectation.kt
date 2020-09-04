@@ -101,7 +101,6 @@ class NewComplectation : BarcodeDataReceiver() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_complectation)
-
         title = ss.title
         val oldMode = ss.CurrentMode
         ss.CurrentMode = Global.Mode.NewComplectation

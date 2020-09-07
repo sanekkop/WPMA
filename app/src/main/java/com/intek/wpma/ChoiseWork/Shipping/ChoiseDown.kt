@@ -5,11 +5,16 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
 import android.os.Bundle
+import android.os.Handler
+import android.os.Message
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
+import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.Global
 import com.intek.wpma.MainActivity
@@ -25,6 +30,7 @@ class ChoiseDown : BarcodeDataReceiver() {
 
     private var rreviousAction = ""
     private var downSituation: MutableList<MutableMap<String, String>> = mutableListOf()
+
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
@@ -39,8 +45,12 @@ class ChoiseDown : BarcodeDataReceiver() {
                         barcode = intent.getStringExtra("data")
                         reactionBarcode(barcode)
                     }
-                    catch(e: Exception) {
-                        val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
+                    catch (e: Exception) {
+                        val toast = Toast.makeText(
+                            applicationContext,
+                            "Не удалось отсканировать штрихкод!",
+                            Toast.LENGTH_LONG
+                        )
                         toast.show()
                     }
 
@@ -60,7 +70,11 @@ class ChoiseDown : BarcodeDataReceiver() {
                 reactionBarcode(barcode)
             }
             catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
+                val toast = Toast.makeText(
+                    applicationContext,
+                    "Ошибка! Возможно отсутствует соединение с базой!",
+                    Toast.LENGTH_LONG
+                )
                 toast.show()
             }
         }
@@ -90,51 +104,55 @@ class ChoiseDown : BarcodeDataReceiver() {
         ss.CurrentMode = Global.Mode.ChoiseDown
 
         btnCancel.setOnClickListener {
+            if (progressBar.isVisible) return@setOnClickListener
             val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
             shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
             startActivity(shoiseWorkInit)
             finish()
         }
         btnRefresh.setOnClickListener {
+            if (progressBar.isVisible) return@setOnClickListener
+            progressBar.visibility = View.VISIBLE
+            FExcStr.text = "Обновляю список..."
             toModeChoiseDown()
         }
         btn1.setOnClickListener {
-            if (!btn1.isEnabled) return@setOnClickListener
+            if (!btn1.isEnabled || progressBar.isVisible) return@setOnClickListener
             FExcStr.text = "Получаю задание..."
             if (!choiseDownComplete(ChoiseLine = 1)) badVoise() else goodVoise()
         }
         btn2.setOnClickListener {
-            if (!btn2.isEnabled) return@setOnClickListener
+            if (!btn2.isEnabled || progressBar.isVisible) return@setOnClickListener
             FExcStr.text = "Получаю задание..."
             if (!choiseDownComplete(ChoiseLine = 2)) badVoise() else goodVoise()
         }
         btn3.setOnClickListener {
-            if (!btn3.isEnabled) return@setOnClickListener
+            if (!btn3.isEnabled || progressBar.isVisible) return@setOnClickListener
             FExcStr.text = "Получаю задание..."
             if (!choiseDownComplete(ChoiseLine = 3)) badVoise() else goodVoise()
         }
         btn4.setOnClickListener {
-            if (!btn4.isEnabled) return@setOnClickListener
+            if (!btn4.isEnabled || progressBar.isVisible) return@setOnClickListener
             FExcStr.text = "Получаю задание..."
             if (!choiseDownComplete(ChoiseLine = 4)) badVoise() else goodVoise()
         }
         btn5.setOnClickListener {
-            if (!btn5.isEnabled) return@setOnClickListener
+            if (!btn5.isEnabled || progressBar.isVisible) return@setOnClickListener
             FExcStr.text = "Получаю задание..."
             if (!choiseDownComplete(ChoiseLine = 5)) badVoise() else goodVoise()
         }
         btn6.setOnClickListener {
-            if (!btn6.isEnabled) return@setOnClickListener
+            if (!btn6.isEnabled || progressBar.isVisible) return@setOnClickListener
             FExcStr.text = "Получаю задание..."
             if (!choiseDownComplete(ChoiseLine = 6)) badVoise() else goodVoise()
         }
         btn7.setOnClickListener {
-            if (!btn7.isEnabled) return@setOnClickListener
+            if (!btn7.isEnabled || progressBar.isVisible) return@setOnClickListener
             FExcStr.text = "Получаю задание..."
             if (!choiseDownComplete(ChoiseLine = 7)) badVoise() else goodVoise()
         }
         btn8.setOnClickListener {
-            if (!btn8.isEnabled) return@setOnClickListener
+            if (!btn8.isEnabled || progressBar.isVisible) return@setOnClickListener
             FExcStr.text = "Получаю задание..."
             if (!newComplectationGetFirstOrder()) badVoise() else goodVoise()
         }
@@ -151,51 +169,63 @@ class ChoiseDown : BarcodeDataReceiver() {
         toModeChoiseDown()
     }
 
-    private fun toModeChoiseDown() {
-        Const.refresh()
-        ss.FEmployer.refresh()     // проверим не изменились ли галки на спуск/комплектацию
-        //не может спускать и комплектовать выходим обратно
-        if (!ss.FEmployer.canDown && !ss.FEmployer.canComplectation) {
-            val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
-            shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
-            startActivity(shoiseWorkInit)
-            finish()
-        }
-        if (!ss.FEmployer.canDown && ss.FEmployer.canComplectation) {
-            val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
-            shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
-            startActivity(shoiseWorkInit)
-            finish()
-        }
-        //Сам запрос
-        var textQuery = "select * from WPM_fn_GetChoiseDown()"
-        val down = ss.executeWithReadNew(textQuery)
-        if (down == null){
-            val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
-            shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
-            startActivity(shoiseWorkInit)
-            finish()
-            return
-        }
-        downSituation = down
-        textQuery = "select * from dbo.WPM_fn_ComplectationInfo()"
-        val dt = ss.executeWithReadNew(textQuery)
-        rreviousAction = if (dt == null) {
-            " < error > "
-        } else {
-            dt[0]["pallets"].toString() + " п, " + dt[0]["box"].toString() + " м, " + dt[0]["CountEmployers"].toString() + " с"
-        }
 
+    private fun toModeChoiseDown() {
+
+        val runnable = Runnable {
+            Const.refresh()
+            ss.FEmployer.refresh()     // проверим не изменились ли галки на спуск/комплектацию
+            //не может спускать и комплектовать выходим обратно
+            if (!ss.FEmployer.canDown && !ss.FEmployer.canComplectation) {
+                val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
+                shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
+                startActivity(shoiseWorkInit)
+                finish()
+            }
+            if (!ss.FEmployer.canDown && ss.FEmployer.canComplectation) {
+                val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
+                shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
+                startActivity(shoiseWorkInit)
+                finish()
+            }
+            //Сам запрос
+            var textQuery = "select * from WPM_fn_GetChoiseDown()"
+            val down = ss.executeWithReadNew(textQuery)
+            if (down == null){
+                val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
+                shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
+                startActivity(shoiseWorkInit)
+                finish()
+                return@Runnable
+            }
+            downSituation = down
+            textQuery = "select * from dbo.WPM_fn_ComplectationInfo()"
+            val dt = ss.executeWithReadNew(textQuery)
+            rreviousAction = if (dt == null) {
+                " < error > "
+            } else {
+                dt[0]["pallets"].toString() + " п, " + dt[0]["box"].toString() + " м, " + dt[0]["CountEmployers"].toString() + " с"
+            }
+            val msg = handler.obtainMessage()
+            handler.sendMessage(msg)
+        }
+        val thread = Thread(runnable)
+        thread.start()
+        return
+    }
+
+    var handler: Handler = object : Handler() {
+        override fun handleMessage(msg: Message) {
+            refreshActivity()
+        }
+    }
+
+    private fun refreshActivity() {
         if (downSituation.isEmpty()) {
             FExcStr.text = "Нет заданий к спуску..."
         } else {
             FExcStr.text = "Выберите сектор спуска..."
         }
-        refreshActivity()
-        return
-    }
-
-    private fun refreshActivity() {
         ss.excStr = "Спуск выбор (" + (if (ss.Const.CarsCount == "0") "нет ограничений" else ss.Const.CarsCount + " авто") + ")"
         lblState.text = ss.excStr
 
@@ -230,37 +260,43 @@ class ChoiseDown : BarcodeDataReceiver() {
                     btn1.text = "$txt1 $txt2"
                     btn1.isEnabled = allowed
                     btn1.visibility = View.VISIBLE
-
+                    btn1.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 1 -> {
                     btn2.text = "$txt1 $txt2"
                     btn2.isEnabled = allowed
                     btn2.visibility = View.VISIBLE
+                    btn2.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 2 -> {
                     btn3.text = "$txt1 $txt2"
                     btn3.isEnabled = allowed
                     btn3.visibility = View.VISIBLE
+                    btn3.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 3 -> {
                     btn4.text = "$txt1 $txt2"
                     btn4.isEnabled = allowed
                     btn4.visibility = View.VISIBLE
+                    btn4.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 4 -> {
                     btn5.text = "$txt1 $txt2"
                     btn5.isEnabled = allowed
                     btn5.visibility = View.VISIBLE
+                    btn5.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 5 -> {
                     btn6.text = "$txt1 $txt2"
                     btn6.isEnabled = allowed
                     btn6.visibility = View.VISIBLE
+                    btn6.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 6 -> {
                     btn7.text = "$txt1 $txt2"
                     btn7.isEnabled = allowed
                     btn7.visibility = View.VISIBLE
+                    btn7.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
             }
 
@@ -268,6 +304,8 @@ class ChoiseDown : BarcodeDataReceiver() {
 
         btn8.text = "8. КМ:$rreviousAction"
         btn8.isEnabled = ss.FEmployer.canComplectation
+        progressBar.visibility = View.INVISIBLE
+
     }
 
     private fun choiseDownComplete(ChoiseLine: Int): Boolean {
@@ -331,7 +369,7 @@ class ChoiseDown : BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
-
+        if (progressBar.isVisible) return true
         val barcoderes = ss.helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         if (typeBarcode == "113") {
@@ -363,6 +401,7 @@ class ChoiseDown : BarcodeDataReceiver() {
 
     private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
+        if (progressBar.isVisible) return true
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4) {
             val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
@@ -373,6 +412,8 @@ class ChoiseDown : BarcodeDataReceiver() {
         }
         //Если Нажали DEL
         else if (keyCode == 67) {
+            progressBar.visibility = View.VISIBLE
+            FExcStr.text = "Обновляю список..."
             toModeChoiseDown()
             return true
         }

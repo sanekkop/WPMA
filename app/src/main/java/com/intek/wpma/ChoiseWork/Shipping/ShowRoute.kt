@@ -532,6 +532,7 @@ class ShowRoute: BarcodeDataReceiver() {
         if (keyCode == 4|| ss.helper.whatDirection(keyCode) == "Left") {
             FExcStr.text = "Секунду..."
             ss.CurrentMode = Global.Mode.ShowRoute
+
             val shoiseWorkInit = Intent(this, NewComplectation::class.java)
             shoiseWorkInit.putExtra("oldMode",oldMode.toString())
             shoiseWorkInit.putExtra("scaningBox", scaningBox)

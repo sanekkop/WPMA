@@ -10,10 +10,7 @@ import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
 import android.view.*
-import android.widget.LinearLayout
-import android.widget.TableRow
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.ParentForm
 import com.intek.wpma.R
@@ -24,12 +21,14 @@ import com.intek.wpma.SQL.SQL1S.sqlToDateTime
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_accept.*
 
+
 class Search : BarcodeDataReceiver() {
 
     var iddoc: String = ""
     var number: String = ""
     var barcode: String = ""
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
+    val pal = RefPalleteMove()
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -60,6 +59,14 @@ class Search : BarcodeDataReceiver() {
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
 
+        if (ss.FPrinter.selected) {
+            printPal.text = ss.FPrinter.path
+        }
+        if (FPallet != "") {
+            pal.foundID(FPallet)
+            palletPal.text = pal.pallete
+        }
+
         title = ss.title
         var oldx = 0F
         FExcStr.setOnTouchListener(fun(v : View, event: MotionEvent): Boolean {
@@ -71,16 +78,16 @@ class Search : BarcodeDataReceiver() {
                     val backAcc = Intent(this, YapItem::class.java)
                     backAcc.putExtra("ParentForm", "Search")
                     backAcc.putExtra("Docs", iddoc)
-                    backAcc.putExtra("FPrinter", ss.FPrinter.path)
-                    backAcc.putExtra("FPallet", FPallet)
+                    backAcc.putExtra("FPrinter", printPal.text.toString())
+                    backAcc.putExtra("FPallet", palletPal.text.toString())
                     startActivity(backAcc)
                     finish()
                 } else if (event.x > oldx) {
                     val backAcc = Intent(this, NoneItem::class.java)
                     backAcc.putExtra("ParentForm", "Search")
                     backAcc.putExtra("Docs", iddoc)
-                    backAcc.putExtra("FPrinter", ss.FPrinter.path)
-                    backAcc.putExtra("FPallet", FPallet)
+                    backAcc.putExtra("FPrinter", printPal.text.toString())
+                    backAcc.putExtra("FPallet", palletPal.text.toString())
                     startActivity(backAcc)
                     finish()
                 }
@@ -97,11 +104,7 @@ class Search : BarcodeDataReceiver() {
             }
         }
 
-        printPal.text = "'принтер не выбран'"
-        palletPal.text = "НЕТ ПАЛЛЕТЫ"
-
         toModeAcceptance()
-
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -326,11 +329,10 @@ class Search : BarcodeDataReceiver() {
         var scanCodeId: String? = null
     }
 
-    private fun reactionBarcode(Barcode: String): Boolean {
+    fun reactionBarcode(Barcode: String): Boolean {
         val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
         if (ss.isSC(idd, "Принтеры")) {
-            //получим путь принтера
             if(!ss.FPrinter.foundIDD(idd)) {
                 return false
             }
@@ -343,17 +345,12 @@ class Search : BarcodeDataReceiver() {
             FExcStr.text = "Не выбран принтер!"
             return false
         }
-
-        val pal = RefPalleteMove()
-
-        //чет через пизду работает
-        //главное работает
         if (FPallet == "") {
             scanPalletBarcode(FPallet)
             pal.foundID(FPallet)
             palletPal.text = pal.pallete
             goodVoise()
-            }
+        }
         else {
             palletPal.text = "НЕТ ПАЛЛЕТЫ"
             FExcStr.text = "Не выбрана паллета!"
@@ -365,7 +362,7 @@ class Search : BarcodeDataReceiver() {
 
     private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
-        if (keyCode == 4){
+        if (keyCode == 4) {
             val accMen = Intent(this, AccMenu::class.java)
             accMen.putExtra("ParentForm", "Search")
             startActivity(accMen)
@@ -377,25 +374,23 @@ class Search : BarcodeDataReceiver() {
             val backAcc = Intent(this, NoneItem::class.java)
             backAcc.putExtra("ParentForm", "Search")
             backAcc.putExtra("Docs", iddoc)
-            backAcc.putExtra("FPrinter", ss.FPrinter.path)
-            backAcc.putExtra("FPallet", FPallet)
+            backAcc.putExtra("FPrinter", printPal.text.toString())
+            backAcc.putExtra("FPallet", palletPal.text.toString())
             startActivity(backAcc)
             finish()
             return true
         }
-
 
         if (ss.helper.whatDirection(keyCode) == "Right") {
             val backAcc = Intent(this, YapItem::class.java)
             backAcc.putExtra("ParentForm", "Search")
             backAcc.putExtra("Docs", iddoc)
-            backAcc.putExtra("FPrinter", ss.FPrinter.path)
-            backAcc.putExtra("FPallet", FPallet)
+            backAcc.putExtra("FPrinter", printPal.text.toString())
+            backAcc.putExtra("FPallet", palletPal.text.toString())
             startActivity(backAcc)
             finish()
             return true
         }
-
         return false
     }
 
@@ -407,8 +402,7 @@ class Search : BarcodeDataReceiver() {
         FBarcodePallet = barcode
         FPallet = ss.executeScalar(textQuery) ?: return
 
-        textQuery =
-            "UPDATE \$Спр.ПеремещенияПаллет " +
+        textQuery = "UPDATE \$Спр.ПеремещенияПаллет " +
                     "SET " +
                     "\$Спр.ПеремещенияПаллет.Сотрудник1 = :EmployerID, " +
                     "\$Спр.ПеремещенияПаллет.ФлагОперации = 1, " +

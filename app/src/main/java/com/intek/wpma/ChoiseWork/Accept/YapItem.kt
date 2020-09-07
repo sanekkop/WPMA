@@ -21,6 +21,9 @@ import com.intek.wpma.R
 import com.intek.wpma.SQL.SQL1S.Const
 import com.intek.wpma.Model.Model
 import com.intek.wpma.Ref.RefPalleteMove
+import com.intek.wpma.SQL.SQL1S
+import com.intek.wpma.SQL.SQL1S.FBarcodePallet
+import com.intek.wpma.SQL.SQL1S.FPallet
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_yap_item.*
 import kotlinx.android.synthetic.main.activity_yap_item.FExcStr
@@ -31,6 +34,7 @@ class YapItem : BarcodeDataReceiver() {
     var number: String = ""
     var barcode: String = ""
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
+    val pal = RefPalleteMove()
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -60,11 +64,20 @@ class YapItem : BarcodeDataReceiver() {
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
         iddoc = intent.extras!!.getString("Docs")!!
-        val prIN = intent.extras!!.getString("FPrinter")!!
-        val paLL = intent.extras!!.getString("FPallet")!!
+        printPal.text = intent.extras!!.getString("FPrinter")!!
+        palletPal.text = intent.extras!!.getString("FPallet")!!
         title = ss.title
 
-        var oldx : Float = 0F
+        if (ss.FPrinter.selected) {
+            printPal.text = ss.FPrinter.path
+        }
+        if (FPallet != "") {
+            pal.foundID(FPallet)
+            palletPal.text = pal.pallete
+        }
+
+
+        var oldx = 0F
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
@@ -73,6 +86,8 @@ class YapItem : BarcodeDataReceiver() {
                 if (event.x > oldx) {
                     val backHead = Intent(this, Search::class.java)
                     backHead.putExtra("ParentForm", "YapItem")
+                    backHead.putExtra("FPrint", printPal.text.toString())
+                    backHead.putExtra("FPallet", palletPal.text.toString())
                     startActivity(backHead)
                     finish()
                 }
@@ -98,18 +113,11 @@ class YapItem : BarcodeDataReceiver() {
             false
         }
 
-        printPal.text = "'принтер не выбран'"
-        palletPal.text = "НЕТ ПАЛЛЕТЫ"
-
-        printPal.text = prIN
-        palletPal.text = paLL
-
         yapItem()
     }
 
     @SuppressLint("ClickableViewAccessibility")
     fun yapItem() {
-
         val linearLayout1 = LinearLayout(this)
         val rowTitle1 = TableRow(this)
 
@@ -212,7 +220,6 @@ class YapItem : BarcodeDataReceiver() {
                 "Supply.\$АдресПоступление.ГруппаСезона as SeasonGroup," +
                 "SypplyHeader.\$АдресПоступление.ДальнийСклад as FlagFarWarehouse, " +
                 "Supply.LineNO_ as LineNO_, " +
-                //isnull(GS.$Спр.ТоварныеСекции.РазмерХранения , 0) StoregeSize " +
                 "isnull(GS.\$Спр.ТоварныеСекции.РасчетныйРХ , 0) StoregeSize " +
                 "FROM DT\$АдресПоступление as Supply (nolock) " +
                 "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
@@ -242,7 +249,6 @@ class YapItem : BarcodeDataReceiver() {
                 "and Supply.\$АдресПоступление.ФлагПечати = 1" +
                 "and Supply.\$АдресПоступление.Сотрудник0 = :Employer" +
                 "ORDER BY Journ.docno, Supply.\$АдресПоступление.Дата0 , Supply.\$АдресПоступление.Время0 "
-
         val model = Model()
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id) //ss.EmployerID)
         textQuery = ss.querySetParam(textQuery, "OKEIPackage", model.okeiPackage)
@@ -334,7 +340,6 @@ class YapItem : BarcodeDataReceiver() {
                 table.addView(rowTitle2)
             }
         }
-
     }
 
     override fun onResume() {
@@ -377,15 +382,30 @@ class YapItem : BarcodeDataReceiver() {
         val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
         if (ss.isSC(idd, "Принтеры")) {
-            if(!ss.FPrinter.foundIDD(idd))
-            {
+            printPal.text = "'принтер не выбран'"
+            if(!ss.FPrinter.foundIDD(idd)) {
                 return false
             }
+            goodVoise()
             printPal.text = ss.FPrinter.path
             return true
         }
         if (!ss.FPrinter.selected) {
+            badVoise()
             FExcStr.text = "Не выбран принтер!"
+            return false
+        }
+        if (FPallet == "") {
+            palletPal.text = "НЕТ ПАЛЛЕТЫ"
+            scanPalletBarcode(FPallet)
+            pal.foundID(FPallet)
+            palletPal.text = pal.pallete
+            goodVoise()
+        }
+        else {
+            palletPal.text = "НЕТ ПАЛЛЕТЫ"
+            FExcStr.text = "Не выбрана паллета!"
+            badVoise()
             return false
         }
         return true
@@ -393,10 +413,11 @@ class YapItem : BarcodeDataReceiver() {
 
     private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
-        // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
             val acBack = Intent(this, Search::class.java)
             acBack.putExtra("ParentForm", "YapItem")
+            acBack.putExtra("FPrint", printPal.text.toString())
+            acBack.putExtra("FPallet", palletPal.text.toString())
             startActivity(acBack)
             finish()
             return true
@@ -405,10 +426,34 @@ class YapItem : BarcodeDataReceiver() {
         if (ss.helper.whatDirection(keyCode) == "Left") {
             val backHead = Intent(this, Search::class.java)
             backHead.putExtra("ParentForm", "YapItem")
+            backHead.putExtra("FPrint", printPal.text.toString())
+            backHead.putExtra("FPallet", palletPal.text.toString())
             startActivity(backHead)
             finish()
             return true
         }
         return false
+    }
+
+    private fun scanPalletBarcode (strBarcode : String) {
+
+        var textQuery = "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, Employer, @result out; select @result;"
+        textQuery = ss.querySetParam(textQuery, "Barcode", barcode)
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        FBarcodePallet = barcode
+        FPallet = ss.executeScalar(textQuery) ?: return
+
+        textQuery = "UPDATE \$Спр.ПеремещенияПаллет " +
+                    "SET " +
+                    "\$Спр.ПеремещенияПаллет.Сотрудник1 = :EmployerID, " +
+                    "\$Спр.ПеремещенияПаллет.ФлагОперации = 1, " +
+                    "\$Спр.ПеремещенияПаллет.Дата10 = :NowDate, " +
+                    "\$Спр.ПеремещенияПаллет.Время10 = :NowTime, " +
+                    "\$Спр.ПеремещенияПаллет.ТипДвижения = 4 " +
+                    "WHERE \$Спр.ПеремещенияПаллет .id = :Pallet "
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        textQuery = ss.querySetParam(textQuery, "EmployerID", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "Pallet", FPallet)
+        var tmpDR = ss.executeWithReadNew(textQuery) ?: return
     }
 }

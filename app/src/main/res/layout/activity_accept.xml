@@ -27,6 +27,7 @@
 
     <TextView
         android:id="@+id/printPal"
+        android:text="&lt;принтер не выбран&gt;"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
@@ -43,6 +44,7 @@
 
     <TextView
         android:id="@+id/palletPal"
+        android:text="НЕТ ПАЛЛЕТЫ"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:height="0dp"

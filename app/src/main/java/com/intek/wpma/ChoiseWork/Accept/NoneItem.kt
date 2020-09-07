@@ -7,38 +7,36 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.Typeface
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.*
-import android.view.View.INVISIBLE
-import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.Model.Model
 import com.intek.wpma.ParentForm
 import com.intek.wpma.R
+import com.intek.wpma.Ref.RefPalleteMove
+import com.intek.wpma.SQL.SQL1S
 import com.intek.wpma.SQL.SQL1S.Const
+import com.intek.wpma.SQL.SQL1S.FPallet
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_none_item.*
-import kotlinx.android.synthetic.main.activity_none_item.FExcStr
-import kotlinx.android.synthetic.main.activity_set.*
-import java.time.temporal.TemporalAdjusters.next
 
 class NoneItem : BarcodeDataReceiver() {
 
     var iddoc: String = ""
     var number: String = ""
     var barcode: String = ""
+    var itemID = ""
     private var currentLine:Int = 2
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
     var noneAccItem : MutableList<MutableMap<String, String>> = mutableListOf()
     var artNeed : String = ""
     var artSearch : String = ""
+    val pal = RefPalleteMove()
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -69,11 +67,19 @@ class NoneItem : BarcodeDataReceiver() {
         setContentView(R.layout.activity_none_item)
         ParentForm = intent.extras!!.getString("ParentForm")!!
         iddoc = intent.extras!!.getString("Docs")!!
-        val prIN = intent.extras!!.getString("FPrinter")!!
-        val paLL = intent.extras!!.getString("FPallet")!!
-
+        printPal.text = intent.extras!!.getString("FPrinter")!!
+        palletPal.text = intent.extras!!.getString("FPallet")!!
         title = ss.title
-        var oldx : Float = 0F
+
+        if (ss.FPrinter.selected) {
+            printPal.text = ss.FPrinter.path
+        }
+        if (FPallet != "") {
+            pal.foundID(FPallet)
+            palletPal.text = pal.pallete
+        }
+
+        var oldx = 0F
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
@@ -82,6 +88,8 @@ class NoneItem : BarcodeDataReceiver() {
                 if (event.x < oldx) {
                     val backHead = Intent(this, Search::class.java)
                     backHead.putExtra("ParentForm", "NoneItem")
+                    backHead.putExtra("FPrint", printPal.text.toString())
+                    backHead.putExtra("FPallet", palletPal.text.toString())
                     startActivity(backHead)
                     finish()
                 }
@@ -89,7 +97,7 @@ class NoneItem : BarcodeDataReceiver() {
             return true
         })
 
-       /* FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
                 true
@@ -97,12 +105,13 @@ class NoneItem : BarcodeDataReceiver() {
                 if (event.x > oldx) {
                     val gotoItem = Intent(this, ItemCard::class.java)
                     gotoItem.putExtra("ParentForm", "NoneItem")
+                    gotoItem.putExtra("itemID", itemID)
                     startActivity(gotoItem)
                     finish()
                 }
             }
             return true
-        }) */
+        })
 
         if (ss.isMobile){
             btnScan.visibility = View.VISIBLE
@@ -113,18 +122,11 @@ class NoneItem : BarcodeDataReceiver() {
             }
         }
 
-        printPal.text = "'принтер не выбран'"
-        palletPal.text = "НЕТ ПАЛЛЕТЫ"
-
-        printPal.text = prIN
-        palletPal.text = paLL
-
-        //сначала все подтянем, потом нарисуем
-        noneItem()
+        noneItem()  //сначала все подтянем, потом нарисуем
     }
 
     //подтягиваем данные для таблички
-    fun noneItem() {
+    private fun noneItem() {
         var textQuery = "SELECT " +
                 "right(Journ.docno,5) as DOCNO , " +
                 "Supply.iddoc as iddoc , " +
@@ -149,7 +151,6 @@ class NoneItem : BarcodeDataReceiver() {
                 "Supply.\$АдресПоступление.ГруппаСезона as SeasonGroup , " +
                 "SypplyHeader.\$АдресПоступление.ДальнийСклад as FlagFarWarehouse , " +
                 " Supply.LineNO_ as LineNO_ , " +
-                //isnull(GS.\$Спр.ТоварныеСекции.РазмерХранения , 0) as StoregeSize " +
                 "isnull(GS.\$Спр.ТоварныеСекции.РасчетныйРХ , 0) as StoregeSize " +
                 "FROM " +
                 "DT\$АдресПоступление as Supply (nolock) " +
@@ -275,7 +276,7 @@ class NoneItem : BarcodeDataReceiver() {
                 val rowTitle1 = TableRow(this)
 
                 rowTitle1.isClickable = true
-                rowTitle1.setOnTouchListener{  v, event ->
+                rowTitle1.setOnTouchListener{  v, event ->  //выделение строки при таче
                     var i = 0
                     while (i < table.childCount) {
                         if (rowTitle1 != table.getChildAt(i)) {
@@ -286,6 +287,7 @@ class NoneItem : BarcodeDataReceiver() {
                         }
                         i++
                         ItemName.text = DR["ItemName"]
+                        itemID = DR["id"].toString()
                     }
                     true
                 }
@@ -406,8 +408,8 @@ class NoneItem : BarcodeDataReceiver() {
         val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
         if (ss.isSC(idd, "Принтеры")) {
-            if(!ss.FPrinter.foundIDD(idd))
-            {
+            printPal.text = "'принтер не выбран'"
+            if(!ss.FPrinter.foundIDD(idd)) {
                 return false
             }
             goodVoise()
@@ -419,12 +421,25 @@ class NoneItem : BarcodeDataReceiver() {
             FExcStr.text = "Не выбран принтер!"
             return false
         }
+        if (FPallet == "") {
+            palletPal.text = "НЕТ ПАЛЛЕТЫ"
+            scanPalletBarcode(FPallet)
+            pal.foundID(FPallet)
+            palletPal.text = pal.pallete
+            goodVoise()
+        }
+        else {
+            palletPal.text = "НЕТ ПАЛЛЕТЫ"
+            FExcStr.text = "Не выбрана паллета!"
+            badVoise()
+            return false
+        }
         return true
     }
 
     private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
-        if (keyCode == 4){;
+        if (keyCode == 4){
             val acBack = Intent(this, Search::class.java)
             acBack.putExtra("ParentForm", "NoneItem")
             startActivity(acBack)
@@ -435,20 +450,19 @@ class NoneItem : BarcodeDataReceiver() {
         if (ss.helper.whatDirection(keyCode) == "Right") {
             val backHead = Intent(this, Search::class.java)
             backHead.putExtra("ParentForm", "NoneItem")
+            backHead.putExtra("FPrint", printPal.text)
+            backHead.putExtra("FPallet", palletPal.text)
             startActivity(backHead)
             finish()
             return true
         }
 
-        //артикуля, ля, ля, ля
-        if (ss.helper.whatInt(keyCode) != -1) {
-            searchArt.text =
-                searchArt.text.toString().trim() + ss.helper.whatInt(keyCode).toString()
+        if (ss.helper.whatInt(keyCode) != -1) {             //артикуля, ля, ля, ля
+            searchArt.text = searchArt.text.toString().trim() + ss.helper.whatInt(keyCode).toString()
             refreshActivity()
         }
 
-        //чистит артикуля
-        if (keyCode == 67) {
+        if (keyCode == 67) {                                //чистит артикуля(введенное)
             if (searchArt.text.toString().isNotEmpty()) {
                 searchArt.text = searchArt.text
                     .toString()
@@ -465,7 +479,27 @@ class NoneItem : BarcodeDataReceiver() {
             finish()
             return true
         }*/
-
         return false
+    }
+
+    private fun scanPalletBarcode (strBarcode : String) {
+        var textQuery = "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, Employer, @result out; select @result;"
+        textQuery = ss.querySetParam(textQuery, "Barcode", barcode)
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        SQL1S.FBarcodePallet = barcode
+        FPallet = ss.executeScalar(textQuery) ?: return
+
+        textQuery = "UPDATE \$Спр.ПеремещенияПаллет " +
+                    "SET " +
+                    "\$Спр.ПеремещенияПаллет.Сотрудник1 = :EmployerID, " +
+                    "\$Спр.ПеремещенияПаллет.ФлагОперации = 1, " +
+                    "\$Спр.ПеремещенияПаллет.Дата10 = :NowDate, " +
+                    "\$Спр.ПеремещенияПаллет.Время10 = :NowTime, " +
+                    "\$Спр.ПеремещенияПаллет.ТипДвижения = 4 " +
+                    "WHERE \$Спр.ПеремещенияПаллет .id = :Pallet "
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        textQuery = ss.querySetParam(textQuery, "EmployerID", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "Pallet", FPallet)
+        var tmpDR = ss.executeWithReadNew(textQuery) ?: return
     }
 }

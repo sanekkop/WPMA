@@ -45,6 +45,7 @@
         <activity android:name=".ChoiseWork.Accept.AccMenu" />
         <activity android:name=".ChoiseWork.Shipping.ShowRoute" />
         <activity android:name=".ChoiseWork.Revise.ReviseMark" />
+        <activity android:name=".ChoiseWork.Shipping.ShowBox" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

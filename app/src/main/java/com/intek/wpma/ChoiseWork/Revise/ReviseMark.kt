@@ -19,12 +19,11 @@ import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_revise_mark.*
 import kotlinx.android.synthetic.main.activity_revise_mark.FExcStr
 import kotlinx.android.synthetic.main.activity_revise_mark.header
-import kotlinx.android.synthetic.main.activity_set.*
 
 
 class ReviseMark : BarcodeDataReceiver() {
 
-    var mark:MutableMap<String,String> = mutableMapOf()
+    private var mark:MutableMap<String,String> = mutableMapOf()
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -116,7 +115,7 @@ class ReviseMark : BarcodeDataReceiver() {
         val typeBarcode = barcoderes["Type"].toString()
         if (codeId == barcodeId){
             val testBatcode = Barcode.replace("'","''")
-            var textQuery =
+            val textQuery =
                 "SELECT " +
                     "\$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен ," +
                     "SUBSTRING(\$Спр.МаркировкаТовара.ДокОтгрузки , 5 , 9) as ДокОтгрузки ," +

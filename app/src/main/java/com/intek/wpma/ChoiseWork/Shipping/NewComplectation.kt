@@ -6,18 +6,19 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.util.Log
-import android.view.KeyEvent
-import android.view.MotionEvent
-import android.view.View
+import android.view.*
 import android.widget.Toast
 import com.intek.wpma.*
+import com.intek.wpma.R.layout.activity_new_complectation
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
 import kotlinx.android.synthetic.main.activity_new_complectation.*
+import kotlinx.android.synthetic.main.activity_new_complectation.FExcStr
+import kotlinx.android.synthetic.main.activity_new_complectation.btnScan
 
+open class NewComplectation : BarcodeDataReceiver() {
 
-class NewComplectation : BarcodeDataReceiver() {
-
+   /*
     private var docDown: MutableMap<String, String> = mutableMapOf()
     private var badDoc: MutableMap<String, String> = mutableMapOf()
 
@@ -29,11 +30,16 @@ class NewComplectation : BarcodeDataReceiver() {
     private var remain = 0
     private var lastGoodAdress = ""
     private var nameLastGoodAdress = ""
+*/
+    var ccrp: MutableList<MutableMap<String, String>> = mutableListOf()
+    var ccrpOld: MutableList<MutableMap<String, String>> = mutableListOf()
+    var preMode:Global.Mode? = null
+    var oldx = 0F
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
-    val barcodeDataReceiver = object : BroadcastReceiver() {
+    open val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("IntentApiSample: ", "onReceive")
             if (ACTION_BARCODE_DATA == intent.action) {
@@ -76,6 +82,10 @@ class NewComplectation : BarcodeDataReceiver() {
                 toast.show()
             }
         }
+        else if ( ss.CurrentMode == Global.Mode.ShowRoute ){
+            ss.CurrentMode = preMode
+            refreshActivity()
+        }
     }
 
     override fun onPause() {
@@ -94,13 +104,25 @@ class NewComplectation : BarcodeDataReceiver() {
     companion object {
         var scanRes: String? = null
         var scanCodeId: String? = null
+        var docDown: MutableMap<String, String> = mutableMapOf()
+        var badDoc: MutableMap<String, String> = mutableMapOf()
+        var downSituation: MutableList<MutableMap<String, String>> = mutableListOf()
+        var scaningBox = ""
+        var scaningBoxIddoc = ""
+        var needAdressComplete = "     0   "
+        var remain = 0
+        var lastGoodAdress = ""
+        var nameLastGoodAdress = ""
     }
     //endregion
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_new_complectation)
+        if (ss.CurrentMode == Global.Mode.ShowRoute)
+        {
+            return
+        }
+        setContentView(activity_new_complectation)
         title = ss.title
         val oldMode = ss.CurrentMode
         ss.CurrentMode = Global.Mode.NewComplectation
@@ -113,7 +135,7 @@ class NewComplectation : BarcodeDataReceiver() {
             }
         }
         btnCansel.setOnClickListener {
-            if (ss.CurrentMode == Global.Mode.NewComplectation) {
+            if (ss.CurrentMode == Global.Mode.NewComplectation || preMode == Global.Mode.NewComplectation) {
                 repealNewComplectation()
             } else {
                 if (needAdressComplete != ss.getVoidID()) {
@@ -129,12 +151,12 @@ class NewComplectation : BarcodeDataReceiver() {
 
         }
         btnKey1.setOnClickListener {
-            if (ss.CurrentMode == Global.Mode.NewComplectation) {
+            if (ss.CurrentMode == Global.Mode.NewComplectation || preMode == Global.Mode.NewComplectation) {
                 remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
                 if (docDown["MaxStub"].toString().toInt() <= remain) {
                     //Можно завершить
                     FExcStr.text =
-                        "Закрываю остальные " + remain.toString() + " места..."
+                        "Закрываю остальные $remain места..."
                     endCCNewComp()
                     refreshActivity()
                 }
@@ -152,7 +174,7 @@ class NewComplectation : BarcodeDataReceiver() {
                 refreshActivity()
             }
         }
-        var oldx = 0F
+
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
@@ -167,15 +189,17 @@ class NewComplectation : BarcodeDataReceiver() {
                     shoiseWorkInit.putExtra("BadDocID", badDoc["ID"])
                     shoiseWorkInit.putExtra("BadDocView", badDoc["View"])
                     startActivity(shoiseWorkInit)
-                    finish()
+
                 }
                 if (event.x > oldx + 200) {
+                    oldx = event.x
                     FExcStr.text = "Подгружаю маршрут..."
-                    val showRouteInit = Intent(this, ShowRoute::class.java)
-                    showRouteInit.putExtra("docDownID", docDown["ID"])
-                    showRouteInit.putExtra("docDownSector", docDown["Sector"])
-                    startActivity(showRouteInit)
-                    finish()
+                    if (ss.CurrentMode != Global.Mode.ShowRoute) {
+                        preMode = ss.CurrentMode
+                        ss.CurrentMode = Global.Mode.ShowRoute
+                        val showRouteInit = Intent(this, ShowRoute::class.java)
+                        startActivity(showRouteInit)
+                    }
                 }
             }
             return true
@@ -216,7 +240,7 @@ class NewComplectation : BarcodeDataReceiver() {
 
     }
 
-    private fun newComplectationGetFirstOrder() {
+    fun newComplectationGetFirstOrder() {
         var textQuery =
             "declare @res int " +
                     "begin tran " +
@@ -232,7 +256,7 @@ class NewComplectation : BarcodeDataReceiver() {
         toModeNewComplectation()
     }
 
-    private fun repealNewComplectation() {
+    fun repealNewComplectation() {
         if (docDown["IsFirstOrder"] == "1") {
             FExcStr.text = "Нельзя отказаться от этого задания!"
             badVoise()
@@ -247,9 +271,14 @@ class NewComplectation : BarcodeDataReceiver() {
         toModeNewComplectation()
     }
 
-    private fun toModeNewComplectation() {
+    fun toModeNewComplectation() {
 
-        ss.CurrentMode = Global.Mode.NewComplectation
+        if (ss.CurrentMode  == Global.Mode.ShowRoute) {
+            preMode = Global.Mode.NewComplectation
+        }
+        else {
+            ss.CurrentMode = Global.Mode.NewComplectation
+        }
         docDown = mutableMapOf()
         var textQuery = "select * from dbo.WPM_fn_ToModeNewComplectation(:Employer)"
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
@@ -287,7 +316,7 @@ class NewComplectation : BarcodeDataReceiver() {
         refreshActivity()
     }
 
-    private fun toModeNewComplectationComplete() {
+    fun toModeNewComplectationComplete() {
         var textQuery =
             "select " +
                     "min(Ref.\$Спр.МестаПогрузки.НомерЗадания7 ) as NumberOfOrder, " +
@@ -313,11 +342,16 @@ class NewComplectation : BarcodeDataReceiver() {
         //Подсосем маршруты
         FExcStr.text = "Сканируйте коробки и адрес комплектации!"
         scaningBox = ""
-        ss.CurrentMode = Global.Mode.NewComplectationComplete
+        if (ss.CurrentMode  == Global.Mode.ShowRoute) {
+            preMode = Global.Mode.NewComplectationComplete
+        }
+        else {
+            ss.CurrentMode = Global.Mode.NewComplectationComplete
+        }
         refreshActivity()
     }
 
-    private fun loadBadDoc(ID: String) {
+    fun loadBadDoc(ID: String) {
         var textQuery =
             "Select " +
                     "isnull(Sections.descr, 'Пу') as Sector, " +
@@ -364,13 +398,13 @@ class NewComplectation : BarcodeDataReceiver() {
             .trim() + "-" + dt[0]["Number"].toString() + " " + dt[0]["DocNo"].toString() + " (" + dt[0]["DateDoc"].toString() + ") мест " + dt[0]["CountBox"].toString()
     } // LoadBadDoc()
 
-    private fun reactionBarcode(Barcode: String): Boolean {
+    fun reactionBarcode(Barcode: String): Boolean {
         val barcoderes = ss.helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         if (typeBarcode == "6") {
             val id = barcoderes["ID"].toString()
             if (ss.isSC(id, "МестаПогрузки")) {
-                if (ss.CurrentMode == Global.Mode.NewComplectation) {
+                if (ss.CurrentMode == Global.Mode.NewComplectation || preMode == Global.Mode.NewComplectation) {
 
                     var textQuery =
                         "Select " +
@@ -554,7 +588,7 @@ class NewComplectation : BarcodeDataReceiver() {
                 mainInit.putExtra("ParentForm", "NewComplectation")
                 startActivity(mainInit)
                 finish()
-            } else if (ss.CurrentMode == Global.Mode.NewComplectationComplete && ss.isSC(
+            } else if ((ss.CurrentMode == Global.Mode.NewComplectationComplete || preMode == Global.Mode.NewComplectationComplete) && ss.isSC(
                     idd,
                     "Секции"
                 )
@@ -694,7 +728,7 @@ class NewComplectation : BarcodeDataReceiver() {
         }
     }
 
-    private fun completeAll(): Boolean {
+    fun completeAll(): Boolean {
         var textQuery =
             "begin tran; " +
                     "declare @res int; " +
@@ -716,7 +750,7 @@ class NewComplectation : BarcodeDataReceiver() {
         return true
     }
 
-    private fun adressFull(): Boolean {
+    fun adressFull(): Boolean {
         var textQuery =
             "begin tran " +
                     "declare @res int " +
@@ -732,12 +766,12 @@ class NewComplectation : BarcodeDataReceiver() {
         return true
     }
 
-    private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
+    open fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4 || keyCode == 67) {
 
-            if (ss.CurrentMode == Global.Mode.NewComplectation) {
+            if (ss.CurrentMode == Global.Mode.NewComplectation || preMode == Global.Mode.NewComplectation) {
                 repealNewComplectation()
             } else {
                 if (needAdressComplete != ss.getVoidID()) {
@@ -754,12 +788,12 @@ class NewComplectation : BarcodeDataReceiver() {
         }
         //это таб кнопка
         if (keyCode == 61) {
-            if (ss.CurrentMode == Global.Mode.NewComplectation) {
+            if (ss.CurrentMode == Global.Mode.NewComplectation || preMode == Global.Mode.NewComplectation) {
                 remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
                 if (docDown["MaxStub"].toString().toInt() <= remain) {
                     //Можно завершить
                     FExcStr.text =
-                        "Закрываю остальные " + remain.toString() + " места..."
+                        "Закрываю остальные $remain места..."
                     endCCNewComp()
                     refreshActivity()
                 }
@@ -779,6 +813,11 @@ class NewComplectation : BarcodeDataReceiver() {
             return true
         }
         if (ss.helper.whatDirection(keyCode) == "Left") {
+            if (ss.CurrentMode == Global.Mode.ShowRoute)
+            {
+               onBackPressed()
+               return true
+            }
             if (!loadCC()) return true
 
             FExcStr.text = "Подгружаю состояние..."
@@ -788,15 +827,13 @@ class NewComplectation : BarcodeDataReceiver() {
             shoiseWorkInit.putExtra("BadDocView", badDoc["View"])
 
             startActivity(shoiseWorkInit)
-            finish()
             return true
         } else if (ss.helper.whatDirection(keyCode) == "Right") {
             FExcStr.text = "Подгружаю маршрут..."
+            preMode = ss.CurrentMode
+            ss.CurrentMode = Global.Mode.ShowRoute
             val showRouteInit = Intent(this, ShowRoute::class.java)
-            showRouteInit.putExtra("docDownID", docDown["ID"])
-            showRouteInit.putExtra("docDownSector", docDown["Sector"])
             startActivity(showRouteInit)
-            finish()
             return true
         }
         return false
@@ -926,10 +963,13 @@ class NewComplectation : BarcodeDataReceiver() {
 
     }
 
-    private fun refreshActivity() {
+    open fun refreshActivity() {
 
+        if (ss.CurrentMode == Global.Mode.ShowRoute) {
+            return
+        }
         //lblPrinter.text = ss.FPrinter.description
-        if (ss.CurrentMode == Global.Mode.NewComplectation) {
+        if (ss.CurrentMode == Global.Mode.NewComplectation || preMode == Global.Mode.NewComplectation) {
 
             remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
 
@@ -957,7 +997,7 @@ class NewComplectation : BarcodeDataReceiver() {
                     .toInt() <= remain
             ) View.VISIBLE else View.INVISIBLE
             btnKey1.text = "Все"
-        } else if (ss.CurrentMode == Global.Mode.NewComplectationComplete) {
+        } else if (ss.CurrentMode == Global.Mode.NewComplectationComplete || preMode == Global.Mode.NewComplectationComplete) {
 
             if (docDown.isNotEmpty()) {
                 lblAdress.text =
@@ -1003,6 +1043,115 @@ class NewComplectation : BarcodeDataReceiver() {
             }
 
         }
+    }
+
+    fun refreshRoute() {
+        var textQuery =
+            "select " +
+                    "right(min(journForBill.docno), 5) as Bill, " +
+                    "rtrim(min(isnull(Sections.descr, 'Пу'))) + '-' + cast(min(DocCC.\$КонтрольНабора.НомерЛиста ) as char) as CC, " +
+                    "max(AllTab.CountAllBox) as Boxes, " +
+                    "rtrim(max(RefAdress9.descr)) as Adress, " +
+                    "max(Gate.descr) as Gate " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "inner join DH\$КонтрольНабора as DocCC (nolock) " +
+                    "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
+                    "left join \$Спр.Секции as Sections (nolock) " +
+                    "on Sections.id = DocCC.\$КонтрольНабора.Сектор " +
+                    "inner join DH\$КонтрольРасходной as DocCB (nolock) " +
+                    "on DocCB .iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
+                    "inner JOIN DH\$Счет as Bill (nolock) " +
+                    "on Bill.iddoc = DocCB.\$КонтрольРасходной.ДокументОснование " +
+                    "inner join _1sjourn as journForBill (nolock) " +
+                    "on journForBill.iddoc = Bill.iddoc " +
+                    "left join \$Спр.Секции as RefAdress9 (nolock) " +
+                    "on RefAdress9.id = dbo.WMP_fn_GetAdressComplete(Ref.id) " +
+                    "left join \$Спр.Ворота as Gate (nolock) " +
+                    "on Gate.id = DocCB.\$КонтрольРасходной.Ворота " +
+                    "inner join ( " +
+                    "select " +
+                    "DocCC.iddoc as iddoc, " +
+                    "count(*) as CountAllBox " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "inner join DH\$КонтрольНабора as DocCC (nolock) " +
+                    "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
+                    "where " +
+                    "Ref.ismark = 0 " +
+                    "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
+                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
+                    "group by DocCC.iddoc ) as AllTab " +
+                    "on AllTab.iddoc = DocCC.iddoc " +
+                    "where " +
+                    "Ref.ismark = 0 " +
+                    "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
+                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
+                    "group by DocCC.iddoc"
+
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        ccrp = ss.executeWithReadNew(textQuery) ?: return
+
+        textQuery =
+            "select " +
+                    "right(min(journForBill.docno), 5) as Bill, " +
+                    "rtrim(min(isnull(Sections.descr, 'Пу'))) + '-' + cast(min(DocCC.\$КонтрольНабора.НомерЛиста ) as char) as CC, " +
+                    "max(AllTab.CountAllBox) as Boxes, " +
+                    "rtrim(max(RefAdress9.descr)) as Adress, " +
+                    "max(Gate.descr) as Gate " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "inner join DH\$КонтрольНабора as DocCC (nolock) " +
+                    "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
+                    "left join \$Спр.Секции as Sections (nolock) " +
+                    "on Sections.id = DocCC.\$КонтрольНабора.Сектор " +
+                    "inner join DH\$КонтрольРасходной as DocCB (nolock) " +
+                    "on DocCB .iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
+                    "inner JOIN DH\$Счет as Bill (nolock) " +
+                    "on Bill.iddoc = DocCB.\$КонтрольРасходной.ДокументОснование " +
+                    "inner join _1sjourn as journForBill (nolock) " +
+                    "on journForBill.iddoc = Bill.iddoc " +
+                    "left join \$Спр.Секции as RefAdress9 (nolock) " +
+                    "on RefAdress9.id = dbo.WMP_fn_GetAdressComplete(Ref.id) " +
+                    "left join \$Спр.Ворота as Gate (nolock) " +
+                    "on Gate.id = DocCB.\$КонтрольРасходной.Ворота " +
+                    "inner join ( " +
+                    "select " +
+                    "Ref.\$Спр.МестаПогрузки.НомерЗадания7 as NumberOfOrder " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "where " +
+                    "Ref.ismark = 0 " +
+                    "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
+                    "and Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
+                    "and not Ref.\$Спр.МестаПогрузки.НомерЗадания7 = 0 " +
+                    "group by Ref.\$Спр.МестаПогрузки.НомерЗадания7 ) as NumberOfOrderBox " +
+                    "on NumberOfOrderBox.NumberOfOrder = Ref.\$Спр.МестаПогрузки.НомерЗадания7 " +
+                    "inner join ( " +
+                    "select " +
+                    "DocCC.iddoc as iddoc, " +
+                    "count(*) as CountAllBox " +
+                    "from \$Спр.МестаПогрузки as Ref (nolock) " +
+                    "inner join DH\$КонтрольНабора as DocCC (nolock) " +
+                    "on DocCC.iddoc = Ref.\$Спр.МестаПогрузки.КонтрольНабора " +
+                    "where " +
+                    "Ref.ismark = 0 " +
+                    "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
+                    "group by DocCC.iddoc ) as AllTab " +
+                    "on AllTab.iddoc = DocCC.iddoc " +
+                    "where " +
+                    "Ref.ismark = 0 " +
+                    "and Ref.\$Спр.МестаПогрузки.Сотрудник8 = :Employer " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата8 = :EmptyDate " +
+                    "and not Ref.\$Спр.МестаПогрузки.Дата9 = :EmptyDate " +
+                    "group by DocCC.iddoc"
+
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        ccrpOld = ss.executeWithReadNew(textQuery) ?: return
+        refreshActivity()
     }
 
 }

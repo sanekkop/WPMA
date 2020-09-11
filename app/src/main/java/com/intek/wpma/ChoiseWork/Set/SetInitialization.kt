@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -31,20 +30,19 @@ import java.util.*
 class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
     private val primordial = Model()
-    var parentForm: String = "" // форма из которой пришли
-    var allSetsRow: Int = 0
-    var docSetSum: BigDecimal = "0.00".toBigDecimal()
-    val mainWarehouse = "     D   "
-    var docSet: Model.StrictDoc? = null                     //текущий док набора
-    var docsSet: MutableList<String> = mutableListOf()      //незавершенные доки на сотруднике
-    var docCC: Model.DocCC? = null
-    var section: Model.Section? = null
-    var ccItem: Model.StructItemSet? = null
-    var barcode: String = ""
+    private var parentForm: String = "" // форма из которой пришли
+    private var allSetsRow: Int = 0
+    private var docSetSum: BigDecimal = "0.00".toBigDecimal()
+    private var docSet: Model.StrictDoc? = null                     //текущий док набора
+    private var docsSet: MutableList<String> = mutableListOf()      //незавершенные доки на сотруднике
+    private var docCC: Model.DocCC? = null
+    private var section: Model.Section? = null
+    private var ccItem: Model.StructItemSet? = null
+    private var barcode: String = ""
     // количество набираемой  позиции
-    var countFact: Int = 0
-    var currLine: Int = 0
-    var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
+    private var countFact: Int = 0
+    private var currLine: Int = 0
+    private var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -303,7 +301,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
         textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
         textQuery = textQuery.replace(":Docs", ss.helper.listToStringWithQuotes(docsSet))
-        textQuery = ss.querySetParam(textQuery, "Warehouse", mainWarehouse)
+        textQuery = ss.querySetParam(textQuery, "Warehouse", ss.Const.mainWarehouse)
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         if (iddoc != null) {
             textQuery = ss.querySetParam(textQuery, "iddoc", iddoc)

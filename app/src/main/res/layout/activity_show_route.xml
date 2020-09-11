@@ -51,7 +51,7 @@
                 android:layout_height="wrap_content"
                 android:baselineAligned="true"
                 android:foregroundGravity="bottom"
-                android:orientation="horizontal"></LinearLayout>
+                android:orientation="horizontal" />
 
 
         </TableLayout>
@@ -70,6 +70,29 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/btnCansel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#EA0A0A"
+        android:text="DEL - Отказ"
+        android:textColor="#FFFFFF"
+        app:layout_constraintBottom_toTopOf="@+id/FExcStr"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/btnKey1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#4CAF50"
+        android:text="Все"
+        android:textColor="#FFFFFF"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/FExcStr"
+        app:layout_constraintEnd_toStartOf="@+id/btnScan" />
 
     <Button
         android:id="@+id/btnScan"

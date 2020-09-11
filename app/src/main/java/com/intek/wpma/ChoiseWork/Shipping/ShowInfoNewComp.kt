@@ -19,8 +19,16 @@ import kotlinx.android.synthetic.main.activity_show_info_new_comp.table
 
 class ShowInfoNewComp: BarcodeDataReceiver() {
 
-    var ccrp: MutableList<MutableMap<String, String>> = mutableListOf()
-    var badDoc: MutableMap<String, String> = mutableMapOf()
+    private var ccrp: MutableList<MutableMap<String, String>> = mutableListOf()
+    private var docDown: MutableMap<String, String> = mutableMapOf()
+    private var badDoc: MutableMap<String, String> = mutableMapOf()
+    private var downSituation: MutableList<MutableMap<String, String>> = mutableListOf()
+    private var scaningBox = ""
+    private var scaningBoxIddoc = ""
+    private var needAdressComplete = "     0   "
+    private var remain = 0
+    private var lastGoodAdress = ""
+    private var nameLastGoodAdress = ""
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -92,8 +100,18 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_show_info_new_comp)
         title = ss.title
-        badDoc["ID"] = intent.extras!!.getString("BadDocID")!!
-        badDoc["View"] = intent.extras!!.getString("BadDocView")!!
+        //badDoc["ID"] = intent.extras!!.getString("BadDocID")!!
+        //badDoc["View"] = intent.extras!!.getString("BadDocView")!!
+        badDoc = NewComplectation.badDoc
+        docDown = NewComplectation.docDown
+        downSituation = NewComplectation.downSituation
+        scaningBox = NewComplectation.scaningBox
+        scaningBoxIddoc = NewComplectation.scaningBoxIddoc
+        needAdressComplete = NewComplectation.needAdressComplete
+        remain = NewComplectation.remain
+        lastGoodAdress = NewComplectation.lastGoodAdress
+        nameLastGoodAdress = NewComplectation.nameLastGoodAdress
+
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             var oldx = 0F
             if (event.action == MotionEvent.ACTION_DOWN) {
@@ -135,6 +153,15 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
             if (ss.CurrentMode == Global.Mode.FreeDownComplete) {
                 shoiseWorkInit = Intent(this, FreeComplectation::class.java)
             }
+            NewComplectation.badDoc = badDoc
+            NewComplectation.docDown = docDown
+            NewComplectation.downSituation = downSituation
+            NewComplectation.scaningBox = scaningBox
+            NewComplectation.scaningBoxIddoc = scaningBoxIddoc
+            NewComplectation.needAdressComplete = needAdressComplete
+            NewComplectation.remain = remain
+            NewComplectation.lastGoodAdress = lastGoodAdress
+            NewComplectation.nameLastGoodAdress = nameLastGoodAdress
             startActivity(shoiseWorkInit)
             finish()
             return true

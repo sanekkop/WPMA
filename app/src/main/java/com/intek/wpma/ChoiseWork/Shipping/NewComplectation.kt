@@ -31,10 +31,7 @@ open class NewComplectation : BarcodeDataReceiver() {
     private var lastGoodAdress = ""
     private var nameLastGoodAdress = ""
 */
-    var ccrp: MutableList<MutableMap<String, String>> = mutableListOf()
-    var ccrpOld: MutableList<MutableMap<String, String>> = mutableListOf()
-    var preMode:Global.Mode? = null
-    var oldx = 0F
+   var oldx = 0F
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -82,10 +79,6 @@ open class NewComplectation : BarcodeDataReceiver() {
                 toast.show()
             }
         }
-        else if ( ss.CurrentMode == Global.Mode.ShowRoute ){
-            ss.CurrentMode = preMode
-            refreshActivity()
-        }
     }
 
     override fun onPause() {
@@ -113,6 +106,10 @@ open class NewComplectation : BarcodeDataReceiver() {
         var remain = 0
         var lastGoodAdress = ""
         var nameLastGoodAdress = ""
+        var preMode:Global.Mode? = null
+        var ccrp: MutableList<MutableMap<String, String>> = mutableListOf()
+        var ccrpOld: MutableList<MutableMap<String, String>> = mutableListOf()
+
     }
     //endregion
 
@@ -181,6 +178,7 @@ open class NewComplectation : BarcodeDataReceiver() {
                 return true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
+                    oldx = event.x
                     if (!loadCC()) return true
 
                     FExcStr.text = "Подгружаю состояние..."
@@ -813,11 +811,6 @@ open class NewComplectation : BarcodeDataReceiver() {
             return true
         }
         if (ss.helper.whatDirection(keyCode) == "Left") {
-            if (ss.CurrentMode == Global.Mode.ShowRoute)
-            {
-               onBackPressed()
-               return true
-            }
             if (!loadCC()) return true
 
             FExcStr.text = "Подгружаю состояние..."
@@ -1022,9 +1015,14 @@ open class NewComplectation : BarcodeDataReceiver() {
                 lblAdress.text = ""
                 lblSetter.text = ""
             }
+
             btnKey1.text = "TAB - Все"
             if (downSituation[0]["NumberOfOrder"].toString() != "0") {
                 val number: String = downSituation[0]["NumberOfOrder"].toString()
+                //заглушка пока не понял как ее обойти
+                if (downSituation[0]["AllBox"].toString() == "1") {
+                    lblNumber.text = ""
+                }
                 lblNumber.text = lblNumber.text.toString().trim() + " задание " + number.substring(if (number.length > 4) number.length - 4 else 0)
             }
             lblInfo1.text = "Всего " + downSituation[0]["AllBox"].toString() + " мест"

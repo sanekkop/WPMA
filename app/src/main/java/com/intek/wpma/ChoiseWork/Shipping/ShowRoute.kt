@@ -8,9 +8,12 @@ import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import com.intek.wpma.*
+import kotlinx.android.synthetic.main.activity_new_complectation.*
 import kotlinx.android.synthetic.main.activity_show_route.*
 import kotlinx.android.synthetic.main.activity_show_route.FExcStr
 import kotlinx.android.synthetic.main.activity_show_route.Shapka
+import kotlinx.android.synthetic.main.activity_show_route.btnCansel
+import kotlinx.android.synthetic.main.activity_show_route.btnKey1
 import kotlinx.android.synthetic.main.activity_show_route.btnScan
 
 class ShowRoute: NewComplectation() {
@@ -87,7 +90,6 @@ class ShowRoute: NewComplectation() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_show_route)
         title = ss.title
-        preMode = ss.CurrentMode
         ss.CurrentMode == Global.Mode.ShowRoute
         //docDown["ID"] = intent.extras?.getString("docDownID").toString()
         //docDown["Sector"] = intent.extras?.getString("docDownSector").toString()
@@ -149,14 +151,24 @@ class ShowRoute: NewComplectation() {
                 return true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
-                    finish()
+                   finish()
                 }
             }
             return true
         })
         refreshRoute()
     }
+    override fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
+        if (ss.helper.whatDirection(keyCode) == "Left") {
+            finish()
+            return true
+        }
+        else if (ss.helper.whatDirection(keyCode) == "Right") {
+            return true
+        }
+        return super.reactionKey(keyCode, event)
+    }
     override fun refreshActivity() {
 
         table.removeAllViewsInLayout()

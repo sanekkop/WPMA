@@ -266,6 +266,7 @@ val dataTable = ss.executeWithReadNew(textQuery) ?: return
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
+        onWindowFocusChanged(true)
         Log.d("IntentApiSample: ", "onResume")
     }
 

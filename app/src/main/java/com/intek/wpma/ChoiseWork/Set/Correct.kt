@@ -71,6 +71,7 @@ class Correct : BarcodeDataReceiver() {
         //        IntentFilter intentFilter = new IntentFilter("hsm.RECVRBI");
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
+        onWindowFocusChanged(true)
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {

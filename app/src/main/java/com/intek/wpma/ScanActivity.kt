@@ -30,6 +30,7 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
 
     override fun onResume() {
         super.onResume()
+        onWindowFocusChanged(true)
         // Register ourselves as a handler for scan results.
         mScannerView!!.setResultHandler(this)
         // Start camera on resume

@@ -121,7 +121,7 @@ class Search : BarcodeDataReceiver() {
             (ss.widthDisplay * 0.05).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         number.gravity = Gravity.CENTER
-        number.textSize = 12F
+        number.textSize = 14F
         number.setTextColor(-0x1000000)
         val docum = TextView(this)
         docum.text = "Накладная"
@@ -130,7 +130,7 @@ class Search : BarcodeDataReceiver() {
         docum.layoutParams = LinearLayout.LayoutParams(
             (ss.widthDisplay * 0.18).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
-        docum.textSize = 12F
+        docum.textSize = 14F
         docum.setTextColor(-0x1000000)
         val address = TextView(this)
         address.text = "Дата"
@@ -139,7 +139,7 @@ class Search : BarcodeDataReceiver() {
             (ss.widthDisplay * 0.2).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         address.gravity = Gravity.CENTER
-        address.textSize = 12F
+        address.textSize = 14F
         address.setTextColor(-0x1000000)
         val boxes = TextView(this)
         boxes.text = "Ост-сь"
@@ -148,7 +148,7 @@ class Search : BarcodeDataReceiver() {
             (ss.widthDisplay * 0.13).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         boxes.gravity = Gravity.CENTER
-        boxes.textSize = 12F
+        boxes.textSize = 14F
         boxes.setTextColor(-0x1000000)
         val boxesfact = TextView(this)
         boxesfact.text = "Поставщик"
@@ -157,7 +157,7 @@ class Search : BarcodeDataReceiver() {
             (ss.widthDisplay * 0.44).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         boxesfact.gravity = Gravity.CENTER
-        boxesfact.textSize = 12F
+        boxesfact.textSize = 14F
         boxesfact.setTextColor(-0x1000000)
 
         linearLayout1.addView(number)
@@ -214,7 +214,7 @@ class Search : BarcodeDataReceiver() {
                     (ss.widthDisplay * 0.05).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 numb.gravity = Gravity.CENTER
-                numb.textSize = 12F
+                numb.textSize = 14F
                 numb.setTextColor(-0x1000000)
                 val doc = TextView(this)
                 doc.text = DR["DocNo"]
@@ -223,7 +223,7 @@ class Search : BarcodeDataReceiver() {
                 doc.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.18).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                doc.textSize = 12F
+                doc.textSize = 14F
                 doc.setTextColor(-0x1000000)
                 val addr = TextView(this)
                 //addr.text = DR["DateDoc"]
@@ -233,7 +233,7 @@ class Search : BarcodeDataReceiver() {
                     (ss.widthDisplay * 0.2).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 addr.gravity = Gravity.CENTER
-                addr.textSize = 12F
+                addr.textSize = 14F
                 addr.setTextColor(-0x1000000)
                 val box = TextView(this)
                 box.text = DR["CountRow"]
@@ -242,7 +242,7 @@ class Search : BarcodeDataReceiver() {
                     (ss.widthDisplay * 0.13).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 box.gravity = Gravity.CENTER
-                box.textSize = 12F
+                box.textSize = 14F
                 box.setTextColor(-0x1000000)
                 val boxf = TextView(this)
                 boxf.text = DR["Client"].toString().trim()
@@ -251,7 +251,7 @@ class Search : BarcodeDataReceiver() {
                     (ss.widthDisplay * 0.44).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 boxf.gravity = Gravity.CENTER
-                boxf.textSize = 12F
+                boxf.textSize = 14F
                 boxf.setTextColor(-0x1000000)
 
                 linearLayout.addView(numb)
@@ -297,6 +297,7 @@ class Search : BarcodeDataReceiver() {
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
+        onWindowFocusChanged(true)
         Log.d("IntentApiSample: ", "onResume")
 
         if(scanRes != null){

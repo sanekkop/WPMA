@@ -10,7 +10,6 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View.OnFocusChangeListener
-import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -19,11 +18,10 @@ import com.intek.wpma.ParentForm
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefItem
 import com.intek.wpma.SQL.SQL1S.Const
+import kotlinx.android.synthetic.main.activity_none_item.*
 import kotlinx.android.synthetic.main.activity_search_acc.*
 
-
 class ItemCard : BarcodeDataReceiver() {
-
     var iddoc: String = ""
     var number: String = ""
     var barcode: String = ""
@@ -33,7 +31,6 @@ class ItemCard : BarcodeDataReceiver() {
     var itemCardInfo : MutableList<MutableMap<String, String>> = mutableListOf()
     var item = RefItem()
     var bufferWarehouse = ""
-    //var inPut = InputConnectionWrapper()
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -44,7 +41,7 @@ class ItemCard : BarcodeDataReceiver() {
                     // ту прописываем что делать при событии сканирования
 
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data").toString()
                         reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
@@ -65,18 +62,13 @@ class ItemCard : BarcodeDataReceiver() {
         item.foundID(intent.extras!!.getString("itemID")!!)
         title = ss.title
 
-        val myTextViewFocus = OnFocusChangeListener { view, hasFocus ->
-                if (hasFocus) {
-                    (view as TextView).setBackgroundColor(Color.WHITE)
-                } else {
-                    (view as TextView).setBackgroundColor(Color.GRAY)
-                }
-            }
         itemCard()
     }
 
+    //тут тянем инфу о товаре и его местоположение и кол-во на складе, если таковое есть
+    //иначе адрес не задан и кол-во равно 0
     private fun getDoc() {
-        buffWare()
+        buffWare()        //вызываем тут, иначе негде будет искать товар
         var textQuery = "DECLARE @curdate DateTime; " +
                 "SELECT @curdate = DATEADD(DAY, 1 - DAY(curdate), curdate) FROM _1ssystem (nolock); " +
                 "SELECT " +
@@ -128,12 +120,13 @@ class ItemCard : BarcodeDataReceiver() {
                          " шт"          //зона где товар есть
                 zonaTech.text = DR["AdressBuffer"].toString().trim() +
                          ": " + DR["BalanceBuffer"].toString().trim() +
-                         " шт"          //зона куда товар будут запихивать, изначально не
+                         " шт"          //зона куда товар будут запихивать, изначально не задан
                 minParty.text = DR["BalanceBuffer"]
                 }
         }
     }
 
+    //нам нужен только наш склад, поэтому его и подтянем
     private fun buffWare() {
         var textQuery = "SELECT " +
                 "VALUE as val " +
@@ -147,8 +140,9 @@ class ItemCard : BarcodeDataReceiver() {
         }
     }
 
+    //подтягиваем все остальное
     private fun nadBl() {
-        getDoc()
+        getDoc()                //собственно исходя из этого и тянем
         var textQuery = "SELECT " +
                 "Goods.Descr as ItemName , " +
                 "Goods.\$Спр.Товары.ИнвКод as InvCode , " +
@@ -183,7 +177,8 @@ class ItemCard : BarcodeDataReceiver() {
         return true
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)   //у нас давно все отрисованно, поэтому просто подтягиваем данные по товару
+    //у нас давно все отрисованно, поэтому просто подтягиваем данные по товару
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun itemCard() {       //тут вакханали ебейшая какая-то происходит, как-то должно считать
         nadBl()
         if (itemCardInfo.isNotEmpty()) {
@@ -194,28 +189,37 @@ class ItemCard : BarcodeDataReceiver() {
                 storageSize.text = DR["StoregeSize"]                                                //кол-во товара дома как я понял
                 pricePrih.text = "Цена: " + DR["Price"].toString()                                  //цена товара
                 baseSHK.text = cardItem.foundBarcode(DR["BaseUnitID"].toString()).toString()        //штрих-код товара
+            }}
+
                 resOne.text = (
                         statVod1.text.toString().toInt() * minParty.text.toString().toInt()
                         ).toString()                                                                //сумма принимаемого товара в общей сложности
 
-                // minParty.text = DR["MinParty"]                                                     //я не ебу что это, но пусть будет так //не пашет, подтянем в другом месте
-                resTwo.text = "0"
-                resThird.text = "0"
-                resFor.text = "0"
-                numVod1.text = "0"
-                numVod2.text = "0"
-                numVod3.text = "0"
-                wtfVod1.text = "0"
-                wtfVod2.text = "0"
-                wtfVod3.text = "0"
-            }
-        }
+                numVod1.text = "1"
+                numVod2.text = "2"
+                numVod3.text = "1"
+                wtfVod1.text = "1"
+                wtfVod2.text = "20"
+                wtfVod3.text = "1"
+
+                resTwo.text = (
+                        minParty.text.toString().toInt() / numVod1.text.toString().toInt()
+                        ).toString()
+                resThird.text = (
+                        minParty.text.toString().toInt() / numVod2.text.toString().toInt()
+                        ).toString()
+                resFor.text = (
+                        minParty.text.toString().toInt() / numVod3.text.toString().toInt()
+                        ).toString()
+
+                // minParty.text = DR["MinParty"]                           //я не ебу что это, но пусть будет так //не пашет, подтянем в другом месте
     }
 
     override fun onResume() {
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
+        onWindowFocusChanged(true)
         Log.d("IntentApiSample: ", "onResume")
 
         if(scanRes != null){
@@ -257,33 +261,38 @@ class ItemCard : BarcodeDataReceiver() {
     @RequiresApi(Build.VERSION_CODES.O)
     private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
-        if (keyCode == 4){
+        if (keyCode == 4) {
             val backH = Intent(this, NoneItem::class.java)
-            backH.putExtra("ParentForm", "ItemCard")
             startActivity(backH)
             finish()
+            return true
         }
-        if (ss.helper.whatDirection(keyCode) in listOf("Left","Right", "Up", "Down") ) { // || inPut.finishComposingText()) {
+        if (ss.helper.whatDirection(keyCode) in listOf("Left","Right", "Up", "Down")) {  //StateListDrawable == true) {
             itemCard()
-            resTwo.text = (
-                    minParty.text.toString().toInt() / numVod1.text.toString().toInt()
-                    ).toString()
-            resThird.text = (
-                    minParty.text.toString().toInt() / numVod2.text.toString().toInt()
-                    ).toString()
-            resFor.text = (
-                    minParty.text.toString().toInt() / numVod3.text.toString().toInt()
-                    ).toString()
-            /*
+            try {
+                resTwo.text = (
+                        minParty.text.toString().toInt() / numVod1.text.toString().toInt()
+                        ).toString()
+                resThird.text = (
+                        minParty.text.toString().toInt() / numVod2.text.toString().toInt()
+                        ).toString()
+                resFor.text = (
+                        minParty.text.toString().toInt() / numVod3.text.toString().toInt()
+                        ).toString()
+
                 minParty.text = (
                         numVod2.text.toString().toInt() / wtfVod2.text.toString().toInt()
-                        ).toString() */
+                        ).toString()
                 wtfVod1.text = (
                         minParty.text.toString().toInt() / numVod1.text.toString().toInt()
                         ).toString()
                 wtfVod2.text = (
                         minParty.text.toString().toInt() / numVod2.text.toString().toInt()
                         ).toString()
+                return true
+            } catch (e : java.lang.Exception) {
+
+            }
         }
         return false
     }

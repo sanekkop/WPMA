@@ -153,7 +153,8 @@
                     android:layout_marginEnd="2dp"
                     android:layout_marginRight="2dp"
                     android:layout_weight="1"
-                    android:background="#a9a9a9"
+                    android:background="@drawable/bg"
+                    android:cursorVisible="true"
                     android:inputType="number"
                     android:padding="10dp"
                     android:textColor="#000"
@@ -194,30 +195,30 @@
                     android:textColor="#000" />
 
                 <TextView
-                    android:clickable="true"
                     android:id="@+id/numVod1"
                     android:layout_width="0dp"
+                    android:layout_marginEnd="2dp"
                     android:layout_marginRight="2dp"
-                    android:textSize="18sp"
                     android:layout_weight="1"
-                    android:background="#a9a9a9"
+                    android:background="@drawable/bg"
+                    android:cursorVisible="true"
                     android:inputType="number"
                     android:padding="10dp"
                     android:textColor="#000"
-                    android:layout_marginEnd="2dp" />
+                    android:textSize="18sp" />
 
                 <TextView
-                    android:clickable="true"
                     android:id="@+id/wtfVod1"
                     android:layout_width="0dp"
+                    android:layout_marginEnd="2dp"
                     android:layout_marginRight="2dp"
-                    android:textSize="18sp"
                     android:layout_weight="1"
-                    android:background="#a9a9a9"
+                    android:background="@drawable/bg"
+                    android:cursorVisible="true"
                     android:inputType="number"
                     android:padding="10dp"
                     android:textColor="#000"
-                    android:layout_marginEnd="2dp" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:clickable="false"
@@ -252,30 +253,30 @@
                     android:textColor="#000" />
 
                 <TextView
-                    android:clickable="true"
                     android:id="@+id/numVod2"
                     android:layout_width="0dp"
-                    android:textSize="18sp"
+                    android:layout_marginEnd="2dp"
                     android:layout_marginRight="2dp"
                     android:layout_weight="1"
-                    android:background="#a9a9a9"
+                    android:background="@drawable/bg"
+                    android:cursorVisible="true"
                     android:inputType="number"
                     android:padding="10dp"
                     android:textColor="#000"
-                    android:layout_marginEnd="2dp" />
+                    android:textSize="18sp" />
 
                 <TextView
-                    android:clickable="true"
                     android:id="@+id/wtfVod2"
                     android:layout_width="0dp"
-                    android:textSize="18sp"
+                    android:layout_marginEnd="2dp"
                     android:layout_marginRight="2dp"
                     android:layout_weight="1"
-                    android:background="#a9a9a9"
+                    android:background="@drawable/bg"
+                    android:cursorVisible="true"
                     android:inputType="number"
                     android:padding="10dp"
                     android:textColor="#000"
-                    android:layout_marginEnd="2dp" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:clickable="false"
@@ -311,30 +312,30 @@
                     android:textColor="#ff0000" />
 
                 <TextView
-                    android:clickable="true"
                     android:id="@+id/numVod3"
                     android:layout_width="0dp"
+                    android:layout_marginEnd="2dp"
                     android:layout_marginRight="2dp"
-                    android:textSize="18sp"
                     android:layout_weight="1"
-                    android:background="#a9a9a9"
+                    android:background="@drawable/bg"
+                    android:cursorVisible="true"
                     android:inputType="number"
                     android:padding="10dp"
                     android:textColor="#000"
-                    android:layout_marginEnd="2dp" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:id="@+id/wtfVod3"
-                    android:clickable="true"
                     android:layout_width="0dp"
+                    android:layout_marginEnd="2dp"
                     android:layout_marginRight="2dp"
-                    android:textSize="18sp"
                     android:layout_weight="1"
-                    android:background="#a9a9a9"
+                    android:background="@drawable/bg"
+                    android:cursorVisible="true"
                     android:inputType="number"
                     android:padding="10dp"
                     android:textColor="#000"
-                    android:layout_marginEnd="2dp" />
+                    android:textSize="18sp" />
 
                 <TextView
                     android:clickable="false"
@@ -373,6 +374,7 @@
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     android:padding="1dp"
+                    android:gravity="center"
                     android:text="Кол-во"
                     android:textColor="#000"
                     android:textSize="15sp" />

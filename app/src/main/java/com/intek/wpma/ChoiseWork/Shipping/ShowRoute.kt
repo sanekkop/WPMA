@@ -151,6 +151,7 @@ class ShowRoute: NewComplectation() {
                 return true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
+                   ss.CurrentMode = preMode
                    finish()
                 }
             }
@@ -161,6 +162,7 @@ class ShowRoute: NewComplectation() {
     override fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
         if (ss.helper.whatDirection(keyCode) == "Left") {
+            ss.CurrentMode = preMode
             finish()
             return true
         }

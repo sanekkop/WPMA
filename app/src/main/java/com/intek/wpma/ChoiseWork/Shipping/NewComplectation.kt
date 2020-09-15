@@ -79,6 +79,9 @@ open class NewComplectation : BarcodeDataReceiver() {
                 toast.show()
             }
         }
+        else {
+            refreshActivity()
+        }
     }
 
     override fun onPause() {
@@ -342,10 +345,12 @@ open class NewComplectation : BarcodeDataReceiver() {
         scaningBox = ""
         if (ss.CurrentMode  == Global.Mode.ShowRoute) {
             preMode = Global.Mode.NewComplectationComplete
+            refreshRoute()
         }
         else {
             ss.CurrentMode = Global.Mode.NewComplectationComplete
         }
+
         refreshActivity()
     }
 

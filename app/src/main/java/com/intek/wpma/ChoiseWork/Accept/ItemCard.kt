@@ -9,8 +9,6 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
-import android.view.View.OnFocusChangeListener
-import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import com.intek.wpma.BarcodeDataReceiver
@@ -18,7 +16,6 @@ import com.intek.wpma.ParentForm
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefItem
 import com.intek.wpma.SQL.SQL1S.Const
-import kotlinx.android.synthetic.main.activity_none_item.*
 import kotlinx.android.synthetic.main.activity_search_acc.*
 
 class ItemCard : BarcodeDataReceiver() {
@@ -27,10 +24,11 @@ class ItemCard : BarcodeDataReceiver() {
     var barcode: String = ""
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
     var cardItem = RefItem()
-   // var noNe = NoneItem()
     var itemCardInfo : MutableList<MutableMap<String, String>> = mutableListOf()
     var item = RefItem()
     var bufferWarehouse = ""
+    var flagBarcode = ""
+
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -59,8 +57,21 @@ class ItemCard : BarcodeDataReceiver() {
         setContentView(R.layout.activity_search_acc)
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
-        item.foundID(intent.extras!!.getString("itemID")!!)
+        flagBarcode = intent.extras!!.getString("flagBarcode")!!
+
+        when (flagBarcode) {
+            "0" -> item.foundID(intent.extras!!.getString("itemID")!!)
+            "1" -> item.foundID(intent.extras!!.getString("itemI")!!)
+        }
+
         title = ss.title
+
+        numVod1.text = "0"
+        numVod2.text = "0"
+        numVod3.text = "0"
+        wtfVod1.text = "0"
+        wtfVod2.text = "0"
+        wtfVod3.text = "0"
 
         itemCard()
     }
@@ -105,22 +116,22 @@ class ItemCard : BarcodeDataReceiver() {
                 "period = @curdate and \$Рег.ОстаткиТоваров.Товар = :Item " +
                 "and \$Рег.ОстаткиТоваров.Склад in (:MainWarehouse, :BufferWarehouse) " +
                 "UNION ALL " +
-                "SELECT :MainWarehouse, :Item, 0 ) as Main GROUP BY Main.Item";
-        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate());
-        textQuery = ss.querySetParam(textQuery, "Item", item.id);
-        textQuery = ss.querySetParam(textQuery, "BufferWarehouse", bufferWarehouse);
-        textQuery = ss.querySetParam(textQuery, "MainWarehouse", Const.MainWarehouse);
+                "SELECT :MainWarehouse, :Item, 0 ) as Main GROUP BY Main.Item"
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+        textQuery = ss.querySetParam(textQuery, "Item", item.id)
+        textQuery = ss.querySetParam(textQuery, "BufferWarehouse", bufferWarehouse)
+        textQuery = ss.querySetParam(textQuery, "MainWarehouse", Const.MainWarehouse)
         val datTab = ss.executeWithReadNew(textQuery) ?: return
 
         if (datTab.isNotEmpty()) {
             for (DR in datTab) {
                 //заполнение шапки карточки товара
-                zonaHand.text = DR["AdressMain"].toString().trim() +
+                zonaHand.text = (DR["AdressMain"].toString().trim() +
                          ": " + DR["BalanceMain"].toString().trim() +
-                         " шт"          //зона где товар есть
-                zonaTech.text = DR["AdressBuffer"].toString().trim() +
+                         " шт")          //зона где товар есть
+                zonaTech.text = (DR["AdressBuffer"].toString().trim() +
                          ": " + DR["BalanceBuffer"].toString().trim() +
-                         " шт"          //зона куда товар будут запихивать, изначально не задан
+                         " шт")          //зона куда товар будут запихивать, изначально не задан
                 minParty.text = DR["BalanceBuffer"]
                 }
         }
@@ -128,11 +139,11 @@ class ItemCard : BarcodeDataReceiver() {
 
     //нам нужен только наш склад, поэтому его и подтянем
     private fun buffWare() {
-        var textQuery = "SELECT " +
+        val textQuery = "SELECT " +
                 "VALUE as val " +
                 "FROM _1sconst (nolock) " +
                 "WHERE ID = \$Константа.ОснЦентрСклад "
-        var datTabl = ss.executeWithReadNew(textQuery) ?: return
+        val datTabl = ss.executeWithReadNew(textQuery) ?: return
         if (datTabl.isNotEmpty()) {
             for (DR in datTabl) {
                 bufferWarehouse = DR["val"].toString()
@@ -161,7 +172,7 @@ class ItemCard : BarcodeDataReceiver() {
         itemCardInfo = ss.executeWithReadNew(textQuery) ?: return
     }
 
-    private fun loadUnits(itemID : String) : Boolean {
+ /*   private fun loadUnits(itemID : String) : Boolean {
         //Загружает единицы товара в таблицу FUnits
         var textQuery = "SELECT " +
                 "Units.id as ID , " +
@@ -175,7 +186,7 @@ class ItemCard : BarcodeDataReceiver() {
         textQuery = ss.querySetParam(textQuery, "CurrentItem", itemID)
         val dT = ss.executeWithReadNew(textQuery) ?: return false
         return true
-    }
+    }*/
 
     //у нас давно все отрисованно, поэтому просто подтягиваем данные по товару
     @RequiresApi(Build.VERSION_CODES.O)
@@ -183,34 +194,36 @@ class ItemCard : BarcodeDataReceiver() {
         nadBl()
         if (itemCardInfo.isNotEmpty()) {
             for (DR in itemCardInfo) {
-                shapka.text = DR["InvCode"].toString() + " Приемка товара"                          //код товара
+                shapka.text = (DR["InvCode"].toString() + "Приемка товара")                         //код товара
                 itemName.text = DR["ItemName"]                                                      //полное наименование товара
                 details.text = DR["Details"]                                                        //кол-во деталей товара, подтягиваем если есть, если нет заполняем, иначе 0
                 storageSize.text = DR["StoregeSize"]                                                //кол-во товара дома как я понял
-                pricePrih.text = "Цена: " + DR["Price"].toString()                                  //цена товара
+                pricePrih.text = ("Цена: " + DR["Price"].toString())                                //цена товара
                 baseSHK.text = cardItem.foundBarcode(DR["BaseUnitID"].toString()).toString()        //штрих-код товара
-            }}
 
+                //определяем, как был найден товар, перед тем, как зайти в карточку
+                when (flagBarcode) {
+                    "0" -> {
+                        FExcStr.text =  (DR["InvCode"].toString() +
+                                "найден в ручную!")
+                        FExcStr.setTextColor(Color.RED)
+                    }
+                    "1" -> {
+                        FExcStr.text =  (DR["InvCode"].toString() +
+                                "найден по штрихкоду!")
+                        FExcStr.setTextColor(Color.RED)
+                    }
+                    "2" -> {
+                        FExcStr.text =  (DR["InvCode"].toString() +
+                                "найден по ШК МЕСТА!")
+                        FExcStr.setTextColor(Color.RED)
+                    }
+                }
+            }}
                 resOne.text = (
                         statVod1.text.toString().toInt() * minParty.text.toString().toInt()
                         ).toString()                                                                //сумма принимаемого товара в общей сложности
 
-                numVod1.text = "1"
-                numVod2.text = "2"
-                numVod3.text = "1"
-                wtfVod1.text = "1"
-                wtfVod2.text = "20"
-                wtfVod3.text = "1"
-
-                resTwo.text = (
-                        minParty.text.toString().toInt() / numVod1.text.toString().toInt()
-                        ).toString()
-                resThird.text = (
-                        minParty.text.toString().toInt() / numVod2.text.toString().toInt()
-                        ).toString()
-                resFor.text = (
-                        minParty.text.toString().toInt() / numVod3.text.toString().toInt()
-                        ).toString()
 
                 // minParty.text = DR["MinParty"]                           //я не ебу что это, но пусть будет так //не пашет, подтянем в другом месте
     }
@@ -269,7 +282,32 @@ class ItemCard : BarcodeDataReceiver() {
         }
         if (ss.helper.whatDirection(keyCode) in listOf("Left","Right", "Up", "Down")) {  //StateListDrawable == true) {
             itemCard()
-            try {
+
+               minParty.text = (
+                       (numVod1.text.toString().toInt()) * wtfVod1.text.toString().toInt()
+                       ).toString().substring(0,-1)
+
+                minParty.text = (
+                        (numVod2.text.toString().toInt()) * wtfVod2.text.toString().toInt()
+                        ).toString().substring(0,-1)
+
+                minParty.text = (
+                        (numVod1.text.toString().toInt()) * wtfVod1.text.toString().toInt()
+                        ).toString().substring(0,-1)
+
+                minParty.text = (
+                        (numVod1.text.toString().toInt()) * wtfVod1.text.toString().toInt()
+                        ).toString().substring(0,-1)
+
+                minParty.text = (
+                        (numVod2.text.toString().toInt()) * wtfVod2.text.toString().toInt()
+                        ).toString().substring(0,-1)
+
+                minParty.text = (
+                        (numVod3.text.toString().toInt()) * wtfVod3.text.toString().toInt()
+                        ).toString().substring(0,-1)
+
+       /*     try {
                 resTwo.text = (
                         minParty.text.toString().toInt() / numVod1.text.toString().toInt()
                         ).toString()
@@ -280,19 +318,26 @@ class ItemCard : BarcodeDataReceiver() {
                         minParty.text.toString().toInt() / numVod3.text.toString().toInt()
                         ).toString()
 
+
                 minParty.text = (
-                        numVod2.text.toString().toInt() / wtfVod2.text.toString().toInt()
-                        ).toString()
+                        (numVod2.text.toString().toInt()) * wtfVod2.text.toString().toInt()
+                        ).toString().substring(0,-1)
                 wtfVod1.text = (
                         minParty.text.toString().toInt() / numVod1.text.toString().toInt()
-                        ).toString()
+                        ).toString().substring(0,-1)
                 wtfVod2.text = (
                         minParty.text.toString().toInt() / numVod2.text.toString().toInt()
-                        ).toString()
+                        ).toString().substring(0,-1)
                 return true
-            } catch (e : java.lang.Exception) {
+            } catch (e : Exception) {
+                numVod1.text = "0"
+                numVod2.text = "0"
+                numVod3.text = "0"
+                wtfVod1.text = "0"
+                wtfVod2.text = "0"
+                wtfVod3.text = "0"
 
-            }
+            } */
         }
         return false
     }

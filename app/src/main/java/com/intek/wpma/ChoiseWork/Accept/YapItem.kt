@@ -23,7 +23,6 @@ import com.intek.wpma.Model.Model
 import com.intek.wpma.Ref.RefPalleteMove
 import com.intek.wpma.SQL.SQL1S
 import com.intek.wpma.SQL.SQL1S.FBarcodePallet
-import com.intek.wpma.SQL.SQL1S.FPallet
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_yap_item.*
 import kotlinx.android.synthetic.main.activity_yap_item.FExcStr
@@ -64,15 +63,14 @@ class YapItem : BarcodeDataReceiver() {
 
         ParentForm = intent.extras!!.getString("ParentForm")!!
         iddoc = intent.extras!!.getString("Docs")!!
-        printPal.text = intent.extras!!.getString("FPrinter")!!
-        palletPal.text = intent.extras!!.getString("FPallet")!!
+        //printPal.text = intent.extras!!.getString("FPrinter")!!
         title = ss.title
 
         if (ss.FPrinter.selected) {
             printPal.text = ss.FPrinter.path
         }
-        if (FPallet != "") {
-            pal.foundID(FPallet)
+        if (ss.FPallet != "") {
+            pal.foundID(ss.FPallet)
             palletPal.text = pal.pallete
         }
 
@@ -396,10 +394,9 @@ class YapItem : BarcodeDataReceiver() {
             FExcStr.text = "Не выбран принтер!"
             return false
         }
-        if (FPallet == "") {
-            palletPal.text = "НЕТ ПАЛЛЕТЫ"
-            scanPalletBarcode(FPallet)
-            pal.foundID(FPallet)
+        if (palletPal.text == "НЕТ ПАЛЛЕТЫ") {
+            scanPalletBarcode(ss.FPallet)
+            pal.foundID(ss.FPallet)
             palletPal.text = pal.pallete
             goodVoise()
         }
@@ -441,8 +438,8 @@ class YapItem : BarcodeDataReceiver() {
         var textQuery = "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, Employer, @result out; select @result;"
         textQuery = ss.querySetParam(textQuery, "Barcode", barcode)
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-        FBarcodePallet = barcode
-        FPallet = ss.executeScalar(textQuery) ?: return
+        ss.FBarcodePallet = barcode
+        ss.FPallet = ss.executeScalar(textQuery) ?: return
 
         textQuery = "UPDATE \$Спр.ПеремещенияПаллет " +
                     "SET " +
@@ -454,7 +451,7 @@ class YapItem : BarcodeDataReceiver() {
                     "WHERE \$Спр.ПеремещенияПаллет .id = :Pallet "
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         textQuery = ss.querySetParam(textQuery, "EmployerID", ss.FEmployer.id)
-        textQuery = ss.querySetParam(textQuery, "Pallet", FPallet)
+        textQuery = ss.querySetParam(textQuery, "Pallet", ss.FPallet)
         var tmpDR = ss.executeWithReadNew(textQuery) ?: return
     }
 }

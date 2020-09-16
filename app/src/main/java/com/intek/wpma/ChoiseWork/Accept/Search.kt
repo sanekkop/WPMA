@@ -16,11 +16,9 @@ import com.intek.wpma.ParentForm
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefPalleteMove
 import com.intek.wpma.SQL.SQL1S.FBarcodePallet
-import com.intek.wpma.SQL.SQL1S.FPallet
 import com.intek.wpma.SQL.SQL1S.sqlToDateTime
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_accept.*
-
 
 class Search : BarcodeDataReceiver() {
 
@@ -62,8 +60,8 @@ class Search : BarcodeDataReceiver() {
         if (ss.FPrinter.selected) {
             printPal.text = ss.FPrinter.path
         }
-        if (FPallet != "") {
-            pal.foundID(FPallet)
+            if (ss.FPallet != "") {
+            pal.foundID(ss.FPallet)
             palletPal.text = pal.pallete
         }
 
@@ -72,22 +70,17 @@ class Search : BarcodeDataReceiver() {
         FExcStr.setOnTouchListener(fun(v : View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
-                //true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
                     val backAcc = Intent(this, YapItem::class.java)
                     backAcc.putExtra("ParentForm", "Search")
                     backAcc.putExtra("Docs", iddoc)
-                    backAcc.putExtra("FPrinter", printPal.text.toString())
-                    backAcc.putExtra("FPallet", palletPal.text.toString())
                     startActivity(backAcc)
                     finish()
                 } else if (event.x > oldx) {
                     val backAcc = Intent(this, NoneItem::class.java)
                     backAcc.putExtra("ParentForm", "Search")
                     backAcc.putExtra("Docs", iddoc)
-                    backAcc.putExtra("FPrinter", printPal.text.toString())
-                    backAcc.putExtra("FPallet", palletPal.text.toString())
                     startActivity(backAcc)
                     finish()
                 }
@@ -341,14 +334,15 @@ class Search : BarcodeDataReceiver() {
             printPal.text = ss.FPrinter.path
             return true
         }
+
         if (!ss.FPrinter.selected) {
             badVoise()
             FExcStr.text = "Не выбран принтер!"
             return false
         }
-        if (FPallet == "") {
-            scanPalletBarcode(FPallet)
-            pal.foundID(FPallet)
+        if (palletPal.text == "НЕТ ПАЛЛЕТЫ") {
+            scanPalletBarcode(ss.FPallet)
+            pal.foundID(ss.FPallet)
             palletPal.text = pal.pallete
             goodVoise()
         }
@@ -375,8 +369,6 @@ class Search : BarcodeDataReceiver() {
             val backAcc = Intent(this, NoneItem::class.java)
             backAcc.putExtra("ParentForm", "Search")
             backAcc.putExtra("Docs", iddoc)
-            backAcc.putExtra("FPrinter", printPal.text.toString())
-            backAcc.putExtra("FPallet", palletPal.text.toString())
             startActivity(backAcc)
             finish()
             return true
@@ -386,8 +378,6 @@ class Search : BarcodeDataReceiver() {
             val backAcc = Intent(this, YapItem::class.java)
             backAcc.putExtra("ParentForm", "Search")
             backAcc.putExtra("Docs", iddoc)
-            backAcc.putExtra("FPrinter", printPal.text.toString())
-            backAcc.putExtra("FPallet", palletPal.text.toString())
             startActivity(backAcc)
             finish()
             return true
@@ -400,8 +390,8 @@ class Search : BarcodeDataReceiver() {
         var textQuery = "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, Employer, @result out; select @result;"
         textQuery = ss.querySetParam(textQuery, "Barcode", barcode)
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-        FBarcodePallet = barcode
-        FPallet = ss.executeScalar(textQuery) ?: return
+        ss.FBarcodePallet = barcode
+        ss.FPallet = ss.executeScalar(textQuery) ?: return
 
         textQuery = "UPDATE \$Спр.ПеремещенияПаллет " +
                     "SET " +
@@ -413,7 +403,7 @@ class Search : BarcodeDataReceiver() {
                     "WHERE \$Спр.ПеремещенияПаллет .id = :Pallet "
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         textQuery = ss.querySetParam(textQuery, "EmployerID", ss.FEmployer.id)
-        textQuery = ss.querySetParam(textQuery, "Pallet", FPallet)
+        textQuery = ss.querySetParam(textQuery, "Pallet", ss.FPallet)
         var tmpDR = ss.executeWithReadNew(textQuery) ?: return
            }
 }

@@ -18,10 +18,10 @@ import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.Model.Model
 import com.intek.wpma.ParentForm
 import com.intek.wpma.R
+import com.intek.wpma.Ref.RefItem
 import com.intek.wpma.Ref.RefPalleteMove
 import com.intek.wpma.SQL.SQL1S
 import com.intek.wpma.SQL.SQL1S.Const
-import com.intek.wpma.SQL.SQL1S.FPallet
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_none_item.*
 
@@ -34,9 +34,12 @@ class NoneItem : BarcodeDataReceiver() {
     private var currentLine:Int = 2
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
     var noneAccItem : MutableList<MutableMap<String, String>> = mutableListOf()
-    var artNeed : String = ""
-    var artSearch : String = ""
-    val pal = RefPalleteMove()
+    var artNeed : String = ""     //артикул, по которому можно искать
+    var artSearch : String = ""   //а этот мы будем сравнивать
+    private val pal = RefPalleteMove()
+    private val itm = RefItem()
+    var flagBarcode = ""
+    var itemIDD = ""            //айдишник товара для поиска
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -47,7 +50,7 @@ class NoneItem : BarcodeDataReceiver() {
                     // ту прописываем что делать при событии сканирования
 
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")                //.toString()
                         reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
@@ -67,15 +70,14 @@ class NoneItem : BarcodeDataReceiver() {
         setContentView(R.layout.activity_none_item)
         ParentForm = intent.extras!!.getString("ParentForm")!!
         iddoc = intent.extras!!.getString("Docs")!!
-        printPal.text = intent.extras!!.getString("FPrinter")!!
-        palletPal.text = intent.extras!!.getString("FPallet")!!
+       // printPal.text = intent.extras!!.getString("FPrinter")!!
         title = ss.title
 
         if (ss.FPrinter.selected) {
             printPal.text = ss.FPrinter.path
         }
-        if (FPallet != "") {
-            pal.foundID(FPallet)
+        if (ss.FPallet != "") {
+            pal.foundID(ss.FPallet)
             palletPal.text = pal.pallete
         }
 
@@ -83,10 +85,8 @@ class NoneItem : BarcodeDataReceiver() {
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
-                true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
-                 //   setContentView(R.layout.activity_accept)
                     val backHead = Intent(this, Search::class.java)
                     backHead.putExtra("ParentForm", "NoneItem")
                     backHead.putExtra("FPrint", printPal.text.toString())
@@ -98,21 +98,6 @@ class NoneItem : BarcodeDataReceiver() {
             return true
         })
 
-      /*  FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
-            if (event.action == MotionEvent.ACTION_DOWN) {
-                oldx = event.x
-                true
-            } else if (event.action == MotionEvent.ACTION_MOVE) {
-                if (event.x > oldx) {
-                    val gotoItem = Intent(this, ItemCard::class.java)
-                    gotoItem.putExtra("ParentForm", "NoneItem")
-                    gotoItem.putExtra("itemID", itemID)
-                    startActivity(gotoItem)
-                    finish()
-                }
-            }
-            return true
-        }) */
 
         if (ss.isMobile){
             btnScan.visibility = View.VISIBLE
@@ -209,6 +194,7 @@ class NoneItem : BarcodeDataReceiver() {
         number.textSize = 16F
         number.setTextColor(-0x1000000)
         number.setBackgroundResource(R.drawable.bg)
+        number.setBackgroundColor(Color.GRAY)
         val docum = TextView(this)
         docum.text = "Накл."
         docum.typeface = Typeface.SERIF
@@ -219,6 +205,7 @@ class NoneItem : BarcodeDataReceiver() {
         docum.textSize = 16F
         docum.setTextColor(-0x1000000)
         docum.setBackgroundResource(R.drawable.bg)
+        docum.setBackgroundColor(Color.GRAY)
         val address = TextView(this)
         address.text = "Артикул"
         address.typeface = Typeface.SERIF
@@ -229,6 +216,7 @@ class NoneItem : BarcodeDataReceiver() {
         address.textSize = 16F
         address.setTextColor(-0x1000000)
         address.setBackgroundResource(R.drawable.bg)
+        address.setBackgroundColor(Color.GRAY)
         val boxes = TextView(this)
         boxes.text = "Арт. на"
         boxes.typeface = Typeface.SERIF
@@ -239,6 +227,7 @@ class NoneItem : BarcodeDataReceiver() {
         boxes.textSize = 16F
         boxes.setTextColor(-0x1000000)
         boxes.setBackgroundResource(R.drawable.bg)
+        boxes.setBackgroundColor(Color.GRAY)
         val boxesfact = TextView(this)
         boxesfact.text = "Кол."
         boxesfact.typeface = Typeface.SERIF
@@ -249,6 +238,7 @@ class NoneItem : BarcodeDataReceiver() {
         boxesfact.textSize = 16F
         boxesfact.setTextColor(-0x1000000)
         boxesfact.setBackgroundResource(R.drawable.bg)
+        boxesfact.setBackgroundColor(Color.GRAY)
         val kof = TextView(this)
         kof.text = "Коэф."
         kof.typeface = Typeface.SERIF
@@ -259,6 +249,7 @@ class NoneItem : BarcodeDataReceiver() {
         kof.textSize = 16F
         kof.setTextColor(-0x1000000)
         kof.setBackgroundResource(R.drawable.bg)
+        kof.setBackgroundColor(Color.GRAY)
 
         linearLayout.addView(number)
         linearLayout.addView(docum)
@@ -306,73 +297,67 @@ class NoneItem : BarcodeDataReceiver() {
                 rowTitle1.setBackgroundColor(colorline)
 
                 //добавим столбцы
-                val number = TextView(this)
-                number.text = DR["Number"]
-                number.typeface = Typeface.SERIF
-                number.layoutParams = LinearLayout.LayoutParams(
+                val numBer = TextView(this)
+                numBer.text = DR["Number"]
+                numBer.typeface = Typeface.SERIF
+                numBer.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.05).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                number.gravity = Gravity.CENTER
-                number.textSize = 16F
-                number.setTextColor(-0x1000000)
-                number.setBackgroundResource(R.drawable.bg)
-                val docum = TextView(this)
-                docum.text = DR["DOCNO"]
-                docum.typeface = Typeface.SERIF
-                docum.gravity = Gravity.CENTER
-                docum.layoutParams = LinearLayout.LayoutParams(
+                numBer.gravity = Gravity.CENTER
+                numBer.textSize = 16F
+                numBer.setTextColor(-0x1000000)
+                val dcNum = TextView(this)
+                dcNum.text = DR["DOCNO"]
+                dcNum.typeface = Typeface.SERIF
+                dcNum.gravity = Gravity.CENTER
+                dcNum.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.21).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                docum.textSize = 16F
-                docum.setTextColor(-0x1000000)
-                docum.setBackgroundResource(R.drawable.bg)
-                val address = TextView(this)
-                address.text = DR["Article"].toString().trim()
-                address.typeface = Typeface.SERIF
-                address.layoutParams = LinearLayout.LayoutParams(
+                dcNum.textSize = 16F
+                dcNum.setTextColor(-0x1000000)
+                val addRess = TextView(this)
+                addRess.text = DR["Article"].toString().trim()
+                addRess.typeface = Typeface.SERIF
+                addRess.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.24).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                address.gravity = Gravity.LEFT
-                address.textSize = 16F
-                address.setTextColor(-0x1000000)
-                address.setBackgroundResource(R.drawable.bg)
-                val boxes = TextView(this)
-                boxes.text = DR["ArticleOnPack"].toString().trim()
-                boxes.typeface = Typeface.SERIF
-                boxes.layoutParams = LinearLayout.LayoutParams(
+                addRess.gravity = Gravity.START
+                addRess.textSize = 16F
+                addRess.setTextColor(-0x1000000)
+                val boxES = TextView(this)
+                boxES.text = DR["ArticleOnPack"].toString().trim()
+                boxES.typeface = Typeface.SERIF
+                boxES.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.24).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                boxes.gravity = Gravity.LEFT
-                boxes.textSize = 16F
-                boxes.setTextColor(-0x1000000)
-                boxes.setBackgroundResource(R.drawable.bg)
-                val boxesfact = TextView(this)
-                boxesfact.text = DR["Count"]
-                boxesfact.typeface = Typeface.SERIF
-                boxesfact.layoutParams = LinearLayout.LayoutParams(
+                boxES.gravity = Gravity.START
+                boxES.textSize = 16F
+                boxES.setTextColor(-0x1000000)
+                val boxesFact = TextView(this)
+                boxesFact.text = DR["Count"]
+                boxesFact.typeface = Typeface.SERIF
+                boxesFact.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.13).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                boxesfact.gravity = Gravity.CENTER
-                boxesfact.textSize = 16F
-                boxesfact.setTextColor(-0x1000000)
-                boxesfact.setBackgroundResource(R.drawable.bg)
-                val kof = TextView(this)
-                kof.text = ss.helper.byeTheNull(DR["Coef"].toString()) //обрежем нулики и точку
-                kof.typeface = Typeface.SERIF
-                kof.layoutParams = LinearLayout.LayoutParams(
+                boxesFact.gravity = Gravity.CENTER
+                boxesFact.textSize = 16F
+                boxesFact.setTextColor(-0x1000000)
+                val koEf = TextView(this)
+                koEf.text = ss.helper.byeTheNull(DR["Coef"].toString()) //обрежем нулики и точку
+                koEf.typeface = Typeface.SERIF
+                koEf.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.13).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                kof.gravity = Gravity.CENTER
-                kof.textSize = 16F
-                kof.setTextColor(-0x1000000)
-                kof.setBackgroundResource(R.drawable.bg)
+                koEf.gravity = Gravity.CENTER
+                koEf.textSize = 16F
+                koEf.setTextColor(-0x1000000)
 
-                linearLayout1.addView(number)
-                linearLayout1.addView(docum)
-                linearLayout1.addView(address)
-                linearLayout1.addView(boxes)
-                linearLayout1.addView(boxesfact)
-                linearLayout1.addView(kof)
+                linearLayout1.addView(numBer)
+                linearLayout1.addView(dcNum)
+                linearLayout1.addView(addRess)
+                linearLayout1.addView(boxES)
+                linearLayout1.addView(boxesFact)
+                linearLayout1.addView(koEf)
 
                 rowTitle1.addView(linearLayout1)
                 rowTitle1.setBackgroundColor(Color.WHITE)
@@ -420,7 +405,6 @@ class NoneItem : BarcodeDataReceiver() {
 
     private fun reactionBarcode(Barcode: String): Boolean {
         val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
-
         if (ss.isSC(idd, "Принтеры")) {
             printPal.text = "'принтер не выбран'"
             if(!ss.FPrinter.foundIDD(idd)) {
@@ -435,18 +419,38 @@ class NoneItem : BarcodeDataReceiver() {
             FExcStr.text = "Не выбран принтер!"
             return false
         }
-        if (FPallet == "") {
-            palletPal.text = "НЕТ ПАЛЛЕТЫ"
-            scanPalletBarcode(FPallet)
-            pal.foundID(FPallet)
-            palletPal.text = pal.pallete
-            goodVoise()
-        }
-        else {
+        if (palletPal.text == "НЕТ ПАЛЛЕТЫ") {
+                scanPalletBarcode(ss.FPallet)
+                pal.foundID(ss.FPallet)
+                palletPal.text = pal.pallete
+                goodVoise()
+                return true
+            }
+        if (palletPal.text != pal.pallete){
             palletPal.text = "НЕТ ПАЛЛЕТЫ"
             FExcStr.text = "Не выбрана паллета!"
             badVoise()
-            return false
+        }
+
+        //если таковой имеется, то присваеваем айдишник и ищем в списке непринятого
+        if (itm.foundBarcode(Barcode) == true) {
+            itemIDD = itm.fID.toString().trim()
+            for (DR in noneAccItem) {
+                if (itemIDD == DR["id"].toString().trim()) {
+                    flagBarcode = "1"
+                    break
+                }
+            }
+            //если товар есть в списке, переходим в карточку
+            val gotoItem = Intent(this, ItemCard::class.java)
+            gotoItem.putExtra("ParentForm", "NoneItem")
+            gotoItem.putExtra("itemI", itm.fID)
+            gotoItem.putExtra("flagBarcode", flagBarcode)
+            startActivity(gotoItem)
+            finish()
+        } else {
+            FExcStr.text = "С таким штрихкодом товар не найден!"
+            badVoise()
         }
         return true
     }
@@ -464,15 +468,13 @@ class NoneItem : BarcodeDataReceiver() {
         if (ss.helper.whatDirection(keyCode) == "Right") {
             val backHead = Intent(this, Search::class.java)
             backHead.putExtra("ParentForm", "NoneItem")
-            backHead.putExtra("FPrint", printPal.text)
-            backHead.putExtra("FPallet", palletPal.text)
             startActivity(backHead)
             finish()
             return true
         }
 
         if (ss.helper.whatInt(keyCode) != -1) {             //артикуля, ля, ля, ля
-            searchArt.text = searchArt.text.toString().trim() + ss.helper.whatInt(keyCode).toString()
+            searchArt.text = (searchArt.text.toString().trim() + ss.helper.whatInt(keyCode).toString())
             refreshActivity()
         }
 
@@ -481,9 +483,11 @@ class NoneItem : BarcodeDataReceiver() {
             badVoise()
             return false
         } else if (keyCode == 66 && palletPal.text == pal.pallete) {
+            flagBarcode = "0"
             val gotoItem = Intent(this, ItemCard::class.java)
             gotoItem.putExtra("ParentForm", "NoneItem")
             gotoItem.putExtra("itemID", itemID)
+            gotoItem.putExtra("flagBarcode", flagBarcode)
             startActivity(gotoItem)
             finish()
             return true
@@ -497,15 +501,6 @@ class NoneItem : BarcodeDataReceiver() {
                 refreshActivity()
             } else refreshActivity()
         }
-
-        /* карточка товара
-        if (ss.helper.whatDirection(keyCode) == "Left") {
-            val goItCard = Intent(this, ItemCard::class.java)
-            goItCard.putExtra(ParentForm, "NoneItem")
-            startActivity(goItCard)
-            finish()
-            return true
-        }*/
         return false
     }
 
@@ -513,8 +508,8 @@ class NoneItem : BarcodeDataReceiver() {
         var textQuery = "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, Employer, @result out; select @result;"
         textQuery = ss.querySetParam(textQuery, "Barcode", barcode)
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-        SQL1S.FBarcodePallet = barcode
-        FPallet = ss.executeScalar(textQuery) ?: return
+        ss.FBarcodePallet = barcode
+        ss.FPallet = ss.executeScalar(textQuery) ?: return
 
         textQuery = "UPDATE \$Спр.ПеремещенияПаллет " +
                     "SET " +
@@ -526,7 +521,8 @@ class NoneItem : BarcodeDataReceiver() {
                     "WHERE \$Спр.ПеремещенияПаллет .id = :Pallet "
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         textQuery = ss.querySetParam(textQuery, "EmployerID", ss.FEmployer.id)
-        textQuery = ss.querySetParam(textQuery, "Pallet", FPallet)
+        textQuery = ss.querySetParam(textQuery, "Pallet", ss.FPallet)
         var tmpDR = ss.executeWithReadNew(textQuery) ?: return
     }
+
 }

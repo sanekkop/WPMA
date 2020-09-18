@@ -20,6 +20,10 @@ import com.intek.wpma.Helpers.Translation
 import com.intek.wpma.R
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_loading.*
+import kotlinx.android.synthetic.main.activity_loading.FExcStr
+import kotlinx.android.synthetic.main.activity_loading.lblPlacer
+import kotlinx.android.synthetic.main.activity_loading.table
+import kotlinx.android.synthetic.main.activity_show_box.*
 
 
 class Loading : BarcodeDataReceiver() {
@@ -115,7 +119,27 @@ class Loading : BarcodeDataReceiver() {
                 completeLodading()
             }
         }
-
+        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+            if (event.action == MotionEvent.ACTION_DOWN) {
+                oldx = event.x
+            } else if (event.action == MotionEvent.ACTION_MOVE) {
+                if (event.x > oldx + 200) {
+                    val showInfo = Intent(this, ShowInfo::class.java)
+                    showInfo.putExtra("Number",currentLineWayBillDT["ProposalNumber"].toString())
+                    showInfo.putExtra("Doc",currentLineWayBillDT["Doc"].toString())
+                    startActivity(showInfo)
+                    finish()
+                }
+                if (event.x < oldx - 200) {
+                    val showInfo = Intent(this, ShowBox::class.java)
+                    showInfo.putExtra("AdressCompl",currentLineWayBillDT["AdressCompl"].toString())
+                    showInfo.putExtra("Doc",currentLineWayBillDT["Doc"].toString())
+                    startActivity(showInfo)
+                    finish()
+                }
+            }
+            return true
+        })
 
         toModeLoadingInicialization()
     }
@@ -503,6 +527,8 @@ class Loading : BarcodeDataReceiver() {
         currentLineWayBillDT["ProposalNumber"] = wayBillDT[0]["ProposalNumber"].toString()
         currentLineWayBillDT["Doc"] = wayBillDT[0]["Doc"].toString()
         currentLineWayBillDT["AdressCounter"] = wayBillDT[0]["AdressCounter"].toString()
+        currentLineWayBillDT["AdressCompl"] = wayBillDT[0]["AdressCompl"].toString()
+
         curentAction = Action.Loading
         refreshActivity()
         return
@@ -539,7 +565,6 @@ class Loading : BarcodeDataReceiver() {
                             "right(\$Спр.МестаПогрузки.Док , 9) as Doc " +
                             "from \$Спр.МестаПогрузки (nolock) where id = :id"
                 textQuery = ss.querySetParam(textQuery, "id", id)
-                textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
                 val dt = ss.executeWithReadNew(textQuery)
                 if (dt == null )
                 {
@@ -681,48 +706,59 @@ class Loading : BarcodeDataReceiver() {
             finish()
             return true
         }
-        if (ss.helper.whatDirection(keyCode) == "Right")
-        {
-            //переход в просмотр состояния
-            val showInfo = Intent(this, ShowInfo::class.java)
-            showInfo.putExtra("ParentForm", "Loading")
-            showInfo.putExtra("Number",currentLineWayBillDT["ProposalNumber"].toString())
-            showInfo.putExtra("Doc",currentLineWayBillDT["Doc"].toString())
-            startActivity(showInfo)
-            finish()
-            return true
+        when {
+            ss.helper.whatDirection(keyCode) == "Right" -> {
+                //переход в просмотр состояния
+                val showInfo = Intent(this, ShowInfo::class.java)
+                showInfo.putExtra("ParentForm", "Loading")
+                showInfo.putExtra("Number",currentLineWayBillDT["ProposalNumber"].toString())
+                showInfo.putExtra("Doc",currentLineWayBillDT["Doc"].toString())
+                startActivity(showInfo)
+                finish()
+                return true
+            }
+            ss.helper.whatDirection(keyCode) == "Left" -> {
+                //переход в просмотр состояния
+                val showInfo = Intent(this, ShowBox::class.java)
+                showInfo.putExtra("AdressCompl",currentLineWayBillDT["AdressCompl"].toString())
+                showInfo.putExtra("Doc",currentLineWayBillDT["Doc"].toString())
+                startActivity(showInfo)
+                finish()
+                return true
+            }
+            ss.helper.whatDirection(keyCode) in listOf("Down","Up") -> {
+                table.getChildAt(currentLine).isFocusable = false
+                table.getChildAt(currentLine).setBackgroundColor(Color.WHITE)
+                if (ss.helper.whatDirection(keyCode) == "Down")
+                {
+                    if (currentLine < wayBillDT.count()) currentLine++ else currentLine = 1
+                }
+                else {
+                    if (currentLine > 1) currentLine-- else currentLine = wayBillDT.count()
+                }
+                currentLineWayBillDT["ProposalNumber"] = wayBillDT[currentLine-1]["ProposalNumber"].toString()
+                currentLineWayBillDT["Doc"] = wayBillDT[currentLine-1]["Doc"].toString()
+                currentLineWayBillDT["AdressCounter"] = wayBillDT[currentLine-1]["AdressCounter"].toString()
+                currentLineWayBillDT["AdressCompl"] = wayBillDT[currentLine-1]["AdressCompl"].toString()
+                //теперь подкрасим строку серым
+                table.getChildAt(currentLine).setBackgroundColor(Color.GRAY)
+                table.getChildAt(currentLine).isFocusable = true
+                return false
+            }
+            //Если Нажали DEL
+            keyCode == 67 -> {
+                //еслинажали финиш, значит переходим в режим погрузки
+                if (curentAction == Action.Inicialization) {
+                    completeLoadingInicialization()
+                }
+                else
+                {
+                    completeLodading()
+                }
+                return true
+            }
+            else -> return false
         }
-        else if(ss.helper.whatDirection(keyCode) in listOf("Down","Up")){
-            table.getChildAt(currentLine).isFocusable = false
-            table.getChildAt(currentLine).setBackgroundColor(Color.WHITE)
-            if (ss.helper.whatDirection(keyCode) == "Down")
-            {
-                if (currentLine < wayBillDT.count()) currentLine++ else currentLine = 1
-            }
-            else {
-                if (currentLine > 1) currentLine-- else currentLine = wayBillDT.count()
-            }
-            currentLineWayBillDT["ProposalNumber"] = wayBillDT[currentLine-1]["ProposalNumber"].toString()
-            currentLineWayBillDT["Doc"] = wayBillDT[currentLine-1]["Doc"].toString()
-            currentLineWayBillDT["AdressCounter"] = wayBillDT[currentLine-1]["AdressCounter"].toString()
-            //теперь подкрасим строку серым
-            table.getChildAt(currentLine).setBackgroundColor(Color.GRAY)
-            table.getChildAt(currentLine).isFocusable = true
-            return false
-        }
-        //Если Нажали DEL
-        else if (keyCode == 67) {
-            //еслинажали финиш, значит переходим в режим погрузки
-            if (curentAction == Action.Inicialization) {
-                completeLoadingInicialization()
-            }
-            else
-            {
-                completeLodading()
-            }
-            return true
-        }
-        return false
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -812,38 +848,30 @@ class Loading : BarcodeDataReceiver() {
             rowTitle.setOnTouchListener { v, event ->
 
                 if (event.action == MotionEvent.ACTION_DOWN) {
-                    oldx = event.x
                     var i = 0
-                    while (i < table.childCount)
-                    {
-                        if (rowTitle != table.getChildAt(i))
-                        {
+                    while (i < table.childCount) {
+                        if (rowTitle != table.getChildAt(i)) {
                             table.getChildAt(i).setBackgroundColor(Color.WHITE)
-                        }
-                        else
-                        {
+                        } else {
                             currentLine = i
                             rowTitle.setBackgroundColor(Color.GRAY)
                             for (rowCDT in wayBillDT) {
-                                if (((rowTitle.getChildAt(0) as ViewGroup).getChildAt(1) as TextView).text.toString() == rowCDT["ProposalNumber"]) {
-                                    currentLineWayBillDT["ProposalNumber"] = rowCDT["ProposalNumber"].toString()
+                                if (((rowTitle.getChildAt(0) as ViewGroup).getChildAt(1) as TextView).text.toString() == rowCDT["ProposalNumber"].toString()
+                                        .substring(4)
+                                ) {
+                                    currentLineWayBillDT["ProposalNumber"] =
+                                        rowCDT["ProposalNumber"].toString()
                                     currentLineWayBillDT["Doc"] = rowCDT["Doc"].toString()
-                                    currentLineWayBillDT["AdressCounter"] = rowCDT["AdressCounter"].toString()
+                                    currentLineWayBillDT["AdressCounter"] =
+                                        rowCDT["AdressCounter"].toString()
+                                    currentLineWayBillDT["AdressCompl"] =
+                                        rowCDT["AdressCompl"].toString()
                                 }
                             }
                         }
                         i++
                     }
-                    true
-                } else if (event.action == MotionEvent.ACTION_MOVE) {
-                    if (event.x > oldx + 200) {
-                        val showInfo = Intent(this, ShowInfo::class.java)
-                        showInfo.putExtra("ParentForm", "Loading")
-                        showInfo.putExtra("Number",currentLineWayBillDT["ProposalNumber"].toString())
-                        showInfo.putExtra("Doc",currentLineWayBillDT["Doc"].toString())
-                        startActivity(showInfo)
-                        finish()
-                    }
+
                 }
                 true
             }
@@ -863,7 +891,7 @@ class Loading : BarcodeDataReceiver() {
             number.textSize = 20F
             number.setTextColor(-0x1000000)
             val docum = TextView(this)
-            docum.text = rowDT["ProposalNumber"]
+            docum.text = rowDT["ProposalNumber"].toString().substring(4)
             docum.typeface = Typeface.SERIF
             docum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.32).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             docum.gravity = Gravity.CENTER

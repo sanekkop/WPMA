@@ -13,15 +13,15 @@ object ConstantsDepot {
     private var FItemForUnits = SS.getVoidID()
 
     val OrderControl:Boolean get() {condRefresh(); return (FSettingsMOD.substring(13, 14) == "0")}
-    val BoxSetOn:Boolean get() { condRefresh(); return (FSettingsMOD.substring(30, 31) == "0") }
-    val ImageOn:Boolean get() { condRefresh(); return (FSettingsMOD.substring(24, 25) == "0") }
+    val boxSetOn:Boolean get() { condRefresh(); return (FSettingsMOD.substring(30, 31) == "0") }
+    val imageOn:Boolean get() { condRefresh(); return (FSettingsMOD.substring(24, 25) == "0") }
     //отключена
-    val StopCorrect:Boolean get() { /*CondRefresh(); return (SS.SettingsMOD.substring(30, 31) == "0")  */ return false }
+    val stopCorrect:Boolean get() { /*CondRefresh(); return (SS.SettingsMOD.substring(30, 31) == "0")  */ return false }
     val CarsCount:String get() { condRefresh(); return FSettingsMOD.substring(26, 27) }
 
-    var MainWarehouse:String = FMainWarehouse
+    var mainWarehouse:String = FMainWarehouse
     /// Товар для единиц из подчинения которого будет подсасывать новые единицы
-    var ItemForUnits =  FItemForUnits
+    var itemForUnits =  FItemForUnits
 
     /// Штамп последнего обновления данных из конфы
     private var refreshTimestamp:Int = 0

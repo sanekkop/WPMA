@@ -94,6 +94,7 @@ class Downing : BarcodeDataReceiver() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_downing)
+        val oldMode = ss.CurrentMode
 
         ss.CurrentMode = Global.Mode.Down
         title = ss.title
@@ -135,8 +136,26 @@ class Downing : BarcodeDataReceiver() {
                 }
             }
         }
+        if (oldMode == Global.Mode.ChoiseDown) {
+            toModeDown()
+        }
+        else {
+            try {
+                refreshActivity()
+            } catch (e: Exception) {
+                val toast = Toast.makeText(
+                    applicationContext,
+                    "Ошибка перехода в режим",
+                    Toast.LENGTH_LONG
+                )
+                toast.show()
+                ss.FEmployer = RefEmployer()
+                val mainInit = Intent(this, MainActivity::class.java)
+                startActivity(mainInit)
+                finish()
+            }
 
-        toModeDown()
+        }
     }
 
     private fun toModeDown() {

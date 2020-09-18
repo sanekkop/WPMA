@@ -20,7 +20,6 @@ import kotlinx.android.synthetic.main.activity_free_complectation.btnCansel
 import kotlinx.android.synthetic.main.activity_free_complectation.btnScan
 import kotlinx.android.synthetic.main.activity_free_complectation.lblInfo1
 import kotlinx.android.synthetic.main.activity_free_complectation.lblState
-import kotlinx.android.synthetic.main.activity_new_complectation.*
 
 
 class FreeComplectation : BarcodeDataReceiver() {
@@ -134,7 +133,7 @@ class FreeComplectation : BarcodeDataReceiver() {
         })
         toModeFreeDownComplete()
     }
-    fun loadCC(): Boolean {
+    private fun loadCC(): Boolean {
         if (badDoc["ID"] == null) {
             FExcStr.text = "Нет текущего сборочного!"
             return false

@@ -5,7 +5,7 @@ import com.intek.wpma.SQL.SQL1S
 
 class Doc
 {
-    protected var ss: SQL1S = SQL1S
+    private var ss: SQL1S = SQL1S
     private var fRowCount = 0
     private var fID = ""
     private var headerAttributes: MutableMap<String,String> = mutableMapOf()  //Атрибуты ШАПКИ, известные на данный момент.
@@ -81,9 +81,9 @@ class Doc
         return headerAttributes["$typeDoc.$name"].toString()
     } // GetAttributeHeader
 
-    fun SetAttributeHeader(name:String, value:String) {
+    fun setAttributeHeader(name:String, value:String) {
         checkSelect()
-        headerAttributes[typeDoc + "." + name] = value
+        headerAttributes["$typeDoc.$name"] = value
         fModified = true
     } // SetAttributeHeader
 
@@ -113,7 +113,7 @@ class Doc
             return true    //документ не был изменен
         }
         var textQuery =
-        "update DH$" + typeDoc + " set "
+            "update DH$$typeDoc set "
         for (pair in headerAttributes)
         {
             textQuery += "$" + pair.key + " = :param, "

@@ -9,22 +9,20 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
-import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.Global
+import com.intek.wpma.*
 import com.intek.wpma.Helpers.Helper
-import com.intek.wpma.R
 import com.intek.wpma.Ref.Doc
+import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
-import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_unloading.*
 
 
 class UnLoading : BarcodeDataReceiver() {
 
-    var currentAction: Global.ActionSet = Global.ActionSet.ScanBox
-    var adressUnLoad: String = ""
-    var boxUnLoad: String = ""
-    var docUnload = Doc()
+    private var currentAction: Global.ActionSet = Global.ActionSet.ScanBox
+    private var adressUnLoad: String = ""
+    private var boxUnLoad: String = ""
+    private var docUnload = Doc()
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -118,7 +116,13 @@ class UnLoading : BarcodeDataReceiver() {
         if (typeBarcode == "113") {
             //это справочник типовой
             val idd = barcoderes["IDD"].toString()
-            if (ss.isSC(idd, "Секции")) {
+            if (ss.isSC(idd, "Сотрудники")) {
+                ss.FEmployer = RefEmployer()
+                val mainInit = Intent(this, MainActivity::class.java)
+                startActivity(mainInit)
+                finish()
+            }
+            else if (ss.isSC(idd, "Секции")) {
 
                 if (currentAction != Global.ActionSet.ScanAdress) {
                     FExcStr.text = "Неверно! Отсканируйте адрес."

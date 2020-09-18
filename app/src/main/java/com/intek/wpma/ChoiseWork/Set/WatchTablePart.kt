@@ -62,7 +62,7 @@ class WatchTablePart : BarcodeDataReceiver() {
         countFact = intent.extras!!.getString("CountFact")!!.toInt()
         title = ss.title
 
-        var oldx : Float = 0F                      //для свайпа, чтобы посмотреть накладную
+        var oldx = 0F                      //для свайпа, чтобы посмотреть накладную
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x

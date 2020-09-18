@@ -116,8 +116,8 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
                 ReviseMark.scanCodeId = codeId
             }
             "ShowRoute" -> {
-                ShowRoute.scanRes = rawResult.text
-                ShowRoute.scanCodeId = codeId
+                NewComplectation.scanRes = rawResult.text
+                NewComplectation.scanCodeId = codeId
             }
         }
 

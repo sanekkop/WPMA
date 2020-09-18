@@ -16,16 +16,12 @@ import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.Model.Model
 import com.intek.wpma.ParentForm
 import com.intek.wpma.R
-import com.intek.wpma.SQL.SQL1S.Const
-import com.intek.wpma.Model.Model
 import com.intek.wpma.Ref.RefPalleteMove
-import com.intek.wpma.SQL.SQL1S
-import com.intek.wpma.SQL.SQL1S.FBarcodePallet
-import com.intek.wpma.ScanActivity
+import com.intek.wpma.SQL.SQL1S.Const
 import kotlinx.android.synthetic.main.activity_yap_item.*
-import kotlinx.android.synthetic.main.activity_yap_item.FExcStr
 
 class YapItem : BarcodeDataReceiver() {
 
@@ -33,7 +29,7 @@ class YapItem : BarcodeDataReceiver() {
     var number: String = ""
     var barcode: String = ""
     var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
-    val pal = RefPalleteMove()
+    private val pal = RefPalleteMove()
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -74,12 +70,25 @@ class YapItem : BarcodeDataReceiver() {
             palletPal.text = pal.pallete
         }
 
+/*
+        if (currBtn.Name === "btnPrint" || currBtn.Name === "btnPrintCondition") {
+            lblAction.Text = "Команда печати в обработке, подождите..."
+            Refresh()
+            SS.PrintLabels(if (currBtn.Name === "btnPrint") false else true)
+            if (Screan === 1) {
+                pnlCurrent.MoveControls(2 * pnlCurrent.Width, 0)
+                Screan = -1
+                pnlCurrent.GetControlByName("tbFind").Focus()
+            }
+            View()
+            lblAction.Text = SS.ExcStr
+        }
+        break*/
 
         var oldx = 0F
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
-                true
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x > oldx) {
                     val backHead = Intent(this, Search::class.java)
@@ -127,7 +136,7 @@ class YapItem : BarcodeDataReceiver() {
             (ss.widthDisplay * 0.05).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         num.gravity = Gravity.CENTER
-        num.textSize = 12F
+        num.textSize = 14F
         num.setTextColor(-0x1000000)
         val doc = TextView(this)
         doc.text = "Накл."
@@ -136,7 +145,7 @@ class YapItem : BarcodeDataReceiver() {
         doc.layoutParams = LinearLayout.LayoutParams(
             (ss.widthDisplay * 0.15).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
-        doc.textSize = 12F
+        doc.textSize = 14F
         doc.setTextColor(-0x1000000)
         val add = TextView(this)
         add.text = "Инв.Код"
@@ -145,16 +154,16 @@ class YapItem : BarcodeDataReceiver() {
             (ss.widthDisplay * 0.15).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         add.gravity = Gravity.CENTER
-        add.textSize = 12F
+        add.textSize = 14F
         add.setTextColor(-0x1000000)
         val box = TextView(this)
-        box.text = "Наименование"
+        box.text = "Наим."
         box.typeface = Typeface.SERIF
         box.layoutParams = LinearLayout.LayoutParams(
             (ss.widthDisplay * 0.25).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         box.gravity = Gravity.CENTER
-        box.textSize = 12F
+        box.textSize = 14F
         box.setTextColor(-0x1000000)
         val boxf = TextView(this)
         boxf.text = "Кол-во"
@@ -163,7 +172,7 @@ class YapItem : BarcodeDataReceiver() {
             (ss.widthDisplay * 0.15).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         boxf.gravity = Gravity.CENTER
-        boxf.textSize = 12F
+        boxf.textSize = 14F
         boxf.setTextColor(-0x1000000)
         val kof = TextView(this)
         kof.text = "Коэф."
@@ -172,16 +181,16 @@ class YapItem : BarcodeDataReceiver() {
             (ss.widthDisplay * 0.1).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         kof.gravity = Gravity.CENTER
-        kof.textSize = 12F
+        kof.textSize = 14F
         kof.setTextColor(-0x1000000)
         val etik = TextView(this)
-        etik.text = "Этикетка"
+        etik.text = "Этик."
         etik.typeface = Typeface.SERIF
         etik.layoutParams = LinearLayout.LayoutParams(
             (ss.widthDisplay * 0.15).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         etik.gravity = Gravity.CENTER
-        etik.textSize = 12F
+        etik.textSize = 14F
         etik.setTextColor(-0x1000000)
 
         linearLayout1.addView(num)
@@ -261,24 +270,24 @@ class YapItem : BarcodeDataReceiver() {
                 val rowTitle2 = TableRow(this)
 
                 //добавим столбцы
-                val num = TextView(this)
-                num.text = DR["DOCNO"]
-                num.typeface = Typeface.SERIF
-                num.layoutParams = LinearLayout.LayoutParams(
+                val numBB = TextView(this)
+                numBB.text = DR["Number"]
+                numBB.typeface = Typeface.SERIF
+                numBB.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.05).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                num.gravity = Gravity.CENTER
-                num.textSize = 12F
-                num.setTextColor(-0x1000000)
-                val doc = TextView(this)
-                doc.text = DR["iddoc"]
-                doc.typeface = Typeface.SERIF
-                doc.gravity = Gravity.CENTER
-                doc.layoutParams = LinearLayout.LayoutParams(
+                numBB.gravity = Gravity.CENTER
+                numBB.textSize = 14F
+                numBB.setTextColor(-0x1000000)
+                val docUU = TextView(this)
+                docUU.text = DR["DOCNO"]
+                docUU.typeface = Typeface.SERIF
+                docUU.gravity = Gravity.CENTER
+                docUU.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.15).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
-                doc.textSize = 12F
-                doc.setTextColor(-0x1000000)
+                docUU.textSize = 14F
+                docUU.setTextColor(-0x1000000)
                 val address = TextView(this)
                 address.text = DR["InvCode"]
                 address.typeface = Typeface.SERIF
@@ -286,16 +295,16 @@ class YapItem : BarcodeDataReceiver() {
                     (ss.widthDisplay * 0.15).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 address.gravity = Gravity.CENTER
-                address.textSize = 12F
+                address.textSize = 14F
                 address.setTextColor(-0x1000000)
                 val boxes = TextView(this)
-                boxes.text = DR["ItemName"]
+                boxes.text = DR["ItemName"].toString().substring(0,7)
                 boxes.typeface = Typeface.SERIF
                 boxes.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.25).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 boxes.gravity = Gravity.CENTER
-                boxes.textSize = 12F
+                boxes.textSize = 14F
                 boxes.setTextColor(-0x1000000)
                 val boxesfact = TextView(this)
                 boxesfact.text = DR["Count"]
@@ -304,16 +313,16 @@ class YapItem : BarcodeDataReceiver() {
                     (ss.widthDisplay * 0.15).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 boxesfact.gravity = Gravity.CENTER
-                boxesfact.textSize = 12F
+                boxesfact.textSize = 14F
                 boxesfact.setTextColor(-0x1000000)
                 val koef = TextView(this)
-                koef.text = DR["Coef"]
+                koef.text = ss.helper.byeTheNull(DR["Coef"].toString()) //обрежем нулики и точку
                 koef.typeface = Typeface.SERIF
                 koef.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.1).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 koef.gravity = Gravity.CENTER
-                koef.textSize = 12F
+                koef.textSize = 14F
                 koef.setTextColor(-0x1000000)
                 val etiks = TextView(this)
                 etiks.text = DR["LabelCount"]
@@ -322,11 +331,11 @@ class YapItem : BarcodeDataReceiver() {
                     (ss.widthDisplay * 0.15).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 etiks.gravity = Gravity.CENTER
-                etiks.textSize = 12F
+                etiks.textSize = 14F
                 etiks.setTextColor(-0x1000000)
 
-                linearLayout2.addView(num)
-                linearLayout2.addView(doc)
+                linearLayout2.addView(numBB)
+                linearLayout2.addView(docUU)
                 linearLayout2.addView(address)
                 linearLayout2.addView(boxes)
                 linearLayout2.addView(boxesfact)

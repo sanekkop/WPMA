@@ -117,11 +117,11 @@ class Search : BarcodeDataReceiver() {
         number.textSize = 14F
         number.setTextColor(-0x1000000)
         val docum = TextView(this)
-        docum.text = "Накладная"
+        docum.text = "Накл."
         docum.typeface = Typeface.SERIF
         docum.gravity = Gravity.CENTER
         docum.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.18).toInt(),
+            (ss.widthDisplay * 0.25).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         docum.textSize = 14F
         docum.setTextColor(-0x1000000)
@@ -129,25 +129,25 @@ class Search : BarcodeDataReceiver() {
         address.text = "Дата"
         address.typeface = Typeface.SERIF
         address.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.2).toInt(),
+            (ss.widthDisplay * 0.22).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         address.gravity = Gravity.CENTER
         address.textSize = 14F
         address.setTextColor(-0x1000000)
         val boxes = TextView(this)
-        boxes.text = "Ост-сь"
+        boxes.text = "Ост."
         boxes.typeface = Typeface.SERIF
         boxes.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.13).toInt(),
+            (ss.widthDisplay * 0.1).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
-        boxes.gravity = Gravity.CENTER
+        boxes.gravity = Gravity.CENTER_HORIZONTAL
         boxes.textSize = 14F
         boxes.setTextColor(-0x1000000)
         val boxesfact = TextView(this)
         boxesfact.text = "Поставщик"
         boxesfact.typeface = Typeface.SERIF
         boxesfact.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.44).toInt(),
+            (ss.widthDisplay * 0.4).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT)
         boxesfact.gravity = Gravity.CENTER
         boxesfact.textSize = 14F
@@ -214,7 +214,7 @@ class Search : BarcodeDataReceiver() {
                 doc.typeface = Typeface.SERIF
                 doc.gravity = Gravity.CENTER
                 doc.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.18).toInt(),
+                    (ss.widthDisplay * 0.25).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 doc.textSize = 14F
                 doc.setTextColor(-0x1000000)
@@ -223,7 +223,7 @@ class Search : BarcodeDataReceiver() {
                 addr.text = sqlToDateTime(DR["DateDoc"].toString())
                 addr.typeface = Typeface.SERIF
                 addr.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.2).toInt(),
+                    (ss.widthDisplay * 0.22).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 addr.gravity = Gravity.CENTER
                 addr.textSize = 14F
@@ -232,7 +232,7 @@ class Search : BarcodeDataReceiver() {
                 box.text = DR["CountRow"]
                 box.typeface = Typeface.SERIF
                 box.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.13).toInt(),
+                    (ss.widthDisplay * 0.1).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 box.gravity = Gravity.CENTER
                 box.textSize = 14F
@@ -241,7 +241,7 @@ class Search : BarcodeDataReceiver() {
                 boxf.text = DR["Client"].toString().trim()
                 boxf.typeface = Typeface.SERIF
                 boxf.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.44).toInt(),
+                    (ss.widthDisplay * 0.4).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT)
                 boxf.gravity = Gravity.CENTER
                 boxf.textSize = 14F

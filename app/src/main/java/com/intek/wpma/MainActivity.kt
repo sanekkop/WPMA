@@ -90,8 +90,9 @@ class MainActivity :  BarcodeDataReceiver() {
         ss.CurrentMode = Global.Mode.Main
         ss.isMobile = checkCameraHardware(this)
         ss.FEmployer = RefEmployer()
-        ss.badvoise.load(this,R.raw.bad,1)
-        ss.goodvoise.load(this,R.raw.good,1)
+        ss.badvoise.load(this, R.raw.bad,1)
+        ss.goodvoise.load(this, R.raw.good,1)
+        ss.clickvoise.load(this, R.raw.click, 1)
         if(ss.isMobile) {
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {

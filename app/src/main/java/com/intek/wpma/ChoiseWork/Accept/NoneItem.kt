@@ -166,7 +166,7 @@ class NoneItem : BarcodeDataReceiver() {
         val model = Model()
         textQuery = ss.querySetParam(textQuery, "$iddoc", iddoc)
         textQuery = ss.querySetParam(textQuery, "OKEIPackage", model.okeiPackage)
-        textQuery = ss.querySetParam(textQuery, "Warehouse", Const.MainWarehouse)
+        textQuery = ss.querySetParam(textQuery, "Warehouse", ss.Const.mainWarehouse)
         noneAccItem = ss.executeWithReadNew(textQuery) ?: return
         refreshActivity() //теперь рисуем
     }

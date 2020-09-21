@@ -259,7 +259,7 @@ class YapItem : BarcodeDataReceiver() {
         val model = Model()
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id) //ss.EmployerID)
         textQuery = ss.querySetParam(textQuery, "OKEIPackage", model.okeiPackage)
-        textQuery = ss.querySetParam(textQuery, "Warehouse", Const.MainWarehouse)
+        textQuery = ss.querySetParam(textQuery, "Warehouse", ss.Const.mainWarehouse)
         val datT = ss.executeWithReadNew(textQuery) ?: return
 
         if (datT.isNotEmpty()) {

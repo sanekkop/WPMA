@@ -38,6 +38,7 @@ object SQL1S : SQLSynchronizer() {
     var CurrentMode: Global.Mode? = null
     val badvoise = SoundPool(1, AudioManager.STREAM_MUSIC,0)
     val goodvoise = SoundPool(1, AudioManager.STREAM_MUSIC,0)
+    val clickvoise = SoundPool(1, AudioManager.STREAM_MUSIC, 0)
     /*Конструктор класса
 
      */

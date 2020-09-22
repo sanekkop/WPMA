@@ -61,6 +61,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
+        onWindowFocusChanged(true)
         Log.d("IntentApiSample: ", "onResume")
         if (scanRes != null) {
             try {
@@ -263,7 +264,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                         " " + ss.helper.timeToString(DR["time1"].toString().toInt()) +
                         " - " + if (DR["time2"] != "0") ss.helper.timeToString(
                     DR["time2"].toString().toInt()
-                ) else "..."
+                )  else  "..."
                 code.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.4).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT

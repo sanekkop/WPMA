@@ -39,6 +39,7 @@ class Loading : BarcodeDataReceiver() {
     private var currentLine:Int = 1 //информация начинается с 2 строки в таблице
     private var currentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
     private var oldx:Float = 0F
+
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
@@ -66,6 +67,7 @@ class Loading : BarcodeDataReceiver() {
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
+        onWindowFocusChanged(true)
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
@@ -303,7 +305,6 @@ class Loading : BarcodeDataReceiver() {
         }
         toModeLoading(wayBill["ID"].toString())
     }
-
     private fun completeLodading() {
         var idSchet = "   " + trans.decTo36(ss.getSynh("Счет"))
         idSchet = idSchet.substring(idSchet.length - 4)
@@ -450,7 +451,6 @@ class Loading : BarcodeDataReceiver() {
         refreshActivity()
         return
     }
-
     private fun toModeLoading(iddoc:String) {
         //Если wayBill еще не выбран, то испавим это недоразумение
 

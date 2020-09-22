@@ -28,6 +28,8 @@ object SQL1S : SQLSynchronizer() {
     var ANDROID_ID: String = "Android_ID"
     var FEmployer: RefEmployer = RefEmployer()
     var FPrinter: RefPrinter = RefPrinter()
+    var FPallet : String = ""
+    var FBarcodePallet = ""
     val Const: ConstantsDepot = ConstantsDepot
     var widthDisplay: Int = 400
     var heightDisplay: Int = 800
@@ -36,6 +38,7 @@ object SQL1S : SQLSynchronizer() {
     var CurrentMode: Global.Mode? = null
     val badvoise = SoundPool(1, AudioManager.STREAM_MUSIC,0)
     val goodvoise = SoundPool(1, AudioManager.STREAM_MUSIC,0)
+    val clickvoise = SoundPool(1, AudioManager.STREAM_MUSIC, 0)
     /*Конструктор класса
 
      */
@@ -154,13 +157,13 @@ object SQL1S : SQLSynchronizer() {
     <param name="Value"></param>
     Устанавливает значение параметра в запросе
      */
+
     fun querySetParam(TextQuery: String, NameParam: String, Value: Any): String {
         return TextQuery.replace(":$NameParam", valueToQuery(Value))
     }
 
     /*
      <param name="Value"></param>
-
      */
     fun valueToQuery(Value: Any): String {
         var result = Value.toString()
@@ -375,11 +378,12 @@ object SQL1S : SQLSynchronizer() {
 
     }
 
-    private fun sqlToDateTime(StrDateTime: String): String {
+    fun sqlToDateTime(StrDateTime: String): String {
         //Пока что без времени
-        return StrDateTime.substring(0, 4) + "." +
-                StrDateTime.substring(4, 6) + "." +
-                StrDateTime.substring(6, 8)
+        return StrDateTime.substring(0, 10)
+       /* return StrDateTime.substring(0, 4) + //"." +
+                StrDateTime.substring(4, 7) + //"." +
+                StrDateTime.substring(7, 10)*/
     }
 
     /// Get extend ID, include ID and 4 symbols determining the type (in 36-dimension system)
@@ -626,5 +630,8 @@ object SQL1S : SQLSynchronizer() {
         }
         else null
     }
+
+
+
 }//class SQLSynhronizer
 

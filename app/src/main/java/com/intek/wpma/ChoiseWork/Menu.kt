@@ -140,11 +140,10 @@ class Menu : BarcodeDataReceiver() {
                 finish()
             }
             1 -> {
-                return
-               /* val accInit = Intent(this, AccMenu::class.java)
+                val accInit = Intent(this, AccMenu::class.java)
                 accInit.putExtra("ParentForm","Menu")
                 startActivity(accInit)
-                finish()*/
+                finish()
             }
         }
     }
@@ -153,6 +152,7 @@ class Menu : BarcodeDataReceiver() {
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
+        onWindowFocusChanged(true)
         Log.d("IntentApiSample: ", "onResume")
         if(MainActivity.scanRes != null){
             try {

@@ -61,6 +61,7 @@ class ChoiseDown : BarcodeDataReceiver() {
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
+        onWindowFocusChanged(true)
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
@@ -153,7 +154,7 @@ class ChoiseDown : BarcodeDataReceiver() {
         btn8.setOnClickListener {
             if (!btn8.isEnabled || progressBar.isVisible) return@setOnClickListener
             FExcStr.text = "Получаю задание..."
-            if (!newComplectationGetFirstOrder()) badVoise() else goodDone()
+            if (!newComplectationGetFirstOrder()) badVoise() else goodVoise()
         }
         btn9.setOnClickListener {
             //это резерв не работает

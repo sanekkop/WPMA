@@ -49,7 +49,6 @@ class SetComplete : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set_complete)
 
-        terminalView.text = ss.terminal
         title = ss.title
 
         if (ss.FPrinter.selected) {
@@ -82,7 +81,6 @@ class SetComplete : BarcodeDataReceiver() {
             ""
         } + dataTable[1][3].trim() + "-" +
                 dataTable[1][4] + " Заявка " + dataTable[1][0] + " (" + dataTable[1][1] + ")"
-
         if (dataTable[1][5].toInt() == 1) DocView.text = "САМОВЫВОЗ" else DocView.text = "ДОСТАВКА"
         //тут этот код дублирую, чтобы поймать нажатие на enter после ввода колва с уже установленным принтером
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
@@ -235,6 +233,7 @@ class SetComplete : BarcodeDataReceiver() {
         super.onResume()
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
+        onWindowFocusChanged(true)
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {

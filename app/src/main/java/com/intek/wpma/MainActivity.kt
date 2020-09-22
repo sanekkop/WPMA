@@ -36,6 +36,7 @@ class MainActivity :  BarcodeDataReceiver() {
                         reactionBarcode(barcode)
                     }
                     catch (e: Exception){
+                        badVoise()
                         val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
                         toast.show()
                     }
@@ -48,6 +49,7 @@ class MainActivity :  BarcodeDataReceiver() {
         //        IntentFilter intentFilter = new IntentFilter("hsm.RECVRBI");
         registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
         claimScanner()
+        onWindowFocusChanged(true)
         Log.d("IntentApiSample: ", "onResume")
         if(scanRes != null){
             try {
@@ -56,6 +58,7 @@ class MainActivity :  BarcodeDataReceiver() {
                 reactionBarcode(barcode)
             }
             catch (e: Exception){
+                badVoise()
                 val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
                 toast.show()
             }
@@ -87,8 +90,9 @@ class MainActivity :  BarcodeDataReceiver() {
         ss.CurrentMode = Global.Mode.Main
         ss.isMobile = checkCameraHardware(this)
         ss.FEmployer = RefEmployer()
-        ss.badvoise.load(this,R.raw.bad,1)
-        ss.goodvoise.load(this,R.raw.good,1)
+        ss.badvoise.load(this, R.raw.bad,1)
+        ss.goodvoise.load(this, R.raw.good,1)
+        ss.clickvoise.load(this, R.raw.click, 1)
         if(ss.isMobile) {
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
@@ -107,6 +111,7 @@ class MainActivity :  BarcodeDataReceiver() {
         val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = ss.vers
         if (!execCommandNoFeedback("GetDateTime", dataMapWrite)) {
+            badVoise()
             val toast = Toast.makeText(applicationContext, "Не удалось подключиться к базе!", Toast.LENGTH_SHORT)
             toast.show()
             return

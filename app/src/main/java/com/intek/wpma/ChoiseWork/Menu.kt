@@ -57,9 +57,7 @@ class Menu : BarcodeDataReceiver() {
             startActivity(0)
         }
         btnTake.setOnClickListener {
-
-            //startActivity(1)
-            return@setOnClickListener
+            startActivity(1)
         }
         btnShipping.setOnClickListener {
             startActivity(3)
@@ -140,7 +138,7 @@ class Menu : BarcodeDataReceiver() {
                 startActivity(revise)
                 finish()
             }
-            /*
+
             1 -> {
 
                 val accInit = Intent(this, AccMenu::class.java)
@@ -149,7 +147,6 @@ class Menu : BarcodeDataReceiver() {
                 finish()
             }
 
-             */
         }
     }
 

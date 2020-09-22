@@ -112,7 +112,6 @@ class ReviseMark : BarcodeDataReceiver() {
     private fun reactionBarcode(Barcode: String): Boolean {
         val helper = Helper()
         val barcoderes = helper.disassembleBarcode(Barcode)
-        val typeBarcode = barcoderes["Type"].toString()
         if (codeId == barcodeId){
             val testBatcode = Barcode.replace("'","''")
             val textQuery =

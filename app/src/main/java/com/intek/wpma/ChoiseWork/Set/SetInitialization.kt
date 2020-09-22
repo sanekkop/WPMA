@@ -726,7 +726,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             //найдем маркировку в справочнике МаркировкаТовара
             val testBatcode = Barcode.replace("'","''")
             textQuery =
-                "SELECT \$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен" +
+                "SELECT \$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен " +
                         "FROM \$Спр.МаркировкаТовара (nolock) " +
                         "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
                         "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' " +
@@ -1315,11 +1315,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 "where iddoc = '${docsSet[0]}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate " +
                 "union all " +
                 "select " +
-                "Mark.\$Спр.МаркировкаТовара.Товар ," +
+                "Mark.\$Спр.МаркировкаТовара.Товар , " +
                 "0, count(*) " +
                 "from \$Спр.МаркировкаТовара as Mark (nolock) " +
                 "where Mark.\$Спр.МаркировкаТовара.ФлагПоступления = 1 and Mark.\$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(
-                    docsSet[0],"КонтрольНабора")}'" +
+                    docsSet[0],"КонтрольНабора")}' " +
                 "and Mark.\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 " +
                 "group by Mark.\$Спр.МаркировкаТовара.Товар " +
                 ") as SetTable " +

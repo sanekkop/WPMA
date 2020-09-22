@@ -49,7 +49,7 @@ class Menu : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
         title = ss.title
-        if (ss.excStr != null && ss.excStr != "" &&  ss.excStr != "null" )
+        if (ss.excStr != "" &&  ss.excStr != "null" )
         {
             FExcStr.text = ss.excStr
         }

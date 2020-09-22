@@ -709,6 +709,7 @@ class Loading : BarcodeDataReceiver() {
         when {
             ss.helper.whatDirection(keyCode) == "Right" -> {
                 //переход в просмотр состояния
+                clickVoise()
                 val showInfo = Intent(this, ShowInfo::class.java)
                 showInfo.putExtra("ParentForm", "Loading")
                 showInfo.putExtra("Number",currentLineWayBillDT["ProposalNumber"].toString())
@@ -719,6 +720,7 @@ class Loading : BarcodeDataReceiver() {
             }
             ss.helper.whatDirection(keyCode) == "Left" -> {
                 //переход в просмотр состояния
+                clickVoise()
                 val showInfo = Intent(this, ShowBox::class.java)
                 showInfo.putExtra("AdressCompl",currentLineWayBillDT["AdressCompl"].toString())
                 showInfo.putExtra("Doc",currentLineWayBillDT["Doc"].toString())
@@ -727,6 +729,7 @@ class Loading : BarcodeDataReceiver() {
                 return true
             }
             ss.helper.whatDirection(keyCode) in listOf("Down","Up") -> {
+                clickVoise()
                 table.getChildAt(currentLine).isFocusable = false
                 table.getChildAt(currentLine).setBackgroundColor(Color.WHITE)
                 if (ss.helper.whatDirection(keyCode) == "Down")

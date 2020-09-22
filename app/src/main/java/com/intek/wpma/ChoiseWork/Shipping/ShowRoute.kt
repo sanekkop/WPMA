@@ -163,11 +163,13 @@ class ShowRoute: NewComplectation() {
     override fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
         if (ss.helper.whatDirection(keyCode) == "Left") {
+            clickVoise()
             ss.CurrentMode = preMode
             finish()
             return true
         }
         else if (ss.helper.whatDirection(keyCode) == "Right") {
+            clickVoise()
             return true
         }
         return super.reactionKey(keyCode, event)

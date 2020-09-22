@@ -817,6 +817,7 @@ open class NewComplectation : BarcodeDataReceiver() {
             return true
         }
         if (ss.helper.whatDirection(keyCode) == "Left") {
+            clickVoise()
             if (!loadCC()) return true
 
             FExcStr.text = "Подгружаю состояние..."
@@ -828,6 +829,7 @@ open class NewComplectation : BarcodeDataReceiver() {
             startActivity(shoiseWorkInit)
             return true
         } else if (ss.helper.whatDirection(keyCode) == "Right") {
+            clickVoise()
             FExcStr.text = "Подгружаю маршрут..."
             preMode = ss.CurrentMode
             ss.CurrentMode = Global.Mode.ShowRoute

@@ -366,6 +366,7 @@ class Search : BarcodeDataReceiver() {
         }
 
         if (ss.helper.whatDirection(keyCode) == "Left") {
+            clickVoise()
             val backAcc = Intent(this, NoneItem::class.java)
             backAcc.putExtra("ParentForm", "Search")
             backAcc.putExtra("Docs", iddoc)
@@ -375,6 +376,7 @@ class Search : BarcodeDataReceiver() {
         }
 
         if (ss.helper.whatDirection(keyCode) == "Right") {
+            clickVoise()
             val backAcc = Intent(this, YapItem::class.java)
             backAcc.putExtra("ParentForm", "Search")
             backAcc.putExtra("Docs", iddoc)

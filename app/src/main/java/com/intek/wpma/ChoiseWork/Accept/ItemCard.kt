@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
+import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import com.intek.wpma.BarcodeDataReceiver
@@ -28,6 +29,7 @@ class ItemCard : BarcodeDataReceiver() {
     var bufferWarehouse = "" //переменка для товара на главном
     var bufferWarehouse2 = ""  //переменка для товара на приходном адресе
     var flagBarcode = ""
+    var flaJoke = 0
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -348,43 +350,69 @@ class ItemCard : BarcodeDataReceiver() {
             return true
         }
 
-        val num1 = numVod1.text.toString().toInt()
-        val num2 = numVod2.text.toString().toInt()
-        val num3 = numVod3.text.toString().toInt()
+        var num1 = numVod1.text.toString().toInt()
+        var num2 = numVod2.text.toString().toInt()
+        var num3 = numVod3.text.toString().toInt()
+        val min1 = minParty.text.toString().toInt()
 
-        //при нажатии на кнопки идет полный пересчет чисел в табличке
+        if (keyCode == 67) {
+            if (num1.toString().isNotEmpty()) {
+                numVod1.text = num1
+                    .toString()
+                    .substring(0, numVod1.text.toString().length - 1)
+                itemCard()
+            } else itemCard()
+            if (num2.toString().isNotEmpty()) {
+                numVod2.text = num1
+                    .toString()
+                    .substring(0, numVod2.text.toString().length - 1)
+                itemCard()
+            } else itemCard()
+            if (num3.toString().isNotEmpty()) {
+                numVod3.text = num1
+                    .toString()
+                    .substring(0, numVod3.text.toString().length - 1)
+                itemCard()
+            } else itemCard()
+        }
+
+
+        //при нажатии на кнопки идет пересчет чисел в табличке
         //substring нужен для удаления нуля, который висит в таблице изначально
         //без изначальных значений (с пустыми значениями) в ячейках крякает приложение при нажатии на стрелочки
             when (ss.helper.whatDirection(keyCode) in listOf("Left","Right", "Up", "Down")) {
-                num1 > 0 -> {
-                    clickVoise()
-                    itemCard()
-                    wtfVod1.text = (
-                            minParty.text.toString().toInt() / numVod1.text.toString().toInt()
-                            ).toString().substring(0,-1)
-                    resTwo.text = (
-                            minParty.text.toString().toInt() / numVod1.text.toString().toInt()
-                            ).toString()
+                (num1 != 0) -> {
+                    return if (flaJoke == 0 || flaJoke == 2 || flaJoke == 3) {
+                        num1 = num1.toString().substring(0, num1.toString().length - 1).toInt()
+                        numVod1.text = num1.toString()
+                        wtfVod1.text = (min1 / num1).toString()
+                        resTwo.text = (min1 / num1).toString()
+                        flaJoke = 1
+                        itemCard()
+                        true
+                    }  else false
                 }
-                num2 > 0 -> {
-                    clickVoise()
-                    itemCard()
-                    wtfVod2.text = (
-                            minParty.text.toString().toInt() / numVod2.text.toString().toInt()
-                            ).toString().substring(0,-1)
-                    resThird.text = (
-                            minParty.text.toString().toInt() / numVod2.text.toString().toInt()
-                            ).toString()
+                (num2 != 0) -> {
+                    return if (flaJoke == 0 || flaJoke == 1 || flaJoke == 3) {
+                        num2 = num2.toString().substring(0, num2.toString().length - 1).toInt()
+                        numVod2.text = num2.toString()
+                        wtfVod2.text = (min1 / num2).toString()
+                        resThird.text = (min1 / num2).toString()
+                        flaJoke = 2
+                        itemCard()
+                        true
+                   } else false
                 }
-                num3 > 0 -> {
-                    clickVoise()
-                    itemCard()
-                    wtfVod3.text = (
-                            minParty.text.toString().toInt() / numVod3.text.toString().toInt()
-                            ).toString().substring(0,-1)
-                    resFor.text = (
-                            minParty.text.toString().toInt() / numVod3.text.toString().toInt()
-                            ).toString()
+                (num3 != 0) -> {
+                    return if (flaJoke == 0 || flaJoke == 1 || flaJoke == 2) {
+                        num3 = num3.toString().substring(0, num3.toString().length - 1).toInt()
+                        numVod3.text = num3.toString()
+                        wtfVod3.text = (min1 / num3).toString()
+                        resFor.text = (min1 / num3).toString()
+                        flaJoke = 3
+                        itemCard()
+                        true
+                    }  else false
                 }
             }
               /*  minParty.text = (

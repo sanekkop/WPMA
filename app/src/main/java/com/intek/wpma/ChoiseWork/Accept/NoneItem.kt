@@ -441,6 +441,7 @@ class NoneItem : BarcodeDataReceiver() {
                     break
                 }
             }
+            goodVoise()
             //если товар есть в списке, переходим в карточку
             val gotoItem = Intent(this, ItemCard::class.java)
             gotoItem.putExtra("ParentForm", "NoneItem")
@@ -466,6 +467,7 @@ class NoneItem : BarcodeDataReceiver() {
         }
 
         if (ss.helper.whatDirection(keyCode) == "Right") {
+            clickVoise()
             val backHead = Intent(this, Search::class.java)
             backHead.putExtra("ParentForm", "NoneItem")
             startActivity(backHead)

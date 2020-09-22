@@ -328,8 +328,8 @@ class FreeComplectation : BarcodeDataReceiver() {
             return true
         }
         if (ss.helper.whatDirection(keyCode) == "Left") {
+            clickVoise()
             if (!loadCC()) return true
-
             FExcStr.text = "Подгружаю состояние..."
             val shoiseWorkInit = Intent(this, ShowInfoNewComp::class.java)
             shoiseWorkInit.putExtra("BadDocID", badDoc["ID"])

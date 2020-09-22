@@ -431,6 +431,7 @@ class YapItem : BarcodeDataReceiver() {
         }
 
         if (ss.helper.whatDirection(keyCode) == "Left") {
+            clickVoise()
             val backHead = Intent(this, Search::class.java)
             backHead.putExtra("ParentForm", "YapItem")
             backHead.putExtra("FPrint", printPal.text.toString())

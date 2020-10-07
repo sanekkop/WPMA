@@ -12,16 +12,16 @@ object ConstantsDepot {
     private var FMainWarehouse:String = SS.getVoidID()
     private var FItemForUnits = SS.getVoidID()
 
-    val OrderControl:Boolean get() {condRefresh(); return (FSettingsMOD.substring(13, 14) == "0")}
-    val boxSetOn:Boolean get() { condRefresh(); return (FSettingsMOD.substring(30, 31) == "0") }
-    val imageOn:Boolean get() { condRefresh(); return (FSettingsMOD.substring(24, 25) == "0") }
+    val OrderControl:Boolean get() {condRefresh(); return (FSettingsMOD.substring(13, 14) != "0")}
+    val boxSetOn:Boolean get() { condRefresh(); return (FSettingsMOD.substring(30, 31) != "0") }
+    val imageOn:Boolean get() { condRefresh(); return (FSettingsMOD.substring(24, 25) != "0") }
     //отключена
     val stopCorrect:Boolean get() { /*CondRefresh(); return (SS.SettingsMOD.substring(30, 31) == "0")  */ return false }
     val CarsCount:String get() { condRefresh(); return FSettingsMOD.substring(26, 27) }
 
-    var mainWarehouse:String = FMainWarehouse
+    val mainWarehouse:String get() {return FMainWarehouse}
     /// Товар для единиц из подчинения которого будет подсасывать новые единицы
-    var itemForUnits =  FItemForUnits
+    val itemForUnits:String get() {return FItemForUnits}
 
     /// Штамп последнего обновления данных из конфы
     private var refreshTimestamp:Int = 0
@@ -36,7 +36,7 @@ object ConstantsDepot {
             refresh(false)
         }
     }
-    fun constantsDepot() {
+    init {
         UpdateInterval = 600 //Раз в 10 минут
         FSettingsMOD = "0000000000000000000000000000000000000000000000000000000"    //default value
         refresh()

@@ -6,6 +6,7 @@ import com.intek.wpma.Global
 import com.intek.wpma.Helpers.ConstantsDepot
 import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.Ref.RefEmployer
+import com.intek.wpma.Ref.RefPalleteMove
 import com.intek.wpma.Ref.RefPrinter
 import net.sourceforge.jtds.jdbc.DateTime
 import java.math.BigInteger
@@ -28,8 +29,8 @@ object SQL1S : SQLSynchronizer() {
     var ANDROID_ID: String = "Android_ID"
     var FEmployer: RefEmployer = RefEmployer()
     var FPrinter: RefPrinter = RefPrinter()
-    var FPallet : String = ""
-    var FBarcodePallet = ""
+    var FPallets:MutableList<MutableMap<String,String>> = mutableListOf()
+    var FPallet = RefPalleteMove()
     val Const: ConstantsDepot = ConstantsDepot
     var widthDisplay: Int = 400
     var heightDisplay: Int = 800

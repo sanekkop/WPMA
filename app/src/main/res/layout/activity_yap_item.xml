@@ -9,71 +9,53 @@
 
     <TextView
         android:id="@+id/head"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:text="Приемка (принятый, печать этикеток)"
         android:textColor="#000"
         android:textSize="20sp"
-        app:layout_constraintBottom_toTopOf="@+id/printPal"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.05"
-        app:layout_constraintWidth_percent="0.99"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.3" />
-
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/printPal"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
+        android:gravity="center"
+        android:text="(принтер не выбран)"
         android:textColor="#228B22"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:text="&lt;принтер не выбран&gt;"
-        app:layout_constraintBottom_toTopOf="@id/scroll"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.07"
-        app:layout_constraintHorizontal_bias="0.004"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/head"
-        app:layout_constraintVertical_bias="0.6"
-        app:layout_constraintWidth_percent="0.6" />
+        app:layout_constraintTop_toBottomOf="@+id/head" />
 
     <TextView
         android:id="@+id/palletPal"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:height="0dp"
+        android:layout_height="wrap_content"
         android:gravity="center"
+        android:text="НЕТ ПАЛЛЕТЫ"
         android:textColor="#228B22"
         android:textSize="16sp"
         android:textStyle="bold"
-        android:text="НЕТ ПАЛЛЕТЫ"
-        app:layout_constraintBottom_toTopOf="@id/scroll"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.07"
-        app:layout_constraintHorizontal_bias="0.985"
-        app:layout_constraintStart_toStartOf="@id/printPal"
-        app:layout_constraintTop_toBottomOf="@id/head"
-        app:layout_constraintVertical_bias="0.603"
-        app:layout_constraintWidth_percent="0.39" />
+        app:layout_constraintStart_toEndOf="@+id/printPal"
+        app:layout_constraintTop_toBottomOf="@+id/head" />
 
     <ScrollView
         android:id="@+id/scroll"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/kolEtik"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.6"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.3"
-        app:layout_constraintWidth_percent="0.99">
+        app:layout_constraintTop_toBottomOf="@+id/palletPal">
 
 
         <TableLayout
@@ -81,24 +63,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
+            android:focusable="true"
             android:gravity="center_horizontal"
             android:scrollbarAlwaysDrawHorizontalTrack="false"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:focusable="true">
+            app:layout_constraintTop_toTopOf="parent">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:clickable="false">
-
-                </TableRow>
-            </LinearLayout>
+                android:orientation="horizontal"/>
 
         </TableLayout>
     </ScrollView>
@@ -107,52 +81,39 @@
         android:id="@+id/etikPol"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginLeft="24dp"
-        android:layout_marginEnd="246dp"
-        android:layout_marginRight="246dp"
         android:text="Этикетки полюбому "
         android:textSize="12sp"
         app:layout_constraintBottom_toTopOf="@id/FExcStr"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/scroll"
         app:layout_constraintWidth_percent="0.4" />
 
     <Button
         android:id="@+id/etik"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginEnd="131dp"
-        android:layout_marginRight="131dp"
         android:text="Этикетки"
         android:textSize="12sp"
         app:layout_constraintBottom_toTopOf="@id/FExcStr"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/etikPol"
-        app:layout_constraintTop_toBottomOf="@id/scroll"
+        app:layout_constraintEnd_toStartOf="@+id/kolEtik"
+        app:layout_constraintStart_toEndOf="@+id/etikPol"
         app:layout_constraintWidth_percent="0.25" />
 
     <TextView
         android:id="@+id/kolEtik"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:textSize="12sp"
         android:focusable="true"
         android:focusableInTouchMode="true"
+        android:textSize="12sp"
         android:visibility="visible"
-        app:layout_constraintBottom_toTopOf="@id/FExcStr"
+        app:layout_constraintBottom_toTopOf="@+id/FExcStr"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/etik"
-        app:layout_constraintTop_toBottomOf="@id/scroll"
-        app:layout_constraintWidth_percent="0.2"
-        app:layout_constraintHeight_percent="0.07"/>
+        app:layout_constraintHeight_percent="0.07"
+        app:layout_constraintWidth_percent="0.2" />
 
     <TextView
         android:id="@+id/FExcStr"
-        android:layout_width="322dp"
+        android:layout_width="match_parent"
         android:layout_height="98dp"
         android:gravity="center"
         android:text="Выберите режим работы"
@@ -160,8 +121,6 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.986" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -49,6 +49,7 @@ class Menu : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
         title = ss.title
+        ss.CurrentMode = Global.Mode.Main
         if (ss.excStr != "" &&  ss.excStr != "null" )
         {
             FExcStr.text = ss.excStr
@@ -119,8 +120,6 @@ class Menu : BarcodeDataReceiver() {
 
         when (num) {
             0 -> {     // режим отбора
-                ss.CurrentMode = Global.Mode.SetInicialization
-                ss.CurrentAction = Global.ActionSet.Waiting
                 val setInit = Intent(this, SetInitialization::class.java)
                 setInit.putExtra("ParentForm","Menu")
                 startActivity(setInit)
@@ -140,11 +139,21 @@ class Menu : BarcodeDataReceiver() {
             }
 
             1 -> {
+                val toast = Toast.makeText(
+                    applicationContext,
+                    "Ошибка перехода в режим.Режим в разработке",
+                    Toast.LENGTH_LONG)
+                toast.show()
+                /*
 
                 val accInit = Intent(this, AccMenu::class.java)
                 accInit.putExtra("ParentForm","Menu")
                 startActivity(accInit)
                 finish()
+
+                 */
+
+
             }
 
         }

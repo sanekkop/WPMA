@@ -18,20 +18,7 @@ import kotlinx.android.synthetic.main.activity_new_complectation.btnScan
 
 open class NewComplectation : BarcodeDataReceiver() {
 
-   /*
-    private var docDown: MutableMap<String, String> = mutableMapOf()
-    private var badDoc: MutableMap<String, String> = mutableMapOf()
-
-    private var downSituation: MutableList<MutableMap<String, String>> = mutableListOf()
-    private var scaningBox = ""
-    private var scaningBoxIddoc = ""
-    private var needAdressComplete = ss.getVoidID()
-
-    private var remain = 0
-    private var lastGoodAdress = ""
-    private var nameLastGoodAdress = ""
-*/
-   var oldx = 0F
+    var oldx = 0F
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""

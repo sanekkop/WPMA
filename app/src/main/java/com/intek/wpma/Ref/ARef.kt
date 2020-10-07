@@ -42,7 +42,7 @@ abstract class ARef {
         }
         val servCount: Int = fieldList.count()    //Количество сервисных полей
         ss.addKnownAttributes(prefix, fieldList)
-        dataMap = ss.getSCData(IDDorID, typeObj, fieldList, dataMap, ThisID)!!
+        dataMap = ss.getSCData(IDDorID, typeObj, fieldList, dataMap, ThisID) ?: return false
         fID = dataMap["ID"].toString()
         fIsMark = (dataMap["ISMARK"].toString() == "1")
         fCode = if (haveCode) dataMap["CODE"].toString() else ""

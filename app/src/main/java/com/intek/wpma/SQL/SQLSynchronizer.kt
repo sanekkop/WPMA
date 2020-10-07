@@ -12,7 +12,7 @@ open class SQLSynchronizer
     private val fServerName: Array<String> = arrayOf("192.168.8.4:57068","192.168.8.5:57068") //Наши серваки
     private val fDBName: String = "int9999001ad1" //База
     //protected val fDBName: String? = "int9999001rab"
-    private val fVers: String = "5.04"    //Номер версии
+    private val fVers: String = "5.03"    //Номер версии
     private var myConnection: Connection? = null
     private var myComand: Statement? = null
     protected var myReader: ResultSet? = null

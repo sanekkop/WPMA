@@ -1,5 +1,7 @@
 package com.intek.wpma
 
+import android.R.bool
+import android.R.string
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -96,7 +98,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
     }
 
     fun clickVoise() {
-        ss.clickvoise.play(1,1F,1F,1,0, 1F)
+        ss.clickvoise.play(1, 1F, 1F, 1, 0, 1F)
     }
 
     /// <summary>
@@ -317,6 +319,60 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
 
             }
             return false
+        }
+    }
+
+    fun ibsAbsoluteLock(BlockText: String):Boolean  {
+        var textQuery =
+        "set nocount on; " +
+                "exec IBS_AbsoluteLock :BlockText;"
+        textQuery = ss.querySetParam(textQuery, "BlockText", BlockText)
+        return ss.executeWithoutRead(textQuery)
+    }
+    fun lockDocAccept(IDDoc: String): Boolean {
+        val BlockText1 = "int_doc_$IDDoc"
+        val BlockText2 = BlockText1.toString() + "_accept"
+        val Lock1 = ibsLock(BlockText1)
+        val Lock2 = ibsAbsoluteLock(BlockText2)
+        return if (Lock1 && Lock2) {
+            //Обе могут, ништяк! Снимем лишний и довольные выходим!
+            ibsLockuot(BlockText1)
+            true
+        } else {
+            //Не могут обе, нужно снять свои блокировки
+            if (Lock1) {
+                ibsLockuot(BlockText1)
+            }
+            if (Lock2) {
+                ibsLockuot(BlockText2)
+            }
+            false
+        }
+    }
+
+    fun lockoutDocAccept(IDDoc: String): Boolean {
+        return ibsLockuot("int_doc_" + IDDoc + "_accept")
+    }
+
+    fun lockItem(ItemID: String): Boolean {
+        val BlockText1 = "int_ref_Товары_$ItemID"
+        val BlockText2 = BlockText1.toString() + "_unit"
+        val Lock1 = ibsLock(BlockText1)
+        val Lock2 = ibsLock(BlockText2)
+        //Только при отсутствии любой из этих блокировок
+        return if (Lock1 && Lock2) {
+            //Обе могут, ништяк! Снимем лишний и довольные выходим!
+            ibsLockuot(BlockText1)
+            true
+        } else {
+            //Не могут обе, нужно снять свои блокировки
+            if (Lock1) {
+                ibsLockuot(BlockText1)
+            }
+            if (Lock2) {
+                ibsLockuot(BlockText2)
+            }
+            false
         }
     }
 

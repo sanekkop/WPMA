@@ -76,8 +76,13 @@ class AccMenu : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_acc_menu)
 
-        ParentForm = intent.extras!!.getString("ParentForm")!!
         title = ss.title
+
+        if (ss.CurrentMode == Global.Mode.Acceptance) {
+            ss.CurrentMode = Global.Mode.Waiting
+            FExcStr.text = ss.excStr
+            ss.excStr = ""
+        }
 
         btnBack.setOnClickListener {
             startActivity(0)
@@ -136,7 +141,6 @@ class AccMenu : BarcodeDataReceiver() {
               1 -> intent = Intent(this, Search::class.java)  //toast.show()
             //  2 -> intent = Intent(this, CrossDoc::class.java)
           }
-          intent.putExtra("ParentForm", "AccMenu")
           startActivity(intent)
           finish()
       }

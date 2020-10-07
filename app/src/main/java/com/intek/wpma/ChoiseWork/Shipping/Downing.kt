@@ -136,7 +136,7 @@ class Downing : BarcodeDataReceiver() {
                 }
             }
         }
-        if (oldMode == Global.Mode.ChoiseDown) {
+        if (oldMode == Global.Mode.ChoiseDown || oldMode == Global.Mode.Main) {
             toModeDown()
         }
         else {

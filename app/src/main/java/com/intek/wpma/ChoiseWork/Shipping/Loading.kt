@@ -929,7 +929,7 @@ class Loading : BarcodeDataReceiver() {
             address.typeface = Typeface.SERIF
             address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.33).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             address.gravity = Gravity.CENTER
-            address.textSize = 20F
+            address.textSize = 17F
             address.setTextColor(-0x1000000)
             boxes = TextView(this)
             boxes.text = rowDT["Boxes"]

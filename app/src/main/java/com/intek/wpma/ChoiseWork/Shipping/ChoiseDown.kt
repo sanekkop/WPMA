@@ -106,7 +106,6 @@ class ChoiseDown : BarcodeDataReceiver() {
         btnCancel.setOnClickListener {
             if (progressBar.isVisible) return@setOnClickListener
             val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
-            shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
             startActivity(shoiseWorkInit)
             finish()
         }
@@ -178,13 +177,11 @@ class ChoiseDown : BarcodeDataReceiver() {
             //не может спускать и комплектовать выходим обратно
             if (!ss.FEmployer.canDown && !ss.FEmployer.canComplectation) {
                 val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
-                shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
                 startActivity(shoiseWorkInit)
                 finish()
             }
             if (!ss.FEmployer.canDown && ss.FEmployer.canComplectation) {
                 val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
-                shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
                 startActivity(shoiseWorkInit)
                 finish()
             }
@@ -193,7 +190,6 @@ class ChoiseDown : BarcodeDataReceiver() {
             val down = ss.executeWithReadNew(textQuery)
             if (down == null){
                 val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
-                shoiseWorkInit.putExtra("ParentForm", "ChoiseDown")
                 startActivity(shoiseWorkInit)
                 finish()
                 return@Runnable

@@ -11,7 +11,10 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.ChoiseWork.Menu
+import com.intek.wpma.MainActivity
 import com.intek.wpma.R
+import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_set_complete.*
 import kotlinx.android.synthetic.main.activity_set_complete.FExcStr
@@ -133,7 +136,15 @@ class SetComplete : BarcodeDataReceiver() {
             enterCountPlace.visibility = View.VISIBLE
 
             return true
-        } else if (!ss.isSC(idd, "Секции")) {
+        } else if (ss.isSC(idd, "Сотрудники")) {
+            lockoutDoc(docSet)      //разблокируем доки
+            ss.FEmployer = RefEmployer()
+            val mainInit = Intent(this, MainActivity::class.java)
+            startActivity(mainInit)
+            finish()
+            return true
+        }
+        else if (!ss.isSC(idd, "Секции")) {
             FExcStr.text = "Нужен принтер и адрес предкомплектации, а не это!"
             return false
         }
@@ -203,7 +214,11 @@ class SetComplete : BarcodeDataReceiver() {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
-
+            lockoutDoc(docSet)      //разблокируем доки
+            val mainInit = Intent(this, Menu::class.java)
+            startActivity(mainInit)
+            finish()
+            return
         }
 
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->

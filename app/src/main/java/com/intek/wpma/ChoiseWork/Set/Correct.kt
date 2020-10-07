@@ -27,18 +27,18 @@ class Correct : BarcodeDataReceiver() {
     private val mainWarehouse = "     D   "
     private var ccItem: Model.StructItemSet? = null
     private var docSet: Model.StrictDoc? = null
-    var barcode: String = ""
     private var choiseCorrect: Int = 0          //тип корректировки
     private var countFact: Int = 0              //при наборе маркировок, чтобы не сбились уже отсканированные QR-коды
     private var enterCount: Int = 0             //колво позиций для корректировки (вводится вручную)
     private var enterCountWithoutQRCode = 0     //колво позиций без QR - кода (вводится вручную)
     private var countWithoutQRCode: Int = 0     //колво уже скорректированных позиций без QR - кода
     private var countCorrect: Int = 0           //общее колво уже скорректированных позиций (с QR - кодом и без)
-    var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     private var flagBtn = 0
     private var flagMark = 0                    //флаг маркировки
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
+    var barcode: String = ""
+    var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("IntentApiSample: ", "onReceive")

@@ -77,38 +77,32 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu_shipping)
 
-        ParentForm = intent.extras!!.getString("ParentForm")!!
         title = ss.title
 
         btnCancel.setOnClickListener {
             val shoiseWorkInit = Intent(this, Menu::class.java)
-            shoiseWorkInit.putExtra("ParentForm", "ChoiseWorkShipping")
             startActivity(shoiseWorkInit)
             finish()
         }
         btnLoad.setOnClickListener {
             val loadingInit = Intent(this, Loading::class.java)
-            loadingInit.putExtra("ParentForm", "ChoiseWorkShipping")
             startActivity(loadingInit)
             finish()
         }
 
         btnUnLoad.setOnClickListener {
             val unLoadingInit = Intent(this, UnLoading::class.java)
-            unLoadingInit.putExtra("ParentForm", "ChoiseWorkShipping")
             startActivity(unLoadingInit)
             finish()
 
         }
         btnDown.setOnClickListener {
             val downingInit = Intent(this, ChoiseDown::class.java)
-            downingInit.putExtra("ParentForm","ChoiseWorkShipping")
             startActivity(downingInit)
             finish()
         }
         btnFree.setOnClickListener {
             val freeComplectationInit = Intent(this, FreeComplectation::class.java)
-            freeComplectationInit.putExtra("ParentForm", "ChoiseWorkShipping")
             startActivity(freeComplectationInit)
             finish()
         }
@@ -158,7 +152,6 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
             3 -> intent = Intent(this, ChoiseDown::class.java)
             4 -> intent = Intent(this, FreeComplectation::class.java)
         }
-        intent.putExtra("ParentForm", "ChoiseWorkShipping")
         startActivity(intent)
         finish()
     }

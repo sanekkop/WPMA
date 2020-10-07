@@ -26,11 +26,12 @@ class WatchTablePart : BarcodeDataReceiver() {
     var iddoc: String = ""
     private var addressID: String = ""
     private var invCode: String = ""
-    var barcode: String = ""
     //при принятии маркировок, чтобы не сбились уже отсканированные QR-коды
     private var countFact: Int = 0
-    var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
 
+    //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
+    var barcode: String = ""
+    var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("IntentApiSample: ", "onReceive")
@@ -45,6 +46,27 @@ class WatchTablePart : BarcodeDataReceiver() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
+        claimScanner()
+        onWindowFocusChanged(true)
+        Log.d("IntentApiSample: ", "onResume")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(barcodeDataReceiver)
+        releaseScanner()
+        Log.d("IntentApiSample: ", "onPause")
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+
+        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
+    }
+    //endregion
 
     private fun reactionBarcode(Barcode: String) {
         val toast = Toast.makeText(applicationContext, "ШК не работают на данном экране!", Toast.LENGTH_SHORT)
@@ -135,7 +157,7 @@ class WatchTablePart : BarcodeDataReceiver() {
         getTablePart(iddoc)
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+    fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
 
         if (keyCode == 21 || keyCode == 4){ //нажали влево; вернемся к документу
             val setInitialization = Intent(this, SetInitialization::class.java)
@@ -146,13 +168,10 @@ class WatchTablePart : BarcodeDataReceiver() {
             setInitialization.putExtra("ParentForm","WatchTablePart")
             startActivity(setInitialization)
             finish()
+            return true
         }
-//        else if (keyCode == 20){    //вниз
-//
-//        }
-        return super.onKeyDown(keyCode, event)
+        return false
     }
-
 
     private fun getTablePart(iddoc: String): Boolean{
         var textQuery =
@@ -231,20 +250,5 @@ class WatchTablePart : BarcodeDataReceiver() {
             }
         }
         return true
-    }
-
-    override fun onResume() {
-        super.onResume()
-        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
-        claimScanner()
-        onWindowFocusChanged(true)
-        Log.d("IntentApiSample: ", "onResume")
-    }
-
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(barcodeDataReceiver)
-        releaseScanner()
-        Log.d("IntentApiSample: ", "onPause")
     }
 }

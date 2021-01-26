@@ -38,12 +38,7 @@ class Downing : BarcodeDataReceiver() {
                         barcode = intent.getStringExtra("data")
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
-                        val toast = Toast.makeText(
-                            applicationContext,
-                            "Не удалось отсканировать штрихкод!",
-                            Toast.LENGTH_LONG
-                        )
-                        toast.show()
+                        FExcStr.text = e.toString()
                     }
 
                 }
@@ -63,12 +58,7 @@ class Downing : BarcodeDataReceiver() {
                 codeId = scanCodeId.toString()
                 reactionBarcode(barcode)
             } catch (e: Exception) {
-                val toast = Toast.makeText(
-                    applicationContext,
-                    "Ошибка! Возможно отсутствует соединение с базой!",
-                    Toast.LENGTH_LONG
-                )
-                toast.show()
+                FExcStr.text = e.toString()
             }
         }
     }
@@ -159,7 +149,17 @@ class Downing : BarcodeDataReceiver() {
     }
 
     private fun toModeDown() {
-
+        if (!ss.FEmployer.selected){
+            //не выбран сотрудник ошибка
+            FExcStr.text = "Не выбран сотрудник! Ошибка!"
+            badVoise()
+            ss.FEmployer = RefEmployer()
+            val mainInit = Intent(this, MainActivity::class.java)
+            mainInit.putExtra("ParentForm", "Downing")
+            startActivity(mainInit)
+            finish()
+            return
+        }
         ss.CurrentMode = Global.Mode.Down
         docDown = mutableMapOf()
         var textQuery = "select * from dbo.WPM_fn_ToModeDown(:Employer)"
@@ -199,7 +199,17 @@ class Downing : BarcodeDataReceiver() {
     }
 
     private fun toModeDownComplete() {
-
+        if (!ss.FEmployer.selected){
+            //не выбран сотрудник ошибка
+            FExcStr.text = "Не выбран сотрудник! Ошибка!"
+            badVoise()
+            ss.FEmployer = RefEmployer()
+            val mainInit = Intent(this, MainActivity::class.java)
+            mainInit.putExtra("ParentForm", "Downing")
+            startActivity(mainInit)
+            finish()
+            return
+        }
         //В этот режим попадает только если нечего собирать по Дате4, так что если и тут нет ничего - то уходит на режим ChoiseDown
         var textQuery =
             "select " +
@@ -281,6 +291,17 @@ class Downing : BarcodeDataReceiver() {
     }
 
     private fun endCC(): Boolean {
+        if (!ss.FEmployer.selected){
+            //не выбран сотрудник ошибка
+            FExcStr.text = "Не выбран сотрудник! Ошибка!"
+            badVoise()
+            ss.FEmployer = RefEmployer()
+            val mainInit = Intent(this, MainActivity::class.java)
+            mainInit.putExtra("ParentForm", "Downing")
+            startActivity(mainInit)
+            finish()
+            return false
+        }
         var textQuery =
             "begin tran; " +
                     "UPDATE \$Спр.МестаПогрузки " +
@@ -310,6 +331,18 @@ class Downing : BarcodeDataReceiver() {
 
     private fun reactionBarcode(Barcode: String): Boolean {
 
+        //из-за ошибки мертвых душ сначала проверим сотрудника
+        if (!ss.FEmployer.selected){
+            //не выбран сотрудник ошибка
+            FExcStr.text = "Не выбран сотрудник! Ошибка!"
+            badVoise()
+            ss.FEmployer = RefEmployer()
+            val mainInit = Intent(this, MainActivity::class.java)
+            mainInit.putExtra("ParentForm", "Downing")
+            startActivity(mainInit)
+            finish()
+            return false
+        }
         val barcoderes = ss.helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         if (typeBarcode == "6" && ss.CurrentMode == Global.Mode.Down) {
@@ -389,7 +422,7 @@ class Downing : BarcodeDataReceiver() {
             if (ss.isSC(idd, "Сотрудники")) {
                 ss.FEmployer = RefEmployer()
                 val mainInit = Intent(this, MainActivity::class.java)
-                mainInit.putExtra("ParentForm", "ChoiseDown")
+                mainInit.putExtra("ParentForm", "Downing")
                 startActivity(mainInit)
                 finish()
             } else if (ss.isSC(idd, "Принтеры")) {

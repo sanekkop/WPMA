@@ -21,10 +21,10 @@
 
     <Button
         android:id="@+id/btnShortage"
-        android:layout_width="180dp"
+        android:layout_width="match_parent"
         android:layout_height="43dp"
         android:background="#FFFFFF"
-        android:gravity="center|start"
+        android:gravity="center"
         android:text="2 - недостача"
         android:textColor="#000000"
         android:textSize="24sp"
@@ -37,9 +37,10 @@
 
     <TextView
         android:id="@+id/label"
-        android:layout_width="291dp"
+        android:layout_width="match_parent"
         android:layout_height="68dp"
         android:text="Корректировка позиции"
+        android:gravity="center"
         android:textColor="#D12114"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -85,10 +86,10 @@
 
     <Button
         android:id="@+id/btnDefect"
-        android:layout_width="179dp"
+        android:layout_width="match_parent"
         android:layout_height="42dp"
         android:background="#FFFFFF"
-        android:gravity="center|start"
+        android:gravity="center"
         android:text="1 - брак"
         android:textColor="#000000"
         android:textSize="24sp"
@@ -101,10 +102,10 @@
 
     <Button
         android:id="@+id/btnRejection"
-        android:layout_width="179dp"
+        android:layout_width="match_parent"
         android:layout_height="40dp"
         android:background="#FFFFFF"
-        android:gravity="center|start"
+        android:gravity="center"
         android:text="3 - отказ"
         android:textColor="#000000"
         android:textSize="24sp"
@@ -117,8 +118,8 @@
 
     <TextView
         android:id="@+id/FExcStr"
-        android:layout_width="322dp"
-        android:layout_height="95dp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:gravity="center"
         android:text="Укажите причину корректировки!"
         android:textColor="#070AA0"
@@ -126,7 +127,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.986" />
+        app:layout_constraintTop_toBottomOf="@+id/btnScan" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

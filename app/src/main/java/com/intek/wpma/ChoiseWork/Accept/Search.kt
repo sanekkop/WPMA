@@ -215,7 +215,7 @@ open class Search : BarcodeDataReceiver() {
         consignmen = ss.executeWithReadNew(textQuery) ?: return
     }
 
-    private fun noneItem() {
+    fun noneItem() {
         var textQuery = "SELECT " +
                 "right(Journ.docno,5) as DOCNO , " +
                 "Supply.iddoc as iddoc , " +
@@ -281,7 +281,7 @@ open class Search : BarcodeDataReceiver() {
 
     }
 
-    private fun yapItem() {
+    fun yapItem() {
 
         var textQuery = "SELECT " +
                 "right(Journ.docno,5) as DOCNO , " +
@@ -341,7 +341,7 @@ open class Search : BarcodeDataReceiver() {
         acceptedItems = ss.executeWithReadNew(textQuery) ?: return
     }
 
-    private fun updateTableInfo() {
+    fun updateTableInfo() {
         //обновим информацию по паллетам если она пустая
         if (ss.FPallets.isEmpty())
         {
@@ -452,7 +452,9 @@ open class Search : BarcodeDataReceiver() {
                 for (dr in ss.FPallets) {
                     strPallets += ", '" + dr["ID"].toString() + "'"
                 }
-                strPallets = strPallets.substring(2)  //Убираем спедери запятые
+                if (strPallets.length > 2) {
+                    strPallets = strPallets.substring(2)  //Убираем спедери запятые
+                }
 
                 var textQuery =
                     "UPDATE \$Спр.ПеремещенияПаллет SET \$Спр.ПеремещенияПаллет.Адрес0 = :ID, \$Спр.ПеремещенияПаллет.ФлагОперации = 2 WHERE \$Спр.ПеремещенияПаллет .id in ($strPallets)"
@@ -517,14 +519,14 @@ open class Search : BarcodeDataReceiver() {
     fun scanPalletBarcode(strBarcode: String):Boolean {
 
         var textQuery =
-            "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, Employer, @result out; select @result;"
+            "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, :Employer, @result out; select @result;"
         textQuery = ss.querySetParam(textQuery, "Barcode", strBarcode)
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
         val palletID =  ss.executeScalar(textQuery) ?: return false
+        ss.FPallet = RefPalleteMove()
         if (!ss.FPallet.foundID(palletID)) {
             return false
         }
-
         textQuery = "UPDATE \$Спр.ПеремещенияПаллет " +
                 "SET " +
                 "\$Спр.ПеремещенияПаллет.Сотрудник1 = :EmployerID, " +
@@ -536,7 +538,25 @@ open class Search : BarcodeDataReceiver() {
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         textQuery = ss.querySetParam(textQuery, "EmployerID", ss.FEmployer.id)
         textQuery = ss.querySetParam(textQuery, "Pallet", ss.FPallet.id)
-        return ss.executeWithoutRead(textQuery)
+        if (!ss.executeWithoutRead(textQuery)) {
+            return false
+        }
+        var findPallet = false
+        for (dr in ss.FPallets) {
+            if (dr["ID"].toString() == ss.FPallet.id) {
+                findPallet = true
+                break
+            }
+        }
+        if (!findPallet) {
+            val tmpdr:MutableMap<String,String> = mutableMapOf()
+            tmpdr["ID"] = ss.FPallet.id
+            tmpdr["Barcode"] = strBarcode;
+            tmpdr["Name"] = strBarcode.substring(8,12)
+            tmpdr["AdressID"] = ss.getVoidID()
+            ss.FPallets.add(tmpdr)
+        }
+        return true
     }
 
     open fun refreshActivity() {
@@ -564,7 +584,6 @@ open class Search : BarcodeDataReceiver() {
         }
 
         var linearLayout = LinearLayout(this)
-        var rowTitle = TableRow(this)
 
         //добавим столбцы
         var number = TextView(this)
@@ -624,17 +643,15 @@ open class Search : BarcodeDataReceiver() {
         linearLayout.addView(сountNotAcceptRow)
         linearLayout.addView(сlient)
 
-        rowTitle.addView(linearLayout)
-        rowTitle.setBackgroundColor(Color.GRAY)
-        table.addView(rowTitle)
+        linearLayout.setBackgroundColor(Color.GRAY)
+        table.addView(linearLayout)
 
 
         if (consignmen.isNotEmpty()) {
 
             for (DR in consignmen) {
 
-                linearLayout = LinearLayout(this)
-                rowTitle = TableRow(this)
+                var linearLayout1 = LinearLayout(this)
 
                 //добавим столбцы
                 number = TextView(this)
@@ -693,14 +710,13 @@ open class Search : BarcodeDataReceiver() {
                 сlient.textSize = 18F
                 сlient.setTextColor(-0x1000000)
 
-                linearLayout.addView(number)
-                linearLayout.addView(docum)
-                linearLayout.addView(datedoc)
-                linearLayout.addView(сountNotAcceptRow)
-                linearLayout.addView(сlient)
+                linearLayout1.addView(number)
+                linearLayout1.addView(docum)
+                linearLayout1.addView(datedoc)
+                linearLayout1.addView(сountNotAcceptRow)
+                linearLayout1.addView(сlient)
 
-                rowTitle.addView(linearLayout)
-                table.addView(rowTitle)
+                table.addView(linearLayout1)
             }
         }
     }

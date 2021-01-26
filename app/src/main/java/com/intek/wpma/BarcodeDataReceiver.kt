@@ -300,8 +300,8 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
             //Покажем кто заблокировал
             textQuery =
                 "SELECT " +
-                        "rtrim(Collation.HostName) as HostName, " +
-                        "rtrim(Collation.UserName) as UserName, " +
+                        "ISNULL(rtrim(Collation.HostName),'') as HostName, " +
+                        "ISNULL(rtrim(Collation.UserName),'') as UserName, " +
                         "convert(char(8), Block.date_time, 4) as Date, " +
                         "substring(convert(char, Block.date_time, 21), 12, 8) as Time " +
                         "FROM " +

@@ -10,9 +10,10 @@ import java.sql.*
 open class SQLSynchronizer
 {
     private val fServerName: Array<String> = arrayOf("192.168.8.4:57068","192.168.8.5:57068") //Наши серваки
-    private val fDBName: String = "int9999001ad1" //База
-    //protected val fDBName: String? = "int9999001rab"
+    //private val fDBName: String = "int9999001ad1" //База
+    private val fDBName: String? = "int9999001rab"
     private val fVers: String = "5.03"    //Номер версии
+    val fullVers = "$fVers.11"
     private var myConnection: Connection? = null
     private var myComand: Statement? = null
     protected var myReader: ResultSet? = null
@@ -89,7 +90,6 @@ open class SQLSynchronizer
     // <returns></returns>
     protected fun executeQuery(Query: String, Read: Boolean): Boolean
     {
-        fExcStr = null
         //Сохраним первоначальое состояние соединения
         val cs: Boolean = myConnection!!.isClosed
         if (!openConnection())
@@ -109,12 +109,19 @@ open class SQLSynchronizer
         }
         catch (e: SQLException)
         {
-            if (cs && myConnection!!.isClosed)
+            if (!cs && myConnection!!.isClosed)
             {
                 //Таким образом, если соединение до выполнения запроса было открыто,
-                //а после выполнения обвалилось (см. выше). Это наверняка эффект "уснувшего" терминала!
+                //а после выполнения обвалилось (см. выше). Это наверняка эффект "уснувшего" терминала! или моргнувшей сети
                 //От бесконечной рекурсии мы избавились так - был открыт, стал не открыт - повторяем,
                 //при повторе CS полюбому - не открыт, значит дополнительный вызов не произойдет!
+
+                //на всякий случай обождем секунду, может вайфай вернется быстро
+                try {
+                    Thread.sleep(1000)
+                }
+                catch (e: java.lang.Exception) {
+                }
                 return executeQuery(Query, Read)
             }
             fExcStr = e.toString()

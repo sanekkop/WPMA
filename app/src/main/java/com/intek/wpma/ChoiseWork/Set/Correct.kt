@@ -18,6 +18,8 @@ import com.intek.wpma.Model.Model
 import com.intek.wpma.R
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_correct.*
+import kotlinx.android.synthetic.main.activity_correct.FExcStr
+import kotlinx.android.synthetic.main.activity_set.*
 
 
 class Correct : BarcodeDataReceiver() {
@@ -51,12 +53,8 @@ class Correct : BarcodeDataReceiver() {
                         codeId = intent.getStringExtra("codeId")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
-                        val toast = Toast.makeText(
-                            applicationContext,
-                            "Не удалось отсканировать штрихкод!",
-                            Toast.LENGTH_LONG
-                        )
-                        toast.show()
+                        FExcStr.text = "Не удалось отсканировать штрихкод!"
+                        badVoise()
                     }
                 }
             }
@@ -80,8 +78,8 @@ class Correct : BarcodeDataReceiver() {
                 reactionBarcode(barcode)
             }
             catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
-                toast.show()
+                FExcStr.text = e.toString()
+                badVoise()
             }
         }
     }
@@ -497,7 +495,7 @@ class Correct : BarcodeDataReceiver() {
                     "select \$КонтрольНабора.СтрокаИсх , \$КонтрольНабора.Товар , :CountCorrect ," +
                     "\$КонтрольНабора.Единица , \$КонтрольНабора.Цена , \$КонтрольНабора.Коэффициент , :CountCorrect*\$КонтрольНабора.Цена ," +
                     "\$КонтрольНабора.Секция , :CountCorrect , :Reason, \$КонтрольНабора.ЕдиницаШК ," +
-                    "\$КонтрольНабора.Состояние0 , \$КонтрольНабора.Адрес0 , :AdressCode , \$КонтрольНабора.АдресКорр ," +
+                    "\$КонтрольНабора.Состояние0 , \$КонтрольНабора.Адрес0 , :AdressCode , \$КонтрольНабора.Адрес0 ," +
                     "\$КонтрольНабора.ДокБлокировки , \$КонтрольНабора.Дата5 , \$КонтрольНабора.Время5 , \$КонтрольНабора.Контейнер , " +
                     "(select max(lineno_) + 1 from DT\$КонтрольНабора where iddoc = :iddoc), iddoc, 0 " +
                     "from DT\$КонтрольНабора as ForInst where ForInst.iddoc = :iddoc and ForInst.lineno_ = :currline; " +

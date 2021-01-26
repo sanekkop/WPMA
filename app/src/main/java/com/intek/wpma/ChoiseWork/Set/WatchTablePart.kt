@@ -15,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.R
+import kotlinx.android.synthetic.main.activity_set.*
 import kotlinx.android.synthetic.main.activity_watch_table_part.*
 import kotlinx.android.synthetic.main.activity_watch_table_part.FExcStr
 import kotlinx.android.synthetic.main.activity_watch_table_part.PreviousAction
@@ -69,9 +70,9 @@ class WatchTablePart : BarcodeDataReceiver() {
     //endregion
 
     private fun reactionBarcode(Barcode: String) {
-        val toast = Toast.makeText(applicationContext, "ШК не работают на данном экране!", Toast.LENGTH_SHORT)
-        toast.show()
-    }
+        FExcStr.text = "ШК не работают на данном экране!"
+        badVoise()
+     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

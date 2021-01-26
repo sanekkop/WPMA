@@ -128,7 +128,7 @@ class MainActivity :  BarcodeDataReceiver() {
         ss.terminal = dataTable[0]["code"].toString()
         //Подтянем настройку обмена МОД
         ss.Const.refresh()
-        ss.title = ss.vers + " " + ss.terminal.trim()
+        ss.title = ss.fullVers + " " + ss.terminal.trim()
         title = ss.title
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -182,7 +182,7 @@ class MainActivity :  BarcodeDataReceiver() {
                badVoise()
                return
             }
-            ss.title = ss.vers + " " + ss.terminal.trim() + " " + ss.helper.getShortFIO(ss.FEmployer.name)
+            ss.title = ss.fullVers + " " + ss.terminal.trim() + " " + ss.helper.getShortFIO(ss.FEmployer.name)
             //инициализация входа
             if (!login(ss.FEmployer.id)) {
                 actionLbl.text = "Ошибка входа в систему!"

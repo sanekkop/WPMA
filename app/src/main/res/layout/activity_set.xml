@@ -21,7 +21,7 @@
 
     <TextView
         android:id="@+id/header"
-        android:layout_width="275dp"
+        android:layout_width="0dp"
         android:layout_height="30dp"
         android:gravity="center"
         android:textColor="#000000"
@@ -30,15 +30,14 @@
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.511"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.087" />
 
     <TextView
         android:id="@+id/FExcStr"
-        android:layout_width="297dp"
-        android:layout_height="154dp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:gravity="center"
         android:text="Ожидание команды"
         android:textColor="#070AA0"
@@ -46,8 +45,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.986" />
+        app:layout_constraintTop_toBottomOf="@+id/btnScanSetMode" />
 
     <TextView
         android:id="@+id/balance"
@@ -57,8 +55,6 @@
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.971"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.244"
         tools:visibility="invisible" />
@@ -70,8 +66,6 @@
         android:textColor="#2B2B2B"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.028"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.244"
@@ -87,28 +81,26 @@
         android:textStyle="bold"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="@+id/FExcStr"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.502"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/balance"
+        app:layout_constraintStart_toEndOf="@+id/price"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.255" />
 
     <TextView
         android:id="@+id/mainView"
-        android:layout_width="230dp"
+        android:layout_width="0dp"
         android:layout_height="42dp"
         android:gravity="center"
         android:text="Для получения задания отбора - нажмите кнопку 1"
         android:textColor="#D12114"
         android:textSize="18sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.177"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/PreviousAction"
-        android:layout_width="306dp"
+        android:layout_width="match_parent"
         android:layout_height="42dp"
         android:gravity="center"
         android:textColor="#070AA0"
@@ -122,19 +114,18 @@
     <TextView
         android:id="@+id/InvCode"
         android:layout_width="0dp"
-        android:layout_height="49dp"
-        android:textColorHint="#000000"
+        android:layout_height="0dp"
         android:textColor="#000"
+        android:textColorHint="#000000"
         android:textSize="25sp"
         android:textStyle="bold"
         android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/enterCount"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.004"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.355"
-        app:layout_constraintWidth_percent="0.35"/>
+        app:layout_constraintTop_toTopOf="@+id/item"
+        app:layout_constraintWidth_percent="0.35" />
 
     <TextView
         android:id="@+id/item"
@@ -198,19 +189,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.598" />
-
-    <TextView
-        android:id="@+id/terminalView"
-        android:layout_width="64dp"
-        android:layout_height="29dp"
-        android:textColor="#000000"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.987"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.003" />
 
     <Button
         android:id="@+id/correct"

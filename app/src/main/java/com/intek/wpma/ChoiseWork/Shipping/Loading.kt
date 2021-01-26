@@ -19,6 +19,7 @@ import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.Helpers.Translation
 import com.intek.wpma.Ref.Doc
 import com.intek.wpma.Ref.RefEmployer
+import kotlinx.android.synthetic.main.activity_downing.*
 import kotlinx.android.synthetic.main.activity_loading.*
 import kotlinx.android.synthetic.main.activity_loading.FExcStr
 import kotlinx.android.synthetic.main.activity_loading.btnScan
@@ -55,8 +56,8 @@ class Loading : BarcodeDataReceiver() {
                         reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
-                        val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
-                        toast.show()
+                        FExcStr.text = "Не удалось отсканировать штрихкод!" + e.toString()
+                        badVoise()
                     }
 
                 }
@@ -76,8 +77,7 @@ class Loading : BarcodeDataReceiver() {
                 reactionBarcode(barcode)
             }
             catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
-                toast.show()
+                FExcStr.text = e.toString()
             }
         }
     }
@@ -473,6 +473,7 @@ class Loading : BarcodeDataReceiver() {
         {
             //погрузка не разрешена
             FExcStr.text = "Погрузка запрещена!"
+            badVoise()
             return
         }
 
@@ -814,8 +815,6 @@ class Loading : BarcodeDataReceiver() {
             lblPlacer.visibility = View.VISIBLE
             return
         }
-        lblPlacer.visibility = View.VISIBLE
-        lblPlacer.text = wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ")"
 
         table.removeAllViewsInLayout()
         var linearLayout = LinearLayout(this)
@@ -866,7 +865,7 @@ class Loading : BarcodeDataReceiver() {
         rowTitle.addView(linearLayout)
         table.addView(rowTitle)
         var linenom = 1 //1 строку шапки не считаем
-
+        var countBoxAll = 0
         for (rowDT in wayBillDT)
         {
             //строки теперь
@@ -945,7 +944,7 @@ class Loading : BarcodeDataReceiver() {
             boxesfact.gravity = Gravity.CENTER
             boxesfact.textSize = 20F
             boxesfact.setTextColor(-0x1000000)
-
+            countBoxAll += rowDT["Boxes"].toString().toInt()
             linearLayout.addView(number)
             linearLayout.addView(docum)
             linearLayout.addView(address)
@@ -956,6 +955,8 @@ class Loading : BarcodeDataReceiver() {
             table.addView(rowTitle)
             linenom++
         }
+        lblPlacer.visibility = View.VISIBLE
+        lblPlacer.text = wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ") ВСЕГО МЕСТ " + countBoxAll.toString()
 
     }
 

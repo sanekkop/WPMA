@@ -10,6 +10,7 @@ import android.view.KeyEvent
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.ChoiseWork.Accept.AccMenu
+import com.intek.wpma.ChoiseWork.Revise.MarkMenu
 import com.intek.wpma.ChoiseWork.Revise.ReviseMark
 import com.intek.wpma.ChoiseWork.Set.SetInitialization
 import com.intek.wpma.ChoiseWork.Shipping.ChoiseWorkShipping
@@ -132,28 +133,17 @@ class Menu : BarcodeDataReceiver() {
                 finish()
             }
             5 -> {
-                val revise = Intent(this, ReviseMark::class.java)
+                val revise = Intent(this, MarkMenu::class.java)
                 revise.putExtra("ParentForm","Menu")
                 startActivity(revise)
                 finish()
             }
 
             1 -> {
-                val toast = Toast.makeText(
-                    applicationContext,
-                    "Ошибка перехода в режим.Режим в разработке",
-                    Toast.LENGTH_LONG)
-                toast.show()
-                /*
-
-                val accInit = Intent(this, AccMenu::class.java)
-                accInit.putExtra("ParentForm","Menu")
-                startActivity(accInit)
-                finish()
-
-                 */
-
-
+                 val accInit = Intent(this, AccMenu::class.java)
+                    accInit.putExtra("ParentForm","Menu")
+                    startActivity(accInit)
+                    finish()
             }
 
         }

@@ -1,100 +1,68 @@
 package com.intek.wpma.ChoiseWork.Accept
 
-import android.annotation.SuppressLint
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
-import android.widget.Toast
-import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.Model.Model
-import com.intek.wpma.ParentForm
+import com.intek.wpma.Global
 import com.intek.wpma.R
-import com.intek.wpma.Ref.RefPalleteMove
-import com.intek.wpma.SQL.SQL1S.Const
+import kotlinx.android.synthetic.main.activity_accept.*
+import kotlinx.android.synthetic.main.activity_none_item.*
 import kotlinx.android.synthetic.main.activity_yap_item.*
+import kotlinx.android.synthetic.main.activity_yap_item.FExcStr
+import kotlinx.android.synthetic.main.activity_yap_item.scroll
+import kotlinx.android.synthetic.main.activity_yap_item.table
+import kotlinx.android.synthetic.main.activity_yap_item.palletPal
 
-class YapItem : BarcodeDataReceiver() {
 
-    var iddoc: String = ""
-    var number: String = ""
-    var barcode: String = ""
-    var codeId: String = ""  //показатель по которому можно различать типы штрих-кодов
-    private val pal = RefPalleteMove()
+class YapItem : Search() {
 
-    val barcodeDataReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            Log.d("IntentApiSample: ", "onReceive")
-            if (ACTION_BARCODE_DATA == intent.action) {
-                val version = intent.getIntExtra("version", 0)
-                if (version >= 1) {
-                    // ту прописываем что делать при событии сканирования
-
-                    try {
-                        barcode = intent.getStringExtra("data")
-                        reactionBarcode(barcode)
-                    }
-                    catch(e: Exception) {
-                        val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
-                        toast.show()
-                    }
-
-                }
-            }
-        }
-    }
+    private var currentLine:Int = 1
+    private var isMoveButon = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ss.CurrentMode = Global.Mode.AcceptanceAccepted
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_yap_item)
 
-        ParentForm = intent.extras!!.getString("ParentForm")!!
-        iddoc = intent.extras!!.getString("Docs")!!
-        //printPal.text = intent.extras!!.getString("FPrinter")!!
         title = ss.title
 
-        if (ss.FPrinter.selected) {
-            printPal.text = ss.FPrinter.path
-        }
-        if (ss.FPallet != "") {
-            pal.foundID(ss.FPallet)
-            palletPal.text = pal.pallete
-        }
-
-/*
-        if (currBtn.Name === "btnPrint" || currBtn.Name === "btnPrintCondition") {
-            lblAction.Text = "Команда печати в обработке, подождите..."
-            Refresh()
-            SS.PrintLabels(if (currBtn.Name === "btnPrint") false else true)
-            if (Screan === 1) {
-                pnlCurrent.MoveControls(2 * pnlCurrent.Width, 0)
-                Screan = -1
-                pnlCurrent.GetControlByName("tbFind").Focus()
+        etikPol.setOnClickListener {
+            //обработчик события при нажатии на кнопку принятия товара
+            if (printLabels(false)) {
+                noneItem()
+                yapItem()
+                updateTableInfo()
+                val backH = Intent(this, NoneItem::class.java)
+                startActivity(backH)
+                finish()
             }
-            View()
-            lblAction.Text = SS.ExcStr
         }
-        break*/
+        etik.setOnClickListener {
+            //обработчик события при нажатии на кнопку принятия товара
+            if (printLabels(true)) {
+                noneItem()
+                yapItem()
+                updateTableInfo()
+                val backH = Intent(this, NoneItem::class.java)
+                startActivity(backH)
+                finish()
+            }
+        }
 
-        var oldx = 0F
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x > oldx) {
+                    ss.CurrentMode = Global.Mode.Waiting
                     val backHead = Intent(this, Search::class.java)
-                    backHead.putExtra("ParentForm", "YapItem")
-                    backHead.putExtra("FPrint", printPal.text.toString())
-                    backHead.putExtra("FPallet", palletPal.text.toString())
                     startActivity(backHead)
                     finish()
                 }
@@ -106,25 +74,138 @@ class YapItem : BarcodeDataReceiver() {
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                 if (ss.isMobile){  //спрячем клаву
                     val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                    inputManager.hideSoftInputFromWindow(this.currentFocus!!.windowToken,
-                        InputMethodManager.HIDE_NOT_ALWAYS)
+                    inputManager.hideSoftInputFromWindow(
+                        this.currentFocus!!.windowToken,
+                        InputMethodManager.HIDE_NOT_ALWAYS
+                    )
                 }
                 // сохраняем текст, введенный до нажатия Enter в переменную
                 try {
-                    val count = kolEtik.text.toString().toInt()
-                    //places = count
-                    kolEtik.visibility = View.INVISIBLE
+                    acceptedItems[currentLine-1]["LabelCount"] = kolEtik.text.toString()
+
                 } catch (e: Exception) {
                 }
             }
             false
         }
 
-        yapItem()
+        refreshActivity()
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    fun yapItem() {
+    override fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
+
+        if (keyCode == 4) {
+            ss.CurrentMode = Global.Mode.Waiting
+            val acBack = Intent(this, Search::class.java)
+            startActivity(acBack)
+            finish()
+            return true
+        }
+
+        if (ss.helper.whatDirection(keyCode) == "Left") {
+            ss.CurrentMode = Global.Mode.Waiting
+            val backHead = Intent(this, Search::class.java)
+            startActivity(backHead)
+            finish()
+            return true
+        }
+        //tab
+        if (keyCode == 61) {
+            if (printLabels(true)) {
+                noneItem()
+                yapItem()
+                updateTableInfo()
+                val backH = Intent(this, NoneItem::class.java)
+                startActivity(backH)
+                finish()
+            }
+            return true
+        }
+        if (keyCode == 56) {
+            if (printLabels(false)) {
+                noneItem()
+                yapItem()
+                updateTableInfo()
+                val backH = Intent(this, NoneItem::class.java)
+                startActivity(backH)
+                finish()
+            }
+            return true
+        }
+        if (ss.helper.whatDirection(keyCode) in listOf("Down", "Up")) {
+            isMoveButon = true
+            table.getChildAt(currentLine).isFocusable = false
+            table.getChildAt(currentLine).setBackgroundColor(Color.WHITE)
+            if (ss.helper.whatDirection(keyCode) == "Down") {
+                if (currentLine < acceptedItems.count()) {
+                    currentLine++
+                } else {
+                    currentLine = 1
+                }
+            } else {
+                if (currentLine > 1) {
+                    currentLine--
+                } else {
+                    currentLine = acceptedItems.count()
+                }
+
+            }
+            if (currentLine < 10) {
+                scroll.fullScroll(View.FOCUS_UP)
+            } else if (currentLine > acceptedItems.count() - 10) {
+                scroll.fullScroll(View.FOCUS_DOWN)
+            } else if (currentLine % 10 == 0) {
+                scroll.scrollTo(0, 30 * currentLine - 1)
+            }
+            //теперь подкрасим строку серым
+            table.getChildAt(currentLine).setBackgroundColor(Color.LTGRAY)
+            table.getChildAt(currentLine).isActivated = false
+            kolEtik.text = acceptedItems[currentLine - 1]["LabelCount"].toString()
+            return true
+        }
+
+        if (ss.helper.whatInt(keyCode) >= 0) {
+            var thisInt = ss.helper.whatInt(keyCode).toString()
+            thisInt = if (isMoveButon) thisInt else acceptedItems[currentLine - 1]["LabelCount"].toString() + thisInt
+            if (changeLabelCount(thisInt)) {
+                refreshActivity()
+            }
+            isMoveButon = false
+            return true
+        }
+
+        if (keyCode == 67) {
+            //это делете, оотменим приемку если до этого двигались
+            if (isMoveButon) {
+                val invCode = acceptedItems[currentLine - 1]["InvCode"].toString()
+                if (!deleteRowAcceptedItems(acceptedItems[currentLine - 1])) {
+                    FExcStr.text = ss.excStr
+                } else {
+                    FExcStr.text = invCode.toString().trim() + " - приемка отменена!"
+                }
+                refreshActivity()
+                return true
+            } else {
+
+                var textForEdit = acceptedItems[currentLine - 1]["LabelCount"].toString()
+                if (textForEdit.count() == 1) {
+                    textForEdit = "1"
+                } else {
+                    textForEdit = textForEdit.substring(0, textForEdit.count() - 1)
+                }
+                if (changeLabelCount(textForEdit)) {
+                    refreshActivity()
+                }
+                return true
+            }
+        }
+        return false
+    }
+
+    override fun refreshActivity() {
+
+        super.refreshActivity()
+
         val linearLayout1 = LinearLayout(this)
         val rowTitle1 = TableRow(this)
 
@@ -134,9 +215,10 @@ class YapItem : BarcodeDataReceiver() {
         num.typeface = Typeface.SERIF
         num.layoutParams = LinearLayout.LayoutParams(
             (ss.widthDisplay * 0.05).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT)
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
         num.gravity = Gravity.CENTER
-        num.textSize = 14F
+        num.textSize = 16F
         num.setTextColor(-0x1000000)
         val doc = TextView(this)
         doc.text = "Накл."
@@ -144,130 +226,96 @@ class YapItem : BarcodeDataReceiver() {
         doc.gravity = Gravity.CENTER
         doc.layoutParams = LinearLayout.LayoutParams(
             (ss.widthDisplay * 0.15).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT)
-        doc.textSize = 14F
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        doc.textSize = 16F
         doc.setTextColor(-0x1000000)
-        val add = TextView(this)
-        add.text = "Инв.Код"
-        add.typeface = Typeface.SERIF
-        add.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.15).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT)
-        add.gravity = Gravity.CENTER
-        add.textSize = 14F
-        add.setTextColor(-0x1000000)
-        val box = TextView(this)
-        box.text = "Наим."
-        box.typeface = Typeface.SERIF
-        box.layoutParams = LinearLayout.LayoutParams(
+        val invkod = TextView(this)
+        invkod.text = "Инв.Код"
+        invkod.typeface = Typeface.SERIF
+        invkod.layoutParams = LinearLayout.LayoutParams(
             (ss.widthDisplay * 0.25).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT)
-        box.gravity = Gravity.CENTER
-        box.textSize = 14F
-        box.setTextColor(-0x1000000)
-        val boxf = TextView(this)
-        boxf.text = "Кол-во"
-        boxf.typeface = Typeface.SERIF
-        boxf.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.15).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT)
-        boxf.gravity = Gravity.CENTER
-        boxf.textSize = 14F
-        boxf.setTextColor(-0x1000000)
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        invkod.gravity = Gravity.CENTER
+        invkod.textSize = 16F
+        invkod.setTextColor(-0x1000000)
+        val nameItem = TextView(this)
+        nameItem.text = "Наим."
+        nameItem.typeface = Typeface.SERIF
+        nameItem.layoutParams = LinearLayout.LayoutParams(
+            (ss.widthDisplay * 0.25).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        nameItem.gravity = Gravity.CENTER
+        nameItem.textSize = 16F
+        nameItem.setTextColor(-0x1000000)
+        val countItem = TextView(this)
+        countItem.text = "Кол-во"
+        countItem.typeface = Typeface.SERIF
+        countItem.layoutParams = LinearLayout.LayoutParams(
+            (ss.widthDisplay * 0.1).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        countItem.gravity = Gravity.CENTER
+        countItem.textSize = 16F
+        countItem.setTextColor(-0x1000000)
         val kof = TextView(this)
         kof.text = "Коэф."
         kof.typeface = Typeface.SERIF
         kof.layoutParams = LinearLayout.LayoutParams(
             (ss.widthDisplay * 0.1).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT)
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
         kof.gravity = Gravity.CENTER
-        kof.textSize = 14F
+        kof.textSize = 16F
         kof.setTextColor(-0x1000000)
         val etik = TextView(this)
         etik.text = "Этик."
         etik.typeface = Typeface.SERIF
         etik.layoutParams = LinearLayout.LayoutParams(
-            (ss.widthDisplay * 0.15).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT)
+            (ss.widthDisplay * 0.1).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
         etik.gravity = Gravity.CENTER
-        etik.textSize = 14F
+        etik.textSize = 16F
         etik.setTextColor(-0x1000000)
 
         linearLayout1.addView(num)
         linearLayout1.addView(doc)
-        linearLayout1.addView(add)
-        linearLayout1.addView(box)
-        linearLayout1.addView(boxf)
+        linearLayout1.addView(invkod)
+        linearLayout1.addView(nameItem)
+        linearLayout1.addView(countItem)
         linearLayout1.addView(kof)
         linearLayout1.addView(etik)
 
         rowTitle1.addView(linearLayout1)
         rowTitle1.setBackgroundColor(Color.GRAY)
         table.addView(rowTitle1)
+        var lineNom = 0
 
-        var textQuery = "SELECT " +
-                "right(Journ.docno,5) as DOCNO , " +
-                "Supply.iddoc as iddoc ," +
-                "Goods.id as id ," +
-                "Goods.Descr as ItemName ," +
-                "Goods.\$Спр.Товары.ИнвКод as InvCode ," +
-                "Goods.\$Спр.Товары.Артикул as Article ," +
-                "Goods.\$Спр.Товары.АртикулНаУпаковке as ArticleOnPack ," +
-                "Goods.\$Спр.Товары.Прих_Цена as Price ," +
-                "Goods.\$Спр.Товары.КоличествоДеталей as Details ," +
-                "CASE WHEN round(Supply.\$АдресПоступление.Количество /ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.\$АдресПоступление.Количество " +
-                "THEN ISNULL(Package.Coef, 1) ELSE 1 END as Coef," +
-                "CASE WHEN round(Supply.\$АдресПоступление.Количество /ISNULL(Package.Coef, 1), 0)*ISNULL(Package.Coef, 1) = Supply.\$АдресПоступление.Количество " +
-                "THEN round(Supply.\$АдресПоступление.Количество /ISNULL(Package.Coef, 1), 0) " +
-                "ELSE Supply.\$АдресПоступление.Количество END as CountPackage, " +
-                "Supply.\$АдресПоступление.Количество as Count," +
-                "Supply.\$АдресПоступление.ЕдиницаШК as Unit," +
-                "Supply.\$АдресПоступление.КоличествоЭтикеток as LabelCount," +
-                "Supply.\$АдресПоступление.НомерСтрокиДока as Number," +
-                "Supply.\$АдресПоступление.ГруппаСезона as SeasonGroup," +
-                "SypplyHeader.\$АдресПоступление.ДальнийСклад as FlagFarWarehouse, " +
-                "Supply.LineNO_ as LineNO_, " +
-                "isnull(GS.\$Спр.ТоварныеСекции.РасчетныйРХ , 0) StoregeSize " +
-                "FROM DT\$АдресПоступление as Supply (nolock) " +
-                "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
-                "ON Goods.ID = Supply.\$АдресПоступление.Товар " +
-                "LEFT JOIN DH\$АдресПоступление as SypplyHeader (nolock) " +
-                "ON SypplyHeader.iddoc = Supply.iddoc " +
-                "LEFT JOIN _1sjourn as Journ (nolock) " +
-                "ON Journ.iddoc = Right(SypplyHeader.\$АдресПоступление.ДокументОснование , 9) " +
-                "LEFT JOIN ( " +
-                "SELECT " +
-                "Units.parentext as ItemID, " +
-                "min(Units.\$Спр.ЕдиницыШК.Коэффициент ) as Coef " +
-                "FROM " +
-                "\$Спр.ЕдиницыШК as Units (nolock) " +
-                "WHERE " +
-                "Units.\$Спр.ЕдиницыШК.ОКЕИ = :OKEIPackage " +
-                "and Units.ismark = 0 " +
-                "and not Units.\$Спр.ЕдиницыШК.Коэффициент = 0 " +
-                "GROUP BY " +
-                "Units.parentext " +
-                ") as Package " +
-                "ON Package.ItemID = Goods.ID " +
-                "LEFT JOIN \$Спр.ТоварныеСекции as GS (nolock) " +
-                "on GS.parentext = goods.id and gs.\$Спр.ТоварныеСекции.Склад = :Warehouse " +
-                "WHERE Supply.IDDOC in ($iddoc) " +
-                "and Supply.\$АдресПоступление.Состояние0 = 1" +
-                "and Supply.\$АдресПоступление.ФлагПечати = 1" +
-                "and Supply.\$АдресПоступление.Сотрудник0 = :Employer" +
-                "ORDER BY Journ.docno, Supply.\$АдресПоступление.Дата0 , Supply.\$АдресПоступление.Время0 "
-        val model = Model()
-        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id) //ss.EmployerID)
-        textQuery = ss.querySetParam(textQuery, "OKEIPackage", model.okeiPackage)
-        textQuery = ss.querySetParam(textQuery, "Warehouse", ss.Const.mainWarehouse)
-        val datT = ss.executeWithReadNew(textQuery) ?: return
+        if (acceptedItems.isNotEmpty()) {
 
-        if (datT.isNotEmpty()) {
+            for (DR in acceptedItems) {
 
-            for (DR in datT) {
-
+                lineNom ++
                 val linearLayout2 = LinearLayout(this)
                 val rowTitle2 = TableRow(this)
+                rowTitle2.isClickable = true
+                rowTitle2.setOnTouchListener{ v, event ->  //выделение строки при таче
+                    var i = 1
+                    while (i < table.childCount) {
+                        if (rowTitle2 != table.getChildAt(i)) {
+                            table.getChildAt(i).setBackgroundColor(Color.WHITE)
+                        } else {
+                            currentLine = i
+                            rowTitle2.setBackgroundColor(Color.LTGRAY)
+                            kolEtik.text = acceptedItems[currentLine - 1]["LabelCount"].toString()
+                        }
+                        i++
+                    }
+                    true
+                }
 
                 //добавим столбцы
                 val numBB = TextView(this)
@@ -275,9 +323,10 @@ class YapItem : BarcodeDataReceiver() {
                 numBB.typeface = Typeface.SERIF
                 numBB.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.05).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 numBB.gravity = Gravity.CENTER
-                numBB.textSize = 14F
+                numBB.textSize = 16F
                 numBB.setTextColor(-0x1000000)
                 val docUU = TextView(this)
                 docUU.text = DR["DOCNO"]
@@ -285,183 +334,191 @@ class YapItem : BarcodeDataReceiver() {
                 docUU.gravity = Gravity.CENTER
                 docUU.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.15).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
-                docUU.textSize = 14F
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                docUU.textSize = 16F
                 docUU.setTextColor(-0x1000000)
-                val address = TextView(this)
-                address.text = DR["InvCode"]
-                address.typeface = Typeface.SERIF
-                address.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.15).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
-                address.gravity = Gravity.CENTER
-                address.textSize = 14F
-                address.setTextColor(-0x1000000)
-                val boxes = TextView(this)
-                boxes.text = DR["ItemName"].toString().substring(0,7)
-                boxes.typeface = Typeface.SERIF
-                boxes.layoutParams = LinearLayout.LayoutParams(
+                val invCode = TextView(this)
+                invCode.text = DR["InvCode"]
+                invCode.typeface = Typeface.SERIF
+                invCode.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.25).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
-                boxes.gravity = Gravity.CENTER
-                boxes.textSize = 14F
-                boxes.setTextColor(-0x1000000)
-                val boxesfact = TextView(this)
-                boxesfact.text = DR["Count"]
-                boxesfact.typeface = Typeface.SERIF
-                boxesfact.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.15).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
-                boxesfact.gravity = Gravity.CENTER
-                boxesfact.textSize = 14F
-                boxesfact.setTextColor(-0x1000000)
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                invCode.gravity = Gravity.CENTER
+                invCode.textSize = 16F
+                invCode.setTextColor(-0x1000000)
+
+                val itemName = TextView(this)
+                itemName.text = DR["ItemName"].toString().substring(0, 7)
+                itemName.typeface = Typeface.SERIF
+                itemName.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.25).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                itemName.gravity = Gravity.CENTER
+                itemName.textSize = 16F
+                itemName.setTextColor(-0x1000000)
+                val countItem = TextView(this)
+                countItem.text = DR["Count"]
+                countItem.typeface = Typeface.SERIF
+                countItem.layoutParams = LinearLayout.LayoutParams(
+                    (ss.widthDisplay * 0.1).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                countItem.gravity = Gravity.CENTER
+                countItem.textSize = 16F
+                countItem.setTextColor(-0x1000000)
                 val koef = TextView(this)
                 koef.text = ss.helper.byeTheNull(DR["Coef"].toString()) //обрежем нулики и точку
                 koef.typeface = Typeface.SERIF
                 koef.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.1).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 koef.gravity = Gravity.CENTER
-                koef.textSize = 14F
+                koef.textSize = 16F
                 koef.setTextColor(-0x1000000)
                 val etiks = TextView(this)
                 etiks.text = DR["LabelCount"]
                 etiks.typeface = Typeface.SERIF
                 etiks.layoutParams = LinearLayout.LayoutParams(
-                    (ss.widthDisplay * 0.15).toInt(),
-                    ViewGroup.LayoutParams.WRAP_CONTENT)
+                    (ss.widthDisplay * 0.1).toInt(),
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
                 etiks.gravity = Gravity.CENTER
-                etiks.textSize = 14F
+                etiks.textSize = 16F
                 etiks.setTextColor(-0x1000000)
 
                 linearLayout2.addView(numBB)
                 linearLayout2.addView(docUU)
-                linearLayout2.addView(address)
-                linearLayout2.addView(boxes)
-                linearLayout2.addView(boxesfact)
+                linearLayout2.addView(invCode)
+                linearLayout2.addView(itemName)
+                linearLayout2.addView(countItem)
                 linearLayout2.addView(koef)
                 linearLayout2.addView(etiks)
 
                 rowTitle2.addView(linearLayout2)
-                rowTitle2.setBackgroundColor(Color.WHITE)
+                var colorline =  Color.WHITE
+                if (lineNom == currentLine) {
+                    colorline = Color.LTGRAY
+                    kolEtik.text = acceptedItems[currentLine - 1]["LabelCount"].toString()
+                }
+                rowTitle2.setBackgroundColor(colorline)
                 table.addView(rowTitle2)
+
             }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
-        claimScanner()
-        onWindowFocusChanged(true)
-        Log.d("IntentApiSample: ", "onResume")
+    fun deleteRowAcceptedItems(currRow:MutableMap<String,String>):Boolean {
 
-        if(scanRes != null){
-            try {
-                barcode = scanRes.toString()
-                codeId = scanCodeId.toString()
-                reactionBarcode(barcode)
-            }
-            catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
-                toast.show()
-            }
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(barcodeDataReceiver)
-        releaseScanner()
-        Log.d("IntentApiSample: ", "onPause")
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-
-        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
-    }
-
-    companion object {
-        var scanRes: String? = null
-        var scanCodeId: String? = null
-    }
-
-    private fun reactionBarcode(Barcode: String): Boolean {
-        val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
-
-        if (ss.isSC(idd, "Принтеры")) {
-            printPal.text = "'принтер не выбран'"
-            if(!ss.FPrinter.foundIDD(idd)) {
-                return false
-            }
-            goodVoise()
-            printPal.text = ss.FPrinter.path
-            return true
-        }
-        if (!ss.FPrinter.selected) {
-            badVoise()
-            FExcStr.text = "Не выбран принтер!"
+        var textQuery =
+            "BEGIN TRAN; " +
+                    "IF EXISTS(SELECT LineNo_ FROM DT\$АдресПоступление as ACDT " +
+                    "WHERE ACDT.IDDOC = :ACID " +
+                    "and ACDT.\$АдресПоступление.Товар = :ItemID " +
+                    "and ACDT.\$АдресПоступление.Состояние0 = 0) " +
+                    "BEGIN " +
+                    "UPDATE DT\$АдресПоступление " +
+                    "SET \$АдресПоступление.Количество = \$АдресПоступление.Количество + :Count " +
+                    "WHERE DT\$АдресПоступление .iddoc = :ACID " +
+                    "and DT\$АдресПоступление .\$АдресПоступление.Товар = :ItemID " +
+                    "and DT\$АдресПоступление .\$АдресПоступление.Состояние0 = 0; " +
+                    "DELETE FROM DT\$АдресПоступление " +
+                    "WHERE DT\$АдресПоступление .iddoc = :ACID " +
+                    "and DT\$АдресПоступление .lineno_ = :lineno_ " +
+                    //Закомментировано соблюдение порядка строк, т.к. это опасно!
+                    //"UPDATE DT$АдресПоступление " +
+                    //    "SET lineno_ = lineno_ - 1 " +
+                    //    "WHERE DT$АдресПоступление .iddoc = :ACID " +
+                    //        "and DT$АдресПоступление .lineno_ > :lineno_ " +
+                    "END ELSE BEGIN " +
+                    "UPDATE DT\$АдресПоступление " +
+                    "SET " +
+                    "\$АдресПоступление.Сотрудник0 = :EmptyID," +
+                    "\$АдресПоступление.Дата0 = :VoidDate," +
+                    "\$АдресПоступление.Время0 = 0," +
+                    "\$АдресПоступление.Состояние0 = 0," +
+                    "\$АдресПоступление.КоличествоЭтикеток = 0," +
+                    "\$АдресПоступление.ФлагПечати = 0, " +
+                    "\$АдресПоступление.Паллета = :EmptyID " +
+                    "WHERE " +
+                    "DT\$АдресПоступление .iddoc = :ACID " +
+                    "and DT\$АдресПоступление .lineno_ = :lineno_ ; " +
+                    "END; " +
+                    "COMMIT TRAN;"
+        textQuery = ss.querySetParam(textQuery, "ACID", currRow["iddoc"].toString())
+        textQuery = ss.querySetParam(textQuery, "Count", currRow["Count"].toString())
+        textQuery = ss.querySetParam(textQuery, "ItemID", currRow["id"].toString())
+        textQuery = ss.querySetParam(textQuery, "lineno_", currRow["LineNO_"].toString())
+        textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
+        textQuery = ss.querySetParam(textQuery, "VoidDate", ss.getVoidDate())
+        if (!ss.executeWithoutRead(textQuery)) {
             return false
         }
-        if (palletPal.text == "НЕТ ПАЛЛЕТЫ") {
-            scanPalletBarcode(ss.FPallet)
-            pal.foundID(ss.FPallet)
-            palletPal.text = pal.pallete
-            goodVoise()
-        }
-        else {
-            palletPal.text = "НЕТ ПАЛЛЕТЫ"
-            FExcStr.text = "Не выбрана паллета!"
-            badVoise()
+        noneItem()
+        yapItem()
+        updateTableInfo()
+        return true
+    } // DeleteRowAcceptedItems()
+
+    fun changeLabelCount(labelCount:String):Boolean {
+        var textQuery =
+            "UPDATE DT\$АдресПоступление " +
+                    "SET \$АдресПоступление.КоличествоЭтикеток = :LabelCount " +
+                    "WHERE DT\$АдресПоступление .iddoc = :Doc and DT\$АдресПоступление .lineno_ = :LineNo_"
+        textQuery = ss.querySetParam(textQuery, "LabelCount", labelCount)
+        textQuery = ss.querySetParam(textQuery, "Doc", acceptedItems[currentLine - 1]["iddoc"].toString())
+        textQuery = ss.querySetParam(textQuery, "LineNo_", acceptedItems[currentLine - 1]["LineNO_"].toString())
+        textQuery = ss.querySetParam(textQuery, "ItemID", acceptedItems[currentLine - 1]["id"].toString())
+        if (!ss.executeWithoutRead(textQuery)) {
+
             return false
         }
+        acceptedItems[currentLine - 1]["LabelCount"] = labelCount
         return true
     }
 
-    private fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
 
-        if (keyCode == 4){
-            val acBack = Intent(this, Search::class.java)
-            acBack.putExtra("ParentForm", "YapItem")
-            acBack.putExtra("FPrint", printPal.text.toString())
-            acBack.putExtra("FPallet", palletPal.text.toString())
-            startActivity(acBack)
-            finish()
-            return true
+    fun printLabels(condition: Boolean):Boolean {
+        if (consignmen.isEmpty())
+        {
+            FExcStr.text = "Не выбраны накладные для приемки!"
+            return false
         }
 
-        if (ss.helper.whatDirection(keyCode) == "Left") {
-            clickVoise()
-            val backHead = Intent(this, Search::class.java)
-            backHead.putExtra("ParentForm", "YapItem")
-            backHead.putExtra("FPrint", printPal.text.toString())
-            backHead.putExtra("FPallet", palletPal.text.toString())
-            startActivity(backHead)
-            finish()
-            return true
+        if (acceptedItems.isEmpty())
+        {
+            FExcStr.text= "Нет принятых товаров в текущей сессии!"
+            return false
         }
-        return false
-    }
+        //Формируем строку с ид-шниками АдресовПоступления
+        var strACID = ""
+        for (dr in consignmen) {
+            strACID += dr["ACID"].toString().trim() + ","
+        }
+        strACID = strACID.substring(0, strACID.length - 1)
 
-    private fun scanPalletBarcode (strBarcode : String) {
-
-        var textQuery = "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, Employer, @result out; select @result;"
-        textQuery = ss.querySetParam(textQuery, "Barcode", barcode)
-        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-        ss.FBarcodePallet = barcode
-        ss.FPallet = ss.executeScalar(textQuery) ?: return
-
-        textQuery = "UPDATE \$Спр.ПеремещенияПаллет " +
-                    "SET " +
-                    "\$Спр.ПеремещенияПаллет.Сотрудник1 = :EmployerID, " +
-                    "\$Спр.ПеремещенияПаллет.ФлагОперации = 1, " +
-                    "\$Спр.ПеремещенияПаллет.Дата10 = :NowDate, " +
-                    "\$Спр.ПеремещенияПаллет.Время10 = :NowTime, " +
-                    "\$Спр.ПеремещенияПаллет.ТипДвижения = 4 " +
-                    "WHERE \$Спр.ПеремещенияПаллет .id = :Pallet "
-        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-        textQuery = ss.querySetParam(textQuery, "EmployerID", ss.FEmployer.id)
-        textQuery = ss.querySetParam(textQuery, "Pallet", ss.FPallet)
-        var tmpDR = ss.executeWithReadNew(textQuery) ?: return
+        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"]       = strACID
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"]    = ss.extendID(ss.FPrinter.id, "Спр.Принтеры")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"]    = ss.extendID(ss.FEmployer.id, "Спр.Сотрудники")
+        var dataMapRead: MutableMap<String, Any> = mutableMapOf()
+        val fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
+        try {
+            dataMapRead = execCommand("AdressAcceptance" + if (condition) "Condition" else "", dataMapWrite, fieldList, dataMapRead)
+        } catch (e: Exception) {
+            badVoise()
+            FExcStr.text= "Не удалось напечатать этикетки"
+            return false
+        }
+        if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
+            badVoise()
+            FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
+            return false
+        }
+        FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
+        return true
     }
 }

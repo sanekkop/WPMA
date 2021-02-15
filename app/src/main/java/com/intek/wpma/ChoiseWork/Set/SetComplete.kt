@@ -11,18 +11,23 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.ChoiseWork.Menu
+import com.intek.wpma.MainActivity
 import com.intek.wpma.R
+import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_set_complete.*
 import kotlinx.android.synthetic.main.activity_set_complete.FExcStr
-import kotlinx.android.synthetic.main.activity_set_complete.terminalView
+import kotlinx.android.synthetic.main.activity_watch_table_part.*
 
 class SetComplete : BarcodeDataReceiver() {
 
     private var docSet: String = ""
+    private var places: Int? = null
+
+    //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
-    private var places: Int? = null
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -36,14 +41,51 @@ class SetComplete : BarcodeDataReceiver() {
                         reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
-                        val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
-                        toast.show()
-                    }
+                        FExcStr.text = "Не удалось отсканировать штрихкод!" + e.toString()
+                        badVoise()
+                   }
 
                 }
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
+        claimScanner()
+        onWindowFocusChanged(true)
+        Log.d("IntentApiSample: ", "onResume")
+        if(scanRes != null){
+            try {
+                barcode = scanRes.toString()
+                codeId = scanCodeId.toString()
+                reactionBarcode(barcode)
+            }
+            catch (e: Exception){
+                FExcStr.text = e.toString()
+                badVoise()
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(barcodeDataReceiver)
+        releaseScanner()
+        Log.d("IntentApiSample: ", "onPause")
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        reactionKey(keyCode, event)
+        return super.onKeyDown(keyCode, event)
+    }
+
+    companion object {
+        var scanRes: String? = null
+        var scanCodeId: String? = null
+    }
+    //endregion
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,7 +140,7 @@ class SetComplete : BarcodeDataReceiver() {
                     countPlace.visibility = View.VISIBLE
                     FExcStr.text = "Ожидание команды"
                 } catch (e: Exception) {
-                }
+               }
             }
             false
         }
@@ -111,11 +153,6 @@ class SetComplete : BarcodeDataReceiver() {
                 startActivity(scanAct)
             }
         }
-    }
-
-    companion object {
-        var scanRes: String? = null
-        var scanCodeId: String? = null
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
@@ -133,7 +170,15 @@ class SetComplete : BarcodeDataReceiver() {
             enterCountPlace.visibility = View.VISIBLE
 
             return true
-        } else if (!ss.isSC(idd, "Секции")) {
+        } else if (ss.isSC(idd, "Сотрудники")) {
+            lockoutDoc(docSet)      //разблокируем доки
+            ss.FEmployer = RefEmployer()
+            val mainInit = Intent(this, MainActivity::class.java)
+            startActivity(mainInit)
+            finish()
+            return true
+        }
+        else if (!ss.isSC(idd, "Секции")) {
             FExcStr.text = "Нужен принтер и адрес предкомплектации, а не это!"
             return false
         }
@@ -194,16 +239,15 @@ class SetComplete : BarcodeDataReceiver() {
         return true
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        reactionKey(keyCode, event)
-        return super.onKeyDown(keyCode, event)
-    }
-
     private fun reactionKey(keyCode: Int, event: KeyEvent?) {
 
         // нажали назад, выйдем и разблокируем доки
         if (keyCode == 4){
-
+            lockoutDoc(docSet)      //разблокируем доки
+            val mainInit = Intent(this, Menu::class.java)
+            startActivity(mainInit)
+            finish()
+            return
         }
 
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
@@ -229,29 +273,5 @@ class SetComplete : BarcodeDataReceiver() {
 
     }
 
-    override fun onResume() {
-        super.onResume()
-        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
-        claimScanner()
-        onWindowFocusChanged(true)
-        Log.d("IntentApiSample: ", "onResume")
-        if(scanRes != null){
-            try {
-                barcode = scanRes.toString()
-                codeId = scanCodeId.toString()
-                reactionBarcode(barcode)
-            }
-            catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
-                toast.show()
-            }
-        }
-    }
 
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(barcodeDataReceiver)
-        releaseScanner()
-        Log.d("IntentApiSample: ", "onPause")
-    }
 }

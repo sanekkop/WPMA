@@ -14,16 +14,19 @@ import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import android.widget.Toast
-import com.intek.wpma.BarcodeDataReceiver
+import com.intek.wpma.*
 import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.Helpers.Translation
-import com.intek.wpma.R
-import com.intek.wpma.ScanActivity
+import com.intek.wpma.Ref.Doc
+import com.intek.wpma.Ref.RefEmployer
+import kotlinx.android.synthetic.main.activity_downing.*
 import kotlinx.android.synthetic.main.activity_loading.*
 import kotlinx.android.synthetic.main.activity_loading.FExcStr
+import kotlinx.android.synthetic.main.activity_loading.btnScan
 import kotlinx.android.synthetic.main.activity_loading.lblPlacer
 import kotlinx.android.synthetic.main.activity_loading.table
 import kotlinx.android.synthetic.main.activity_show_box.*
+import kotlinx.android.synthetic.main.activity_unloading.*
 
 
 class Loading : BarcodeDataReceiver() {
@@ -32,7 +35,7 @@ class Loading : BarcodeDataReceiver() {
     private var wayBillDT: MutableList<MutableMap<String,String>> = mutableListOf()
     enum class Action {Inicialization,Loading}
     private var curentAction:Action = Action.Inicialization
-    private var placer:String = ""
+    private var placer = RefEmployer()
     private val trans = Translation()
     private var currentLine:Int = 1 //информация начинается с 2 строки в таблице
     private var currentLineWayBillDT:MutableMap<String,String> = mutableMapOf()
@@ -53,8 +56,8 @@ class Loading : BarcodeDataReceiver() {
                         reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
-                        val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
-                        toast.show()
+                        FExcStr.text = "Не удалось отсканировать штрихкод!" + e.toString()
+                        badVoise()
                     }
 
                 }
@@ -74,8 +77,7 @@ class Loading : BarcodeDataReceiver() {
                 reactionBarcode(barcode)
             }
             catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Ошибка! Возможно отсутствует соединение с базой!", Toast.LENGTH_LONG)
-                toast.show()
+                FExcStr.text = e.toString()
             }
         }
     }
@@ -145,7 +147,7 @@ class Loading : BarcodeDataReceiver() {
     }
 
     private fun completeLoadingInicialization() {
-        if (placer == ss.FEmployer.id)
+        if (placer.id == ss.FEmployer.id)
         {
             FExcStr.text = "Пользователь совпадает с укладчиком! Извини друг, так нельзя!"
             return
@@ -234,7 +236,7 @@ class Loading : BarcodeDataReceiver() {
                         "\$ПутевойЛист.Укладчик2  = :Placer_2, " +
                         "\$ПутевойЛист.Укладчик3  = :Placer_3 " +
                         "WHERE " +
-                        "DH\$ПутевойЛист .iddoc = :iddoc;"
+                        "DH\$ПутевойЛист .iddoc = :iddoc"
             var findeEmpty = false
             if (dataTable[1][0] == ss.getVoidID())
             {
@@ -261,7 +263,7 @@ class Loading : BarcodeDataReceiver() {
             }
             else
             {
-                textQuery = ss.querySetParam(textQuery, "Placer2", dataTable[1][2])
+                textQuery = ss.querySetParam(textQuery, "Placer_2", dataTable[1][2])
             }
             if (dataTable[1][3] == ss.getVoidID() && !findeEmpty)
             {
@@ -270,7 +272,7 @@ class Loading : BarcodeDataReceiver() {
             }
             else
             {
-                textQuery = ss.querySetParam(textQuery, "Placer3", dataTable[1][3])
+                textQuery = ss.querySetParam(textQuery, "Placer_3", dataTable[1][3])
             }
             textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
             if (!findeEmpty)
@@ -293,13 +295,12 @@ class Loading : BarcodeDataReceiver() {
                         "WHERE " +
                         "DH\$ПутевойЛист .iddoc = :iddoc;"
             textQuery = ss.querySetParam(textQuery, "Loader", ss.FEmployer.id)
-            textQuery = ss.querySetParam(textQuery, "Placer", if (placer != "") placer else ss.getVoidID())
+            textQuery = ss.querySetParam(textQuery, "Placer", if (placer.selected) placer.id else ss.getVoidID())
             textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
 
         }
-
-        dataTable = ss.executeWithRead(textQuery)
-        if (dataTable == null){
+        if (!ss.executeWithoutRead(textQuery)) {
+            FExcStr.text = "Ошибка фиксации задания!"
             return
         }
         toModeLoading(wayBill["ID"].toString())
@@ -362,9 +363,10 @@ class Loading : BarcodeDataReceiver() {
                     "DH\$ПутевойЛист .iddoc = :iddoc"
 
         textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
-
-        dataTable = ss.executeWithRead(textQuery)
-        if (dataTable == null){
+        if (!ss.executeWithoutRead(textQuery))
+        {
+            FExcStr.text = "Ошибка фиксации погрузки"
+            badVoise()
             return
         }
         val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
@@ -471,6 +473,7 @@ class Loading : BarcodeDataReceiver() {
         {
             //погрузка не разрешена
             FExcStr.text = "Погрузка запрещена!"
+            badVoise()
             return
         }
 
@@ -524,10 +527,13 @@ class Loading : BarcodeDataReceiver() {
         textQuery = ss.querySetParam(textQuery, "iddoc", wayBill["ID"].toString())
         wayBillDT = ss.executeWithReadNew(textQuery)!!
         currentLine = 1
-        currentLineWayBillDT["ProposalNumber"] = wayBillDT[0]["ProposalNumber"].toString()
-        currentLineWayBillDT["Doc"] = wayBillDT[0]["Doc"].toString()
-        currentLineWayBillDT["AdressCounter"] = wayBillDT[0]["AdressCounter"].toString()
-        currentLineWayBillDT["AdressCompl"] = wayBillDT[0]["AdressCompl"].toString()
+        if (wayBillDT.isNotEmpty()) {
+            //не кончились места
+            currentLineWayBillDT["ProposalNumber"] = wayBillDT[0]["ProposalNumber"].toString()
+            currentLineWayBillDT["Doc"] = wayBillDT[0]["Doc"].toString()
+            currentLineWayBillDT["AdressCounter"] = wayBillDT[0]["AdressCounter"].toString()
+            currentLineWayBillDT["AdressCompl"] = wayBillDT[0]["AdressCompl"].toString()
+        }
 
         curentAction = Action.Loading
         refreshActivity()
@@ -539,7 +545,7 @@ class Loading : BarcodeDataReceiver() {
         val helper = Helper()
         val barcoderes = helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
-        if(typeBarcode == "6")
+        if(typeBarcode == "6" && curentAction == Action.Loading)
         {
             val id = barcoderes["ID"].toString()
             if (ss.isSC(id, "МестаПогрузки")) {
@@ -687,12 +693,34 @@ class Loading : BarcodeDataReceiver() {
                 return false
             }
         }
+        else if (curentAction == Action.Inicialization && typeBarcode == "113") {
+            val idd = barcoderes["IDD"].toString()
+            if (ss.isSC(idd, "Сотрудники")) {
+                placer.foundIDD(idd)
+            } else {
+                val doc = ss.getDoc(idd, false)
+                if (doc == null) {
+                    FExcStr.text = "Нет действий с данным ШК!"
+                    badVoise()
+                    return false
+                }
+                if (doc["Тип"] == "ПутевойЛист") {
+                    wayBill = doc
+                    wayBill["View"] = doc["НомерДок"].toString() + " (" + doc["ДатаДок"].toString() + ")"
+                } else {
+                    FExcStr.text = "Неверный тип документа!"
+                    badVoise()
+                    return false
+                }
+            }
+        }
         else {
             FExcStr.text = "Нет действий с данным ШК! Отсканируйте коробку."
             badVoise()
             return false
         }
         goodVoise()
+        refreshActivity()
         return true
     }
 
@@ -776,13 +804,13 @@ class Loading : BarcodeDataReceiver() {
         //путевой есть, надо подтянуть его в название
         lblPlacer.text = "Путевой: " + wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ") Укладчик: "
         //теперь укладчик
-        if (placer == "")
+        if (!placer.selected)
         {
             lblPlacer.text = lblPlacer.text.toString() + "<не выбран>"
         }
         else
         {
-            lblPlacer.text = lblPlacer.text.toString() + placer
+            lblPlacer.text = lblPlacer.text.toString() + ss.helper.getShortFIO(placer.name)
         }
         if (curentAction == Action.Inicialization)
         {
@@ -790,42 +818,40 @@ class Loading : BarcodeDataReceiver() {
             lblPlacer.visibility = View.VISIBLE
             return
         }
-        lblPlacer.visibility = View.VISIBLE
-        lblPlacer.text = wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ")"
 
         table.removeAllViewsInLayout()
-        val linearLayout = LinearLayout(this)
+        var linearLayout = LinearLayout(this)
         val rowTitle = TableRow(this)
         //добавим столбцы
-        val number = TextView(this)
+        var number = TextView(this)
         number.text = "№"
         number.typeface = Typeface.SERIF
         number.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.09).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         number.gravity = Gravity.CENTER
         number.textSize = 20F
         number.setTextColor(-0x1000000)
-        val docum = TextView(this)
+        var docum = TextView(this)
         docum.text = "Документ"
         docum.typeface = Typeface.SERIF
         docum.gravity = Gravity.CENTER
         docum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.32).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         docum.textSize = 20F
         docum.setTextColor(-0x1000000)
-        val address = TextView(this)
+        var address = TextView(this)
         address.text = "Адрес"
         address.typeface = Typeface.SERIF
         address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.33).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         address.gravity = Gravity.CENTER
         address.textSize = 20F
         address.setTextColor(-0x1000000)
-        val boxes = TextView(this)
+        var boxes = TextView(this)
         boxes.text = "Мест"
         boxes.typeface = Typeface.SERIF
         boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.13).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         boxes.gravity = Gravity.CENTER
         boxes.textSize = 20F
         boxes.setTextColor(-0x1000000)
-        val boxesfact = TextView(this)
+        var boxesfact = TextView(this)
         boxesfact.text = "Факт"
         boxesfact.typeface = Typeface.SERIF
         boxesfact.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.13).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -842,7 +868,7 @@ class Loading : BarcodeDataReceiver() {
         rowTitle.addView(linearLayout)
         table.addView(rowTitle)
         var linenom = 1 //1 строку шапки не считаем
-
+        var countBoxAll = 0
         for (rowDT in wayBillDT)
         {
             //строки теперь
@@ -878,7 +904,7 @@ class Loading : BarcodeDataReceiver() {
                 }
                 true
             }
-            val linearLayout = LinearLayout(this)
+            linearLayout = LinearLayout(this)
             var colorline =  Color.WHITE
             if (linenom == currentLine)
             {
@@ -886,42 +912,42 @@ class Loading : BarcodeDataReceiver() {
             }
             rowTitle.setBackgroundColor(colorline)
             //добавим столбцы
-            val number = TextView(this)
+            number = TextView(this)
             number.text = rowDT["AdressCounter"]
             number.typeface = Typeface.SERIF
             number.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.09).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             number.gravity = Gravity.CENTER
             number.textSize = 20F
             number.setTextColor(-0x1000000)
-            val docum = TextView(this)
+            docum = TextView(this)
             docum.text = rowDT["ProposalNumber"].toString().substring(4)
             docum.typeface = Typeface.SERIF
             docum.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.32).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             docum.gravity = Gravity.CENTER
             docum.textSize = 20F
             docum.setTextColor(-0x1000000)
-            val address = TextView(this)
+            address = TextView(this)
             address.text = rowDT["AdressCompl"]?.trim()
             address.typeface = Typeface.SERIF
             address.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.33).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             address.gravity = Gravity.CENTER
-            address.textSize = 20F
+            address.textSize = 17F
             address.setTextColor(-0x1000000)
-            val boxes = TextView(this)
+            boxes = TextView(this)
             boxes.text = rowDT["Boxes"]
             boxes.typeface = Typeface.SERIF
             boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             boxes.gravity = Gravity.CENTER
             boxes.textSize = 20F
             boxes.setTextColor(-0x1000000)
-            val boxesfact = TextView(this)
+            boxesfact = TextView(this)
             boxesfact.text = rowDT["BoxesFact"]
             boxesfact.typeface = Typeface.SERIF
             boxesfact.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay*0.14).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             boxesfact.gravity = Gravity.CENTER
             boxesfact.textSize = 20F
             boxesfact.setTextColor(-0x1000000)
-
+            countBoxAll += rowDT["Boxes"].toString().toInt()
             linearLayout.addView(number)
             linearLayout.addView(docum)
             linearLayout.addView(address)
@@ -932,6 +958,8 @@ class Loading : BarcodeDataReceiver() {
             table.addView(rowTitle)
             linenom++
         }
+        lblPlacer.visibility = View.VISIBLE
+        lblPlacer.text = wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ") ВСЕГО МЕСТ " + countBoxAll.toString()
 
     }
 

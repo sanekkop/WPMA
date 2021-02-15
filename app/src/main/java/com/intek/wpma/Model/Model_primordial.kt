@@ -1,7 +1,9 @@
 package com.intek.wpma.Model
 
+import android.R.string
 import com.intek.wpma.SQL.SQLSynchronizer
 import java.math.BigDecimal
+
 
 class Model : SQLSynchronizer() {
 
@@ -78,6 +80,18 @@ class Model : SQLSynchronizer() {
         var FlagDelivery: Int
     )
 
+    fun getStrPackageCount(Count: Int, Coef: Int): String {
+        var Count = Count
+        var result: String = Count.toString() + " ШТУК" //По умолчанию штуки
+        if (Coef > 1) {
+            if ((Count / Coef) * Coef == Count) {
+                //Делится по коробкам
+                Count = Count / Coef
+                result = Count.toString() + " м."
+            }
+        }
+        return result
+    }
 
 
 }

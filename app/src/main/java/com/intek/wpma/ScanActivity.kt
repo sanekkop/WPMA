@@ -104,12 +104,12 @@ class ScanActivity: AppCompatActivity(), ZXingScannerView.ResultHandler {
                 Search.scanCodeId = codeId
             }
             "YapItem" -> {
-                YapItem.scanRes = rawResult.text
-                YapItem.scanCodeId = codeId
+                Search.scanRes = rawResult.text
+                Search.scanCodeId = codeId
             }
             "NoneItem" -> {
-                NoneItem.scanRes = rawResult.text
-                NoneItem.scanCodeId = codeId
+                Search.scanRes = rawResult.text
+                Search.scanCodeId = codeId
             }
             "ReviseMark" -> {
                 ReviseMark.scanRes = rawResult.text

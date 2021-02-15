@@ -9,71 +9,53 @@
 
     <TextView
         android:id="@+id/head"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:gravity="center_horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
         android:text="Приемка (накладные)"
         android:textColor="#000"
         android:textSize="20sp"
-        app:layout_constraintBottom_toTopOf="@+id/printPal"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHeight_percent="0.05"
-        app:layout_constraintWidth_percent="0.99"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.3" />
+        app:layout_constraintWidth_percent="0.99" />
 
 
     <TextView
         android:id="@+id/printPal"
-        android:text="&lt;принтер не выбран&gt;"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
+        android:gravity="center"
+        android:text="(принтер не выбран)"
         android:textColor="#228B22"
         android:textSize="16sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/scroll"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.07"
-        app:layout_constraintHorizontal_bias="0.004"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/head"
-        app:layout_constraintVertical_bias="0.6"
-        app:layout_constraintWidth_percent="0.6" />
+        app:layout_constraintTop_toBottomOf="@+id/head" />
 
     <TextView
         android:id="@+id/palletPal"
-        android:text="НЕТ ПАЛЛЕТЫ"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:height="0dp"
+        android:layout_height="wrap_content"
         android:gravity="center"
+        android:text="НЕТ ПАЛЛЕТЫ"
         android:textColor="#228B22"
         android:textSize="16sp"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@id/scroll"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.07"
-        app:layout_constraintHorizontal_bias="0.985"
-        app:layout_constraintStart_toStartOf="@id/printPal"
-        app:layout_constraintTop_toBottomOf="@id/head"
-        app:layout_constraintVertical_bias="0.603"
-        app:layout_constraintWidth_percent="0.39" />
+        app:layout_constraintStart_toEndOf="@+id/printPal"
+        app:layout_constraintTop_toBottomOf="@+id/head" />
 
     <ScrollView
         android:id="@+id/scroll"
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/btnScan"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.6"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.3"
-        app:layout_constraintWidth_percent="0.99">
+        app:layout_constraintTop_toBottomOf="@+id/palletPal">
 
 
         <TableLayout
@@ -81,26 +63,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
+            android:focusable="true"
             android:gravity="center_horizontal"
             android:scrollbarAlwaysDrawHorizontalTrack="false"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:focusable="true">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TableRow
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:clickable="false">
-
-                </TableRow>
-            </LinearLayout>
-
-        </TableLayout>
+            app:layout_constraintTop_toTopOf="parent"/>
     </ScrollView>
 
     <Button
@@ -109,16 +76,12 @@
         android:layout_height="wrap_content"
         android:text="Scan"
         android:visibility="invisible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.847" />
+        app:layout_constraintBottom_toTopOf="@+id/FExcStr"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/FExcStr"
-        android:layout_width="322dp"
+        android:layout_width="match_parent"
         android:layout_height="98dp"
         android:gravity="center"
         android:text="Выберите режим работы"
@@ -126,8 +89,6 @@
         android:textSize="24sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.986" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

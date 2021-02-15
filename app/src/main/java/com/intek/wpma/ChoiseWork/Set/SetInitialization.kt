@@ -20,7 +20,9 @@ import com.intek.wpma.*
 import com.intek.wpma.ChoiseWork.Menu
 import com.intek.wpma.Model.Model
 import com.intek.wpma.Ref.RefSection
+import kotlinx.android.synthetic.main.activity_downing.*
 import kotlinx.android.synthetic.main.activity_set.*
+import kotlinx.android.synthetic.main.activity_set.FExcStr
 import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
@@ -36,11 +38,13 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     private var docCC: Model.DocCC? = null
     private var section: Model.Section? = null
     private var ccItem: Model.StructItemSet? = null
-    private var barcode: String = ""
     // количество набираемой  позиции
     private var countFact: Int = 0
     private var currLine: Int = 0
-    private var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
+
+    //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
+    var barcode: String = ""
+    var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
 
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -54,12 +58,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                         codeId = intent.getStringExtra("codeId")!!
                         this@SetInitialization.reactionBarcode(barcode)
                     } catch (e: Exception) {
-                        val toast = Toast.makeText(
-                            applicationContext,
-                            "Не удалось отсканировать штрихкод!",
-                            Toast.LENGTH_LONG
-                        )
-                        toast.show()
+                        FExcStr.text = "Не удалось отсканировать штрихкод!" + e.toString()
                         badVoise()
                     }
                 }
@@ -67,16 +66,59 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
+        claimScanner()
+        onWindowFocusChanged(true)
+        Log.d("IntentApiSample: ", "onResume")
+        if(scanRes != null){
+            try {
+                barcode = scanRes.toString()
+                codeId = scanCodeId.toString()
+                this.reactionBarcode(barcode)
+            }
+            catch (e: Exception){
+                FExcStr.text = "Не удалось отсканировать штрихкод!"
+                badVoise()
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(barcodeDataReceiver)
+        releaseScanner()
+        Log.d("IntentApiSample: ", "onPause")
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+
+        reactionKey(keyCode, event)
+        return super.onKeyDown(keyCode, event)
+    }
+
+    companion object {
+        var scanRes: String? = null
+        var scanCodeId: String? = null
+    }
+    //endregion
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_set)
         parentForm = intent.extras!!.getString("ParentForm")!!
+        val oldMode = ss.CurrentMode
         title = ss.title
         scanRes = null //занулим повторно для перехода между формами
-        if (parentForm == "Menu") {
+        if (oldMode == Global.Mode.Main) {
+            ss.CurrentMode = Global.Mode.SetInicialization
+            ss.CurrentAction = Global.ActionSet.Waiting
+
             if (!toModeSetInicialization())
             {
                 badVoise()
+                quitModesSet()
                 val menu = Intent(this, Menu::class.java)
                 startActivity(menu)
                 finish()
@@ -98,8 +140,8 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     toModeSet(addressID, docSetID)
                 } else toModeSet(null, null)
             } catch (e: Exception) {
-                val toast = Toast.makeText(applicationContext, e.toString(), Toast.LENGTH_LONG)
-                toast.show()
+                FExcStr.text = e.toString()
+                badVoise()
             }
         }
         else if (parentForm == "SetComplete") {
@@ -109,13 +151,14 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 {
                     //облом выходим обратно
                     badVoise()
+                    quitModesSet()
                     val menu = Intent(this, Menu::class.java)
                     startActivity(menu)
                     finish()
                 }
             } catch (e: Exception) {
-                val toast = Toast.makeText(applicationContext, e.toString(), Toast.LENGTH_LONG)
-                toast.show()
+                FExcStr.text = e.toString()
+                badVoise()
             }
         }
         if (ss.isMobile){
@@ -164,11 +207,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         PreviousAction.setOnTouchListener(this)     //для завершения набора маркировок при неполно набранной строке
     }
 
-    companion object {
-        var scanRes: String? = null
-        var scanCodeId: String? = null
-    }
-
     private fun toModeSetInicialization(): Boolean {
         ss.FEmployer.refresh()    //Обновим данные сотрудника
         ss.Const.refresh()        //Обновим константы
@@ -178,6 +216,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         //получим незаконченные задания по отбору
         getDocsSet()
         if (docsSet.isNotEmpty()) {
+            for (id in docsSet) {
+                if (!lockDoc(id)) {
+                    return false
+                }
+            }
             return toModeSet(null, null)
         }
         ss.CurrentMode = Global.Mode.SetInicialization
@@ -217,11 +260,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     }
 
     private fun toModeSet(AdressID: String?, iddoc: String?): Boolean {
-        for (id in docsSet) {
-            if (!lockDoc(id)) {
-                return false
-            }
-        }
+
         var textQuery =
             "DECLARE @curdate DateTime; " +
                     "SELECT @curdate = DATEADD(DAY, 1 - DAY(curdate), curdate) FROM _1ssystem (nolock); " +
@@ -594,14 +633,16 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
     private fun reactionBarcode(Barcode: String) {
         var isObject = true
-        val barcoderes: MutableMap<String, String> = ss.helper.disassembleBarcode(Barcode)
+        val barcoderes: MutableMap<String, String> = ss.helper.disassembleBarcode(Barcode.replace("\r\n",""))
         val typeBarcode = barcoderes["Type"].toString()
         //если это не типовой справочник, то выходим
         val idd = barcoderes["IDD"].toString()
         if (ss.isSC(idd, "Сотрудники")) {
+            quitModesSet()
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
             finish()
+            goodVoise()
             return
         }
 //        if (SS.IsSC(IDD, "Принтеры")) {
@@ -720,17 +761,22 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             //найдем маркировку в справочнике МаркировкаТовара
             val testBatcode = Barcode.replace("'","''")
             textQuery =
-                "SELECT \$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен" +
+                "SELECT \$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен " +
                         "FROM \$Спр.МаркировкаТовара (nolock) " +
                         "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
                         "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' " +
                         "and \$Спр.МаркировкаТовара.ФлагПоступления = 1 " +
                         "and ((\$Спр.МаркировкаТовара.ФлагОтгрузки = 0 and \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' )" +
                         "or (\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 and \$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(docCC!!.ID,"КонтрольНабора")}'))"
-            val dtMark = ss.executeWithReadNew(textQuery) ?: return false
+            val dtMark = ss.executeWithReadNew(textQuery)
+                if (dtMark == null) {
+                    badVoise()
+                    return false
+                }
             when {
                 dtMark.isEmpty() -> {
                     FExcStr.text = ("Маркировка не найдена, либо товар уже отгружен!" + whatUNeed())
+                    badVoise()
                     return false
                 }
                 dtMark[0]["Отгружен"].toString() == "0" -> {
@@ -753,9 +799,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                         if (countFact == ccItem!!.Count){
                             if (enterCountSet(countFact)){
                                 //Если все норм, то выходим
+                                goodVoise()
                                 return true
-                            } else{
-                                //не прошло что-то отменим маркировку
+                            } /*else{
+                                //не прошло что-то отменим маркировку тут бажина скорее всего отменим пока
+
                                 textQuery =
                                     "UPDATE \$Спр.МаркировкаТовара " +
                                             "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' , \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 " +
@@ -764,9 +812,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                                             "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' "
                                 if (!ss.executeWithoutRead(textQuery)) {
                                     FExcStr.text = ("QR - code не распознан! Заново " + whatUNeed())
+                                    badVoise()
                                     return false
                                 }
                             }
+                            */
 
                         }
 
@@ -777,6 +827,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                         countFact = 1
                         if (!enterCountSet(countFact)){
                             //не прошло что-то отменим маркировку
+                           /*
                             textQuery =
                                 "UPDATE \$Спр.МаркировкаТовара " +
                                         "SET \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' , \$Спр.МаркировкаТовара.ФлагОтгрузки = 0 " +
@@ -785,8 +836,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                                         "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' "
                             if (!ss.executeWithoutRead(textQuery)) {
                                 FExcStr.text = ("QR - code не распознан! Заново " + whatUNeed())
+                                badVoise()
                                 return false
                             }
+
+                            */
                         }
                     }
                     FExcStr.text = ("Отобрано " + ccItem!!.InvCode.trim() +
@@ -823,6 +877,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     val dtmark = ss.executeWithReadNew(textQuery) ?: return false
                     if (dtmark.isEmpty()) {
                         //не может быть
+                        badVoise()
                         return false
                     }
                     //надо чтобы маркировок было не больше чем набранных строк
@@ -830,6 +885,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                         .toInt() - dtmark[0]["CountCC"].toString().toInt()
                 }
             }
+            goodVoise()
             return true
         }
         //нужно сканировать маркировку, а сканиуруют что-то другое
@@ -1019,13 +1075,16 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     private fun scanPartBarcode(CountPart: Int): Boolean {
         if (ss.CurrentAction != Global.ActionSet.ScanPart) {
             FExcStr.text = ("Неверно! " + whatUNeed())
+            badVoise()
             return false
         } else if (CountPart != ccItem!!.Details) {
             FExcStr.text = ("Количество деталей неверно! " + whatUNeed())
+            badVoise()
             return false
         }
         ss.CurrentAction = Global.ActionSet.ScanItem
         FExcStr.text = whatUNeed()
+        goodVoise()
         return true
     } // ScanPartBarcode
 
@@ -1111,12 +1170,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
         enterCount.visibility = INVISIBLE
         return toModeSet(null, null)
-    }
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-
-        reactionKey(keyCode, event)
-        return super.onKeyDown(keyCode, event)
     }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
@@ -1277,8 +1330,8 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             dataMapRead = execCommand("QuestPicing", dataMapWrite, fieldList, dataMapRead)
         }
         catch (e: Exception){
-            val toast = Toast.makeText(applicationContext, "Не удалось получить задание!", Toast.LENGTH_SHORT)
-            toast.show()
+            FExcStr.text = "Не удалось получить задание!"
+            badVoise()
         }
 
         if ((dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"] as String).toInt() == -3) {
@@ -1312,11 +1365,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 "where iddoc = '${docsSet[0]}' and DocCC.\$КонтрольНабора.Корректировка = 0 and DocCC.\$КонтрольНабора.Дата5 != :EmptyDate " +
                 "union all " +
                 "select " +
-                "Mark.\$Спр.МаркировкаТовара.Товар ," +
+                "Mark.\$Спр.МаркировкаТовара.Товар , " +
                 "0, count(*) " +
                 "from \$Спр.МаркировкаТовара as Mark (nolock) " +
                 "where Mark.\$Спр.МаркировкаТовара.ФлагПоступления = 1 and Mark.\$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(
-                    docsSet[0],"КонтрольНабора")}'" +
+                    docsSet[0],"КонтрольНабора")}' " +
                 "and Mark.\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 " +
                 "group by Mark.\$Спр.МаркировкаТовара.Товар " +
                 ") as SetTable " +
@@ -1439,32 +1492,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         }
 
         return false
-    }
-
-    override fun onResume() {
-        super.onResume()
-        registerReceiver(barcodeDataReceiver, IntentFilter(ACTION_BARCODE_DATA))
-        claimScanner()
-        onWindowFocusChanged(true)
-        Log.d("IntentApiSample: ", "onResume")
-        if(scanRes != null){
-            try {
-                barcode = scanRes.toString()
-                codeId = scanCodeId.toString()
-                this.reactionBarcode(barcode)
-            }
-            catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Не удалось отсканировать штрихкод!", Toast.LENGTH_LONG)
-                toast.show()
-            }
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(barcodeDataReceiver)
-        releaseScanner()
-        Log.d("IntentApiSample: ", "onPause")
     }
 
 }

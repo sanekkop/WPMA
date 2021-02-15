@@ -10,8 +10,8 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Выбор работы (приемка)"
         android:gravity="center"
+        android:text="Выбор работы (маркировка)"
         android:textColor="#000"
         android:textSize="24sp"
         app:layout_constraintStart_toStartOf="parent"
@@ -35,14 +35,14 @@
         app:layout_constraintVertical_bias="0.237" />
 
     <Button
-        android:id="@+id/btnAcc"
+        android:id="@+id/btnRevise"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="8dp"
         android:background="#FFFFFF"
         android:focusable="false"
         android:gravity="center"
-        android:text="1 - Приемка"
+        android:text="1 - Проверка"
         android:textColor="#000000"
         android:textSize="30sp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -51,19 +51,20 @@
         app:layout_constraintTop_toBottomOf="@+id/btnBack" />
 
     <Button
+        android:id="@+id/btnRemark"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="8dp"
         android:background="#FFFFFF"
         android:focusable="false"
         android:gravity="center"
-        android:text="2 - Кросс Докинг"
+        android:text="2 - Перемаркировка"
         android:textColor="#000000"
         android:textSize="30sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.528"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnAcc" />
+        app:layout_constraintTop_toBottomOf="@+id/btnRevise" />
 
     <TextView
         android:id="@+id/FExcStr"

@@ -10,6 +10,7 @@ import android.view.KeyEvent
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.ChoiseWork.Accept.AccMenu
+import com.intek.wpma.ChoiseWork.Revise.MarkMenu
 import com.intek.wpma.ChoiseWork.Revise.ReviseMark
 import com.intek.wpma.ChoiseWork.Set.SetInitialization
 import com.intek.wpma.ChoiseWork.Shipping.ChoiseWorkShipping
@@ -49,7 +50,8 @@ class Menu : BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_menu)
         title = ss.title
-        if (ss.excStr != null && ss.excStr != "" &&  ss.excStr != "null" )
+        ss.CurrentMode = Global.Mode.Main
+        if (ss.excStr != "" &&  ss.excStr != "null" )
         {
             FExcStr.text = ss.excStr
         }
@@ -58,7 +60,6 @@ class Menu : BarcodeDataReceiver() {
         }
         btnTake.setOnClickListener {
             startActivity(1)
-            return@setOnClickListener
         }
         btnShipping.setOnClickListener {
             startActivity(3)
@@ -120,8 +121,6 @@ class Menu : BarcodeDataReceiver() {
 
         when (num) {
             0 -> {     // режим отбора
-                ss.CurrentMode = Global.Mode.SetInicialization
-                ss.CurrentAction = Global.ActionSet.Waiting
                 val setInit = Intent(this, SetInitialization::class.java)
                 setInit.putExtra("ParentForm","Menu")
                 startActivity(setInit)
@@ -134,17 +133,19 @@ class Menu : BarcodeDataReceiver() {
                 finish()
             }
             5 -> {
-                val revise = Intent(this, ReviseMark::class.java)
+                val revise = Intent(this, MarkMenu::class.java)
                 revise.putExtra("ParentForm","Menu")
                 startActivity(revise)
                 finish()
             }
+
             1 -> {
-                val accInit = Intent(this, AccMenu::class.java)
-                accInit.putExtra("ParentForm","Menu")
-                startActivity(accInit)
-                finish()
+                 val accInit = Intent(this, AccMenu::class.java)
+                    accInit.putExtra("ParentForm","Menu")
+                    startActivity(accInit)
+                    finish()
             }
+
         }
     }
 

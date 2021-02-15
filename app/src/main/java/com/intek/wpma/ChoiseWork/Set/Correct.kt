@@ -18,6 +18,8 @@ import com.intek.wpma.Model.Model
 import com.intek.wpma.R
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_correct.*
+import kotlinx.android.synthetic.main.activity_correct.FExcStr
+import kotlinx.android.synthetic.main.activity_set.*
 
 
 class Correct : BarcodeDataReceiver() {
@@ -27,18 +29,18 @@ class Correct : BarcodeDataReceiver() {
     private val mainWarehouse = "     D   "
     private var ccItem: Model.StructItemSet? = null
     private var docSet: Model.StrictDoc? = null
-    var barcode: String = ""
     private var choiseCorrect: Int = 0          //тип корректировки
     private var countFact: Int = 0              //при наборе маркировок, чтобы не сбились уже отсканированные QR-коды
     private var enterCount: Int = 0             //колво позиций для корректировки (вводится вручную)
     private var enterCountWithoutQRCode = 0     //колво позиций без QR - кода (вводится вручную)
     private var countWithoutQRCode: Int = 0     //колво уже скорректированных позиций без QR - кода
     private var countCorrect: Int = 0           //общее колво уже скорректированных позиций (с QR - кодом и без)
-    var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     private var flagBtn = 0
     private var flagMark = 0                    //флаг маркировки
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
+    var barcode: String = ""
+    var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("IntentApiSample: ", "onReceive")
@@ -51,12 +53,8 @@ class Correct : BarcodeDataReceiver() {
                         codeId = intent.getStringExtra("codeId")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
-                        val toast = Toast.makeText(
-                            applicationContext,
-                            "Не удалось отсканировать штрихкод!",
-                            Toast.LENGTH_LONG
-                        )
-                        toast.show()
+                        FExcStr.text = "Не удалось отсканировать штрихкод!"
+                        badVoise()
                     }
                 }
             }
@@ -80,8 +78,8 @@ class Correct : BarcodeDataReceiver() {
                 reactionBarcode(barcode)
             }
             catch (e: Exception){
-                val toast = Toast.makeText(applicationContext, "Отсутствует соединение с базой!", Toast.LENGTH_LONG)
-                toast.show()
+                FExcStr.text = e.toString()
+                badVoise()
             }
         }
     }
@@ -496,8 +494,8 @@ class Correct : BarcodeDataReceiver() {
                     "lineno_, iddoc, \$КонтрольНабора.Контроль ) " +
                     "select \$КонтрольНабора.СтрокаИсх , \$КонтрольНабора.Товар , :CountCorrect ," +
                     "\$КонтрольНабора.Единица , \$КонтрольНабора.Цена , \$КонтрольНабора.Коэффициент , :CountCorrect*\$КонтрольНабора.Цена ," +
-                    "\$КонтрольНабора.Секция , :CountCorrect , :Reason, , \$КонтрольНабора.ЕдиницаШК ," +
-                    "\$КонтрольНабора.Состояние0 , \$КонтрольНабора.Адрес0 , :AdressCode , \$КонтрольНабора.АдресКорр ," +
+                    "\$КонтрольНабора.Секция , :CountCorrect , :Reason, \$КонтрольНабора.ЕдиницаШК ," +
+                    "\$КонтрольНабора.Состояние0 , \$КонтрольНабора.Адрес0 , :AdressCode , \$КонтрольНабора.Адрес0 ," +
                     "\$КонтрольНабора.ДокБлокировки , \$КонтрольНабора.Дата5 , \$КонтрольНабора.Время5 , \$КонтрольНабора.Контейнер , " +
                     "(select max(lineno_) + 1 from DT\$КонтрольНабора where iddoc = :iddoc), iddoc, 0 " +
                     "from DT\$КонтрольНабора as ForInst where ForInst.iddoc = :iddoc and ForInst.lineno_ = :currline; " +

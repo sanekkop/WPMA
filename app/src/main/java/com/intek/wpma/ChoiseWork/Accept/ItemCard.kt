@@ -7,8 +7,10 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
 import com.intek.wpma.Helpers.Helper
+import com.intek.wpma.MainActivity
 import com.intek.wpma.Model.Model
 import com.intek.wpma.R
+import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefItem
 import kotlinx.android.synthetic.main.activity_search_acc.*
 
@@ -47,9 +49,22 @@ class ItemCard : Search() {
                 updateTableInfo()
                 val backH = Intent(this, NoneItem::class.java)
                 backH.putExtra("ParentForm", "ItemCard")
+                backH.putExtra("flagBarcode", flagBarcode)
+                backH.putExtra("itemID", item.id)
+                backH.putExtra("iddoc", idDoc)
                 startActivity(backH)
                 finish()
             }
+        }
+        btnMark.setOnClickListener {
+            //обработчик события при нажатии на кнопку принятия товара
+           val backH = Intent(this, AccMark::class.java)
+            backH.putExtra("ParentForm", "ItemCard")
+            backH.putExtra("flagBarcode", flagBarcode)
+            backH.putExtra("itemID", item.id)
+            backH.putExtra("iddoc", idDoc)
+            startActivity(backH)
+            finish()
         }
         //
         if (!loadUnits()) {
@@ -503,7 +518,10 @@ class ItemCard : Search() {
         val barcoderes = helper.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         if (typeBarcode == "113") {
-            return super.reactionBarcode(Barcode)
+            val idd = barcoderes["IDD"].toString()
+            if (ss.isSC(idd, "Принтеры")||ss.isSC(idd, "Сотрудники")||ss.isSC(idd, "Секции")) {
+                return super.reactionBarcode(Barcode)
+            }
         }
         //не опознанный ШК, скорее всего позиция запомним ее
         return changeUnitBarcode(Barcode)
@@ -532,6 +550,18 @@ class ItemCard : Search() {
             }
             val backH = Intent(this, NoneItem::class.java)
             backH.putExtra("ParentForm", "ItemCard")
+            startActivity(backH)
+            finish()
+            return true
+        }
+
+        if (keyCode == 69) {
+            // -  переход в режим маркирвоки
+            val backH = Intent(this, AccMark::class.java)
+            backH.putExtra("ParentForm", "ItemCard")
+            backH.putExtra("flagBarcode", flagBarcode)
+            backH.putExtra("itemID", item.id)
+            backH.putExtra("iddoc", idDoc)
             startActivity(backH)
             finish()
             return true

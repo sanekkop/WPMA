@@ -42,6 +42,7 @@ class NoneItem : Search() {
             //обнулим ошибку
             ss.excStr = ""
         }
+
         noneAccItemLocal.addAll(noneAccItem)
 
         //фигня чтобы скрол не скролился
@@ -82,12 +83,14 @@ class NoneItem : Search() {
             }
         }
         //позиционируемся на первом товаре
-        if (itm.foundID(noneAccItemLocal[0]["id"].toString())) {
-            ItemName.text = itm.name
-        } else {
-            ItemName.text = noneAccItemLocal[0]["ItemName"].toString()
+        if (noneAccItemLocal.isNotEmpty()) {
+            if (itm.foundID(noneAccItemLocal[0]["id"].toString())) {
+                ItemName.text = itm.name
+            } else {
+                ItemName.text = noneAccItemLocal[0]["ItemName"].toString()
+            }
+            idDocItm = noneAccItemLocal[0]["iddoc"].toString()
         }
-        idDocItm = noneAccItemLocal[0]["iddoc"].toString()
         refreshActivity()
     }
 
@@ -202,7 +205,7 @@ class NoneItem : Search() {
         else {
             noneAccItemLocal.addAll(noneAccItem)
         }
-        if (countLocal != noneAccItemLocal.count()) {
+        if (countLocal != noneAccItemLocal.count()&&noneAccItemLocal.isNotEmpty()) {
             //сменилось количество, обнулим текущую строку
             currentLine = 1
             //позиционируемся на первом товаре
@@ -382,6 +385,10 @@ class NoneItem : Search() {
             startActivity(backHead)
             finish()
         }
+        if (ss.helper.whatDirection(keyCode) == "Left") {
+           //говорят при нажатии в лево вылетает программа
+            //првоерим
+        }
 
         if (ss.helper.whatInt(keyCode) != -1) {             //артикуля, ля, ля, ля
             searchArt.text = (searchArt.text.toString().trim() + ss.helper.whatInt(keyCode).toString())
@@ -419,6 +426,9 @@ class NoneItem : Search() {
 
     fun reactionKeyLocal(keyCode: Int):Boolean {
         var res = true
+        if (noneAccItemLocal.isEmpty()) {
+            return false
+        }
         //тут частенько вылетает сделаем через попытку
         var oldCurrentLine = currentLine
         table.getChildAt(currentLine).setBackgroundColor(Color.WHITE)

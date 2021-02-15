@@ -32,6 +32,7 @@ class YapItem : Search() {
         setContentView(R.layout.activity_yap_item)
 
         title = ss.title
+
         etikPol.setOnClickListener {
             //обработчик события при нажатии на кнопку принятия товара
             if (printLabels(false)) {

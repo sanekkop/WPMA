@@ -20,12 +20,19 @@ import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefPalleteMove
 import com.intek.wpma.Ref.RefSection
 import kotlinx.android.synthetic.main.activity_accept.*
+import kotlinx.android.synthetic.main.activity_accept.FExcStr
+import kotlinx.android.synthetic.main.activity_accept.palletPal
+import kotlinx.android.synthetic.main.activity_accept.printPal
+import kotlinx.android.synthetic.main.activity_accept.scroll
+import kotlinx.android.synthetic.main.activity_accept.table
+import kotlinx.android.synthetic.main.activity_yap_item.*
 
 
 open class Search : BarcodeDataReceiver() {
 
     var oldx = 0F
     var oldMode:Global.Mode? = null
+    private var currentLine:Int = 1
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -513,6 +520,54 @@ open class Search : BarcodeDataReceiver() {
             startActivity(backAcc)
             return true
         }
+        if (ss.helper.whatDirection(keyCode) in listOf("Down", "Up")) {
+
+            table.getChildAt(currentLine).isFocusable = false
+            table.getChildAt(currentLine).setBackgroundColor(Color.WHITE)
+            if (ss.helper.whatDirection(keyCode) == "Down") {
+                if (currentLine < consignmen.count()) {
+                    currentLine++
+                } else {
+                    currentLine = 1
+                }
+            } else {
+                if (currentLine > 1) {
+                    currentLine--
+                } else {
+                    currentLine = consignmen.count()
+                }
+
+            }
+            if (currentLine < 10) {
+                scroll.fullScroll(View.FOCUS_UP)
+            } else if (currentLine > consignmen.count() - 10) {
+                scroll.fullScroll(View.FOCUS_DOWN)
+            } else if (currentLine % 10 == 0) {
+                scroll.scrollTo(0, 30 * currentLine - 1)
+            }
+            //теперь подкрасим строку серым
+            table.getChildAt(currentLine).setBackgroundColor(Color.LTGRAY)
+            table.getChildAt(currentLine).isActivated = false
+            return true
+        }
+
+        if (keyCode == 67) {
+            //делит удаляем текущую накладную
+            //это делете, оотменим приемку если до этого двигались
+            iddoc = iddoc.replace(consignmen[currentLine - 1]["ACID"].toString(), "")
+            lockoutDocAccept(consignmen[currentLine - 1]["ACID"].toString())
+            //подтянем табличку накладных
+            consign()
+            //подтянем не принятые товары
+            noneItem()
+            //тепреь принятые
+            yapItem()
+            //теперь обнговим информацию о не принятх позициях
+            updateTableInfo()
+
+            refreshActivity()
+            return true
+        }
         return false
     }
 
@@ -584,6 +639,7 @@ open class Search : BarcodeDataReceiver() {
         }
 
         var linearLayout = LinearLayout(this)
+        val rowTitle = TableRow(this)
 
         //добавим столбцы
         var number = TextView(this)
@@ -643,15 +699,33 @@ open class Search : BarcodeDataReceiver() {
         linearLayout.addView(сountNotAcceptRow)
         linearLayout.addView(сlient)
 
-        linearLayout.setBackgroundColor(Color.GRAY)
-        table.addView(linearLayout)
-
+        rowTitle.addView(linearLayout)
+        rowTitle.setBackgroundColor(Color.GRAY)
+        table.addView(rowTitle)
+        var lineNom = 0
 
         if (consignmen.isNotEmpty()) {
 
             for (DR in consignmen) {
 
                 var linearLayout1 = LinearLayout(this)
+                lineNom ++
+                val rowTitle1 = TableRow(this)
+                rowTitle1.isClickable = true
+                rowTitle1.setOnTouchListener{ v, event ->  //выделение строки при таче
+                    var i = 1
+                    while (i < table.childCount) {
+                        if (rowTitle1 != table.getChildAt(i)) {
+                            table.getChildAt(i).setBackgroundColor(Color.WHITE)
+                        } else {
+                            currentLine = i
+                            rowTitle1.setBackgroundColor(Color.LTGRAY)
+                            kolEtik.text = consignmen[currentLine - 1]["LabelCount"].toString()
+                        }
+                        i++
+                    }
+                    true
+                }
 
                 //добавим столбцы
                 number = TextView(this)
@@ -716,7 +790,13 @@ open class Search : BarcodeDataReceiver() {
                 linearLayout1.addView(сountNotAcceptRow)
                 linearLayout1.addView(сlient)
 
-                table.addView(linearLayout1)
+                rowTitle1.addView(linearLayout1)
+                var colorline =  Color.WHITE
+                if (lineNom == currentLine) {
+                    colorline = Color.LTGRAY
+                }
+                rowTitle1.setBackgroundColor(colorline)
+                table.addView(rowTitle1)
             }
         }
     }

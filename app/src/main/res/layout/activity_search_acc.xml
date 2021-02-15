@@ -393,6 +393,44 @@
 
         </TableRow>
 
+        <TableRow>
+
+            <Button
+                android:id="@+id/btnMark"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:text="Маркировка"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:padding="1dp"
+                android:text=""
+                android:textColor="#000"
+                android:textSize="15sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="макрк-вок"
+                android:textColor="#ff0000"
+                android:textStyle="bold" />
+
+
+            <TextView
+                android:id="@+id/markCount"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:gravity="center"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+        </TableRow>
     </TableLayout>
 
     <TextView

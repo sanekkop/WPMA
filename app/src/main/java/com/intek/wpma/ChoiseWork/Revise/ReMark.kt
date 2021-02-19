@@ -18,11 +18,8 @@ import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_mark_menu.*
 import kotlinx.android.synthetic.main.activity_remark_mark.*
 import kotlinx.android.synthetic.main.activity_remark_mark.FExcStr
-import kotlinx.android.synthetic.main.activity_remark_mark.header
 import kotlinx.android.synthetic.main.activity_search_acc.*
-import java.text.SimpleDateFormat
 import java.util.*
-
 
 class ReMark : BarcodeDataReceiver() {
 
@@ -120,7 +117,7 @@ class ReMark : BarcodeDataReceiver() {
         val helper = Helper()
         val barcoderes = helper.disassembleBarcode(Barcode)
         mark = mutableMapOf()
-        if (codeId == barcodeId){
+        if (codeId == barcodeId) {
             val testBatcode = Barcode.replace("'", "''")
                 val textQuery =
                     "SELECT " +
@@ -149,11 +146,10 @@ class ReMark : BarcodeDataReceiver() {
                         FExcStr.text = "Маркировка принята. Зафиксируйте перемаркировку."
                     }
                 }
-
         }
         else {
             val itemTemp = RefItem()
-            if (itemTemp.foundBarcode(Barcode) == true) {
+            if (itemTemp.foundBarcode(Barcode)) {
                 FExcStr.text = "Товар найден, сканируйте маркировку"
                 item = RefItem()
                 item.foundID(itemTemp.id)
@@ -191,9 +187,9 @@ class ReMark : BarcodeDataReceiver() {
             FExcStr.text = "Отсканируйте товар"
             return
         }
-        lblInfo2.text = item.invCode + " " + item.name
+        lblInfo2.text = (item.invCode + " " + item.name)
         if (mark.isNotEmpty()) {
-            lblInfo1.text = mark["Маркировка"] + " " + if (mark["Отгружен"] == "0") "не отгружен" else " отгружен"
+            lblInfo1.text = (mark["Маркировка"] + " " + if (mark["Отгружен"] == "0") "не отгружен" else " отгружен")
         }
         else {
             lblInfo1.text = "Маркировка не отсканированна!"

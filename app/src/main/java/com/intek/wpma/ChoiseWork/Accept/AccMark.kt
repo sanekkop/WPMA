@@ -9,12 +9,14 @@ import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import com.intek.wpma.*
 import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.Helpers.Translation
+import com.intek.wpma.Model.Model
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefItem
 import kotlinx.android.synthetic.main.activity_downing.*
@@ -23,8 +25,8 @@ import kotlinx.android.synthetic.main.activity_acc_mark.FExcStr
 import kotlinx.android.synthetic.main.activity_acc_mark.btnScan
 import kotlinx.android.synthetic.main.activity_acc_mark.lblPlacer
 import kotlinx.android.synthetic.main.activity_acc_mark.table
-
-
+import kotlinx.android.synthetic.main.activity_remark_mark.*
+import kotlinx.android.synthetic.main.activity_set.*
 
 class AccMark : BarcodeDataReceiver() {
 
@@ -33,7 +35,11 @@ class AccMark : BarcodeDataReceiver() {
     var itemID = ""
     var markItemDT : MutableList<MutableMap<String, String>> = mutableListOf()
     private var naklAcc: MutableMap<String,String> = mutableMapOf()
-    val item = RefItem()
+    private var markBox = ""  //ШК коробочной маркировки
+    private var docCC: Model.DocCC? = null
+    private var ccItem: Model.StructItemSet? = null
+    var item = RefItem()
+    val hh = Helper()
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -46,10 +52,11 @@ class AccMark : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
+                        codeId = intent.getStringExtra("codeId")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
-                        FExcStr.text = "Не удалось отсканировать штрихкод!" + e.toString()
+                        FExcStr.text = ("Не удалось отсканировать штрихкод!$e")
                         badVoise()
                     }
 
@@ -111,20 +118,20 @@ class AccMark : BarcodeDataReceiver() {
             }
         }
         btnFinishAccMarkMode!!.setOnClickListener {
-            //еслинажали финиш, значит переходим в режим погрузки
+            //если нажали финиш, значит переходим в режим погрузки
             completeAccMark()
         }
 
         toModeAccMarkInicialization()
     }
 
-    private fun completeAccMark() {
 
+    private fun completeAccMark() {
         //проверим чек погрузки
-        var textQuery =
+        var textQuery =                                                    //для чего этот запрос я так и не понял
             "SELECT " +
                     "Main.DocFull as DocFull " +
-                    "FROM ("
+                    "FROM (" +
                     ") as Main " +
                     "INNER JOIN (" +
                     "SELECT " +
@@ -137,8 +144,7 @@ class AccMark : BarcodeDataReceiver() {
                     ""
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
-        textQuery = ss.querySetParam(textQuery, "iddoc","")
-
+        textQuery = ss.querySetParam(textQuery, "iddoc", markItemDT)
 
         if (!ss.executeWithoutRead(textQuery)) {
             FExcStr.text = "Ошибка фиксации маркировки"
@@ -149,12 +155,14 @@ class AccMark : BarcodeDataReceiver() {
         itemCardInit.putExtra("ParentForm", "AccMark")
         itemCardInit.putExtra("flagBarcode", flagBarcode)
         itemCardInit.putExtra("itemID", itemID)
-        itemCardInit.putExtra("idDoc", idDoc)
+        itemCardInit.putExtra("iddoc", idDoc)
         startActivity(itemCardInit)
         finish()
     }
 
+    //наличие маркировок по товару
     private fun toModeAccMarkInicialization() {
+
         var textQuery = "SELECT " +
                 "ISNULL(journ.iddoc, AC.iddoc ) as iddoc , " +
                 "ISNULL(journ.docno, journAC.docno ) as DocNo , " +
@@ -180,7 +188,7 @@ class AccMark : BarcodeDataReceiver() {
             itemCardInit.putExtra("ParentForm", "AccMark")
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
-            itemCardInit.putExtra("idDoc", idDoc)
+            itemCardInit.putExtra("iddoc", idDoc)
             startActivity(itemCardInit)
             finish()
             return
@@ -205,21 +213,107 @@ class AccMark : BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
-
-        val helper = Helper()
-        val barcoderes = helper.disassembleBarcode(Barcode)
+        val barcoderes = hh.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         val idd = barcoderes["IDD"].toString()
-        if (ss.isSC(idd, "Сотрудники")) {
 
-        } else {
-            FExcStr.text = "Нет действий с данным ШК! Отсканируйте маркировку."
-            badVoise()
-            return false
+        //если вместо Data-Matrix пикает ШК
+        if (ss.isSC(idd, "Сотрудники")) {
+            if (ss.CurrentAction != Global.ActionSet.ScanItem && ss.CurrentAction != Global.ActionSet.ScanQRCode) {
+                FExcStr.text = "Нет действий с данным ШК! Сотрудники."
+                badVoise()
+                // return false
+            }
+            else {
+                FExcStr.text = "Нет действий с данным ШК! Отсканируйте маркировку."
+                badVoise()
+                //return false
+            }
         }
+
+        //если пикаем Data-Matrix
+        if (codeId == barcodeId) {
+            val testBatcode = Barcode.replace("'", "''")
+            val textQuery = "SELECT " +
+                        "\$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен ," +
+                        "SUBSTRING(\$Спр.МаркировкаТовара.ДокОтгрузки , 5 , 9) as ДокОтгрузки ," +
+                        "SUBSTRING(\$Спр.МаркировкаТовара.Маркировка , 1 , 31) as Маркировка ," +
+                        "\$Спр.МаркировкаТовара.Товар as Товар , " +
+                        "ID as id " +
+                        "FROM \$Спр.МаркировкаТовара (nolock) " +
+                        "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') "
+
+            val dtMark = ss.executeWithReadNew(textQuery) ?: return false
+
+            //если мы натыкаемся на пустое значение, значит нужно его записать
+            if (dtMark.isEmpty()) {
+                FExcStr.text = "Маркировка не найдена. Давайте занесем её в базу."
+                if (barcoderes["Mark"] == null) barcoderes["Mark"] = barcode
+                if (barcoderes["Box"] == null) barcoderes["Box"] = "1" //так как это DataMatrix, то каждый код уникален, значение всегда должно равняться единице
+                dtMark.add(barcoderes)    //заполняем значениями пустой список
+                markItemDT = dtMark       //и выкидываем это дальше
+                }
+            else {
+                FExcStr.text = "Такая маркировка уже есть в базе!"
+                badVoise()
+                return false
+                }
+            }
+        else {
+            val itemTemp = RefItem()
+
+            if (itemTemp.foundBarcode(Barcode)) {
+                FExcStr.text = "Товар найден, сканируйте маркировку"
+                item = RefItem()
+                item.foundID(itemTemp.id)
+            }
+            else {
+                FExcStr.text = ("ВНИМАНИЕ! Товар не найден!")
+                badVoise()
+                return false
+            }
+            //теперь случай, когда сканируется коробочная маркировка товара, то есть ШК в 20-21 символ0
+            if (barcode.length >= 20) {
+                markBox = barcode
+                if (barcoderes["Mark"] == null) barcoderes["Mark"] = markBox
+            }
+        }
+
         goodVoise()
         refreshActivity()
         return true
+
+       /*
+        val textQuery: String
+        val dt: Array<Array<String>>
+
+        val qrCod = "010290001205009421tWp&YkCA+fZ;v91EE0692MB6116Q1iCFsD2BeI+6YKpLAhUAFVJajQx6CvM+ZQhA="
+
+        if (ss.CurrentAction == Global.ActionSet.ScanQRCode && codeId == barcodeId) {//заодно проверим DataMatrix ли пришедший код
+            //найдем маркировку в справочнике МаркировкаТовара
+
+            val testBatcode = Barcode.replace("'", "''")
+            textQuery =
+                "SELECT \$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен " +
+                        "FROM \$Спр.МаркировкаТовара (nolock) " +
+                        "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
+                        "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' " +
+                        "and \$Спр.МаркировкаТовара.ФлагПоступления = 1 " +
+                        "and ((\$Спр.МаркировкаТовара.ФлагОтгрузки = 0 and \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' )" +
+                        "or (\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 and \$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(docCC!!.ID, "КонтрольНабора")}'))"
+            val dtMark = ss.executeWithReadNew(textQuery) ?: return true
+            if (barcode == qrCod) {
+                FExcStr.text = ("Данный QR-code уже существует!")
+                badVoise()
+            }
+            if (dtMark == null) {
+                badVoise()
+                return false
+            }
+            goodVoise()
+            refreshActivity()
+        }
+        return false*/
     }
 
     private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
@@ -230,7 +324,7 @@ class AccMark : BarcodeDataReceiver() {
             itemCardInit.putExtra("ParentForm", "AccMark")
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
-            itemCardInit.putExtra("idDoc", idDoc)
+            itemCardInit.putExtra("iddoc", idDoc)
             startActivity(itemCardInit)
             finish()
             return true
@@ -242,6 +336,7 @@ class AccMark : BarcodeDataReceiver() {
         return false
     }
 
+    //заполнение таблицы
     fun refreshActivity() {
         table.removeAllViewsInLayout()
         var linearLayout = LinearLayout(this)
@@ -284,7 +379,7 @@ class AccMark : BarcodeDataReceiver() {
             linenom++
             val rowTitle = TableRow(this)
             linearLayout = LinearLayout(this)
-            var colorline = Color.WHITE
+            val colorline = Color.WHITE
             rowTitle.setBackgroundColor(colorline)
             //добавим строки
             number = TextView(this)
@@ -295,14 +390,14 @@ class AccMark : BarcodeDataReceiver() {
             number.textSize = 20F
             number.setTextColor(-0x1000000)
             boxes = TextView(this)
-            boxes.text = rowDT["Box"]
+            boxes.text = rowDT["Box"].toString().trim()
             boxes.typeface = Typeface.SERIF
             boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.3).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             boxes.gravity = Gravity.CENTER
             boxes.textSize = 20F
             boxes.setTextColor(-0x1000000)
             mark = TextView(this)
-            mark.text = rowDT["Mark"]
+            mark.text = rowDT["Mark"].toString().trim().substring(0,31)       //в базу пишем полностью, на терминале покажем только 31 символ
             mark.typeface = Typeface.SERIF
             mark.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.6).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             mark.gravity = Gravity.CENTER
@@ -317,7 +412,7 @@ class AccMark : BarcodeDataReceiver() {
 
         }
         lblPlacer.visibility = View.VISIBLE
-        lblPlacer.text = naklAcc["DocNo"] + " (" + naklAcc["DateDoc"] + ") " + item.invCode + " ВСЕГО МАРКИРОВОК " + linenom.toString()
+        lblPlacer.text = (naklAcc["DocNo"] + " (" + naklAcc["DateDoc"]?.let { hh.shortDate(it) } + ") " + item.invCode + " ВСЕГО МАРКИРОВОК " + linenom.toString())
 
     }
 

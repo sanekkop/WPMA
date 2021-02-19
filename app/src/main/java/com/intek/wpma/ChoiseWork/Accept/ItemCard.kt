@@ -307,10 +307,10 @@ class ItemCard : Search() {
             ("Цена: " + AcceptedItem["Price"].toString())                                //цена товара
         tbCount0.text = AcceptedItem["AcceptCount"].toString()
         tbCoef0.text = "1"
-        zonaHand.text = AcceptedItem["AdressMain"].toString()
-            .trim() + ": " + AcceptedItem["BalanceMain"].toString() + " шт"
-        zonaTech.text = AcceptedItem["AdressBuffer"].toString()
-            .trim() + ": " + AcceptedItem["BalanceBuffer"].toString() + " шт"
+        zonaHand.text = (AcceptedItem["AdressMain"].toString()
+            .trim() + ": " + AcceptedItem["BalanceMain"].toString() + " шт")
+        zonaTech.text = (AcceptedItem["AdressBuffer"].toString()
+            .trim() + ": " + AcceptedItem["BalanceBuffer"].toString() + " шт")
         if (units.isNotEmpty()) {
             for (dr in units) {
                 var findUnits = false
@@ -321,7 +321,7 @@ class ItemCard : Search() {
                     }
                 }
                 if (!findUnits) {
-                    //не нашли в таблдичке диницу, добавим
+                    //не нашли в табличке единицу, добавим
                     fUnits.add(dr)
                 }
             }
@@ -336,7 +336,7 @@ class ItemCard : Search() {
                     model.okeiUnit -> {
                         if (dr["Barcode"].toString().trim() != "") {
                             tbBarcode0.text =
-                                tbBarcode0.text.toString() + " " + dr["Barcode"].toString().trim()
+                                (tbBarcode0.text.toString() + " " + dr["Barcode"].toString().trim())
                         }
                     }
                     model.okeiPack -> {
@@ -345,8 +345,8 @@ class ItemCard : Search() {
                                 .toInt()).toString()
                         if (dr["Barcode"].toString().trim() != "") {
                             tbBarcode1.text =
-                                tbBarcode1.text.toString().trim() + " " + dr["Barcode"].toString()
-                                    .trim()
+                                (tbBarcode1.text.toString().trim() + " " + dr["Barcode"].toString()
+                                    .trim())
                         }
                         tbCoef1.text = dr["Coef"].toString()
                     }
@@ -356,8 +356,8 @@ class ItemCard : Search() {
                                 .toInt()).toString()
                         if (dr["Barcode"].toString().trim() != "") {
                             tbBarcode2.text =
-                                tbBarcode2.text.toString().trim() + " " + dr["Barcode"].toString()
-                                    .trim()
+                                (tbBarcode2.text.toString().trim() + " " + dr["Barcode"].toString()
+                                    .trim())
                         }
                         tbCoef2.text = dr["Coef"].toString()
                     }
@@ -367,8 +367,8 @@ class ItemCard : Search() {
                                 .toInt()).toString()
                         if (dr["Barcode"].toString().trim() != "") {
                             tbBarcode3.text =
-                                tbBarcode3.text.toString().trim() + " " + dr["Barcode"].toString()
-                                    .trim()
+                                (tbBarcode3.text.toString().trim() + " " + dr["Barcode"].toString()
+                                    .trim())
                         }
                         tbCoef3.text = dr["Coef"].toString()
                     }
@@ -675,8 +675,8 @@ class ItemCard : Search() {
         return false
     }
 
-    fun engineChangeBarcode(coef: Int, barcode: String, okei: String): Boolean {
-        FExcStr.text = "Штрихкод " + barcode + " принят!";   //По умолчанию так
+    private fun engineChangeBarcode(coef: Int, barcode: String, okei: String): Boolean {
+        FExcStr.text = ("Штрихкод $barcode принят!")   //По умолчанию так
         //Поиск по ШК
         if (newBarcodes.contains(barcode)) {
             newBarcodes.remove(barcode)
@@ -687,7 +687,7 @@ class ItemCard : Search() {
                 if (dr["Barcode"] == barcode) {
                     val currOKEI = dr["OKEI"].toString()
                     if (dr["Coef"].toString().toInt() == coef && currOKEI == okei) {
-                        FExcStr.text = "Штрихкод " + barcode + " уже задан у данной единицы!"
+                        FExcStr.text = ("Штрихкод $barcode уже задан у данной единицы!")
                         return true //С этим коэффициентом и штрихкодом и ОКЕИ уже есть единица
                     } else if (currOKEI == model.okeiUnit || currOKEI == model.okeiPack || currOKEI == model.okeiPackage || currOKEI == model.okeiKit) {
                         //Из специальной - ЛЮБУЮ (нельзя менять коэффициент)
@@ -786,7 +786,7 @@ class ItemCard : Search() {
         return true
     }
 
-    fun changeUnitBarcode(barcode: String): Boolean {
+    private fun changeUnitBarcode(barcode: String): Boolean {
         if (yCoor == 1) {
             return false
         }
@@ -813,7 +813,7 @@ class ItemCard : Search() {
         return changeUnitBarcode(coef, barcode, okei)
     }
 
-    fun changeUnitBarcode(coef: Int, barcode: String, okei: String): Boolean {
+    private fun changeUnitBarcode(coef: Int, barcode: String, okei: String): Boolean {
 
         if (coef == 0) {
             FExcStr.text = "Нельзя задать ШК единице с нулевым коэффициентом!"
@@ -838,7 +838,7 @@ class ItemCard : Search() {
         return result
     }
 
-    fun changeUnitCoef() {
+    private fun changeUnitCoef() {
         if (xCoor == 2 || yCoor == 1) {
             return
         }
@@ -865,7 +865,7 @@ class ItemCard : Search() {
         changeUnitCoef(coef, "", okei)
     }
 
-    fun changeUnitCoef(coef: Int, barcode: String, okei: String) {
+    private fun changeUnitCoef(coef: Int, barcode: String, okei: String) {
         if (okei == model.okeiPack || okei == model.okeiPackage || okei == model.okeiKit) {
             //Это единица специального вида - меняем коэффициент у всех единиц такого вида
             if (fUnits.isNotEmpty()) {
@@ -929,7 +929,7 @@ class ItemCard : Search() {
         textQuery = ss.querySetParam(textQuery,"Doc", docForQuery)
         textQuery = ss.querySetParam(textQuery, "Item", item.id)
         textQuery = ss.querySetParam(textQuery,"LineNo_", currentRowAcceptedItem["LineNO_"].toString())
-        var dTCurrState = ss.executeWithReadNew(textQuery)
+        val dTCurrState = ss.executeWithReadNew(textQuery)
         if (dTCurrState == null) {
             FExcStr.text = "Недопустимое количество! Повторите приемку позиции!"
             return false
@@ -939,7 +939,7 @@ class ItemCard : Search() {
             return false
         }
         //Скорректируем начальное количество
-        var beginCount = dTCurrState[0]["Count"].toString().toInt()
+        val beginCount = dTCurrState[0]["Count"].toString().toInt()
 
         var needNew: Int = 0
         var coefPlace: Int = 0 //Коэффициент мест, по нему будет расчитывать количество этикеток
@@ -1128,7 +1128,7 @@ class ItemCard : Search() {
         textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
         textQuery = ss.querySetParam(textQuery, "Item", item.id)
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-        var alreadyDT = ss.executeWithReadNew(textQuery) ?: return false
+        val alreadyDT = ss.executeWithReadNew(textQuery) ?: return false
 
         var allCountAccepted: Int = AcceptedItem["AcceptCount"].toString().toInt()
         if (alreadyDT.isEmpty() && allCountAccepted < beginCount) {
@@ -1137,7 +1137,7 @@ class ItemCard : Search() {
                     "FROM DT\$АдресПоступление " +
                     "WHERE DT\$АдресПоступление .iddoc = :Doc"
             textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
-            var datTab = ss.executeWithReadNew(textQuery) ?: return false
+            val datTab = ss.executeWithReadNew(textQuery) ?: return false
             val newLineNo_ = datTab[0]["NewLineNo_"].toString()
 
             textQuery = "INSERT INTO DT\$АдресПоступление VALUES " +

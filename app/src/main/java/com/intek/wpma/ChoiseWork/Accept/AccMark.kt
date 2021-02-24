@@ -127,37 +127,39 @@ class AccMark : BarcodeDataReceiver() {
 
 
     private fun completeAccMark() {
-        //проверим чек погрузки
-        var textQuery =                                                    //для чего этот запрос я так и не понял
-            "SELECT " +
-                    "Main.DocFull as DocFull " +
-                    "FROM (" +
-                    ") as Main " +
-                    "INNER JOIN (" +
-                    "SELECT " +
-                    "Boxes.\$Спр.МестаПогрузки.Док as DocID " +
-                    "FROM \$Спр.МестаПогрузки as Boxes (nolock) " +
-                    "WHERE Boxes.ismark = 0 and Boxes.\$Спр.МестаПогрузки.Дата6 = :EmptyDate " +
-                    "GROUP BY Boxes.\$Спр.МестаПогрузки.Док " +
-                    ") as Boxes " +
-                    "ON Boxes.DocID = Main.DocFull " +
-                    ""
-        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-        textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
-        textQuery = ss.querySetParam(textQuery, "iddoc", markItemDT)
 
-        if (!ss.executeWithoutRead(textQuery)) {
-            FExcStr.text = "Ошибка фиксации маркировки"
-            badVoise()
+        //проверим чек погрузки
+        var markItemDTNew : MutableList<MutableMap<String, String>> = mutableListOf()
+        for (rowDT in markItemDT) {
+            if (rowDT["id"].toString() == "null" || rowDT["id"].toString() == "") {
+                continue
+            }
+            //нет еще такого будем создавать
+            val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(itemID, "Спр.Товары")
+            dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(idDoc, "АдресПоступление")
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString()
+            dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = rowDT["Box"].toString()
+            if (!execCommandNoFeedback("MarkInsert", dataMapWrite)) {
+                markItemDTNew.add(rowDT)
+            }
+        }
+        if (markItemDTNew.isEmpty()) {
+            val itemCardInit = Intent(this, ItemCard::class.java)
+            itemCardInit.putExtra("ParentForm", "AccMark")
+            itemCardInit.putExtra("flagBarcode", flagBarcode)
+            itemCardInit.putExtra("itemID", itemID)
+            itemCardInit.putExtra("iddoc", idDoc)
+            startActivity(itemCardInit)
+            finish()
             return
         }
-        val itemCardInit = Intent(this, ItemCard::class.java)
-        itemCardInit.putExtra("ParentForm", "AccMark")
-        itemCardInit.putExtra("flagBarcode", flagBarcode)
-        itemCardInit.putExtra("itemID", itemID)
-        itemCardInit.putExtra("iddoc", idDoc)
-        startActivity(itemCardInit)
-        finish()
+
+        //ошибка
+        FExcStr.text = "Не все маркировки отправленны!"
+        badVoise()
+        markItemDT.clear()
+        markItemDT.addAll(markItemDTNew)
     }
 
     //наличие маркировок по товару
@@ -219,16 +221,9 @@ class AccMark : BarcodeDataReceiver() {
 
         //если вместо Data-Matrix пикает ШК
         if (ss.isSC(idd, "Сотрудники")) {
-            if (ss.CurrentAction != Global.ActionSet.ScanItem && ss.CurrentAction != Global.ActionSet.ScanQRCode) {
-                FExcStr.text = "Нет действий с данным ШК! Сотрудники."
-                badVoise()
-                // return false
-            }
-            else {
-                FExcStr.text = "Нет действий с данным ШК! Отсканируйте маркировку."
-                badVoise()
-                //return false
-            }
+           FExcStr.text = "Нет действий с данным ШК! Отсканируйте маркировку."
+           badVoise()
+           return false
         }
 
         //если пикаем Data-Matrix

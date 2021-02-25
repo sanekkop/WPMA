@@ -13,6 +13,9 @@ import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefItem
 import kotlinx.android.synthetic.main.activity_search_acc.*
+import kotlinx.android.synthetic.main.activity_search_acc.FExcStr
+import kotlinx.android.synthetic.main.activity_search_acc.details
+import kotlinx.android.synthetic.main.activity_set.*
 
 
 class ItemCard : Search() {
@@ -1365,6 +1368,16 @@ class ItemCard : Search() {
     private fun checkMark(): Boolean {
 
         var textQuery = "SELECT " +
+                "Category.\$Спр.КатегорииТоваров.Маркировка as Маркировка " +
+                "from \$Спр.Товары as Item (nolock) " +
+                "INNER JOIN \$Спр.КатегорииТоваров as Category (nolock) " +
+                "on Item.\$Спр.Товары.Категория = Category.ID " +
+                "where Category.\$Спр.КатегорииТоваров.Маркировка > 0 " +
+                "and Item.id = '${item.id}' "
+        val dt = ss.executeWithReadNew(textQuery) ?: return true
+        if (dt.isEmpty()) return true
+
+        textQuery = "SELECT " +
                 "ISNULL(journ.iddoc, AC.iddoc ) as iddoc , " +
                 "AC.iddoc as ACiddoc , " +
                 "FROM " +

@@ -9,22 +9,16 @@ import android.graphics.Typeface
 import android.os.Bundle
 import android.util.Log
 import android.view.*
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import com.intek.wpma.*
 import com.intek.wpma.Helpers.Helper
-import com.intek.wpma.Helpers.Translation
-import com.intek.wpma.Model.Model
-import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefItem
-import kotlinx.android.synthetic.main.activity_downing.*
 import kotlinx.android.synthetic.main.activity_acc_mark.*
 import kotlinx.android.synthetic.main.activity_acc_mark.FExcStr
 import kotlinx.android.synthetic.main.activity_acc_mark.btnScan
-import kotlinx.android.synthetic.main.activity_acc_mark.lblPlacer
-import kotlinx.android.synthetic.main.activity_acc_mark.table
+import kotlinx.android.synthetic.main.activity_downing.*
 import kotlinx.android.synthetic.main.activity_remark_mark.*
 import kotlinx.android.synthetic.main.activity_set.*
 
@@ -36,8 +30,6 @@ class AccMark : BarcodeDataReceiver() {
     var markItemDT : MutableList<MutableMap<String, String>> = mutableListOf()
     private var naklAcc: MutableMap<String,String> = mutableMapOf()
     private var markBox = ""  //ШК коробочной маркировки
-    private var docCC: Model.DocCC? = null
-    private var ccItem: Model.StructItemSet? = null
     var item = RefItem()
     val hh = Helper()
 
@@ -127,22 +119,31 @@ class AccMark : BarcodeDataReceiver() {
 
 
     private fun completeAccMark() {
-
-        //проверим чек погрузки
+        //нет еще такого будем создавать
         var markItemDTNew : MutableList<MutableMap<String, String>> = mutableListOf()
         for (rowDT in markItemDT) {
             if (rowDT["id"].toString() == "null" || rowDT["id"].toString() == "") {
-                continue
-            }
-            //нет еще такого будем создавать
-            val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-            dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(itemID, "Спр.Товары")
-            dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(idDoc, "АдресПоступление")
-            dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString()
-            dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = rowDT["Box"].toString()
-            if (!execCommandNoFeedback("MarkInsert", dataMapWrite)) {
-                markItemDTNew.add(rowDT)
-            }
+                if (rowDT["Box"] == "0") {
+                    val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+                    dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(itemID, "Спр.Товары")
+                    dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(idDoc, "АдресПоступление")
+                    dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString()
+                    dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = rowDT["Box"].toString()
+                    if (!execCommandNoFeedback("MarkInsert", dataMapWrite)) {
+                        markItemDTNew.add(rowDT)
+                    }
+                }
+                if (rowDT["Box"] == "1") {
+                    val dataMapBox: MutableMap<String, Any> = mutableMapOf()
+                    dataMapBox["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ""        //ss.extendID(itemID, "Спр.Товары")
+                    dataMapBox["Спр.СинхронизацияДанных.ДокументВход"] = ""        //ss.extendID(idDoc, "АдресПоступление")
+                    dataMapBox["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString()
+                    dataMapBox["Спр.СинхронизацияДанных.ДатаВход2"] = rowDT["Box"].toString()
+                    if (!execCommandNoFeedback("MarkInsert", dataMapBox)) {
+                        markItemDTNew.add(rowDT)
+                    }
+                }
+            } else continue
         }
         if (markItemDTNew.isEmpty()) {
             val itemCardInit = Intent(this, ItemCard::class.java)
@@ -218,6 +219,7 @@ class AccMark : BarcodeDataReceiver() {
         val barcoderes = hh.disassembleBarcode(Barcode)
         val typeBarcode = barcoderes["Type"].toString()
         val idd = barcoderes["IDD"].toString()
+        var textQuery = ""
 
         //если вместо Data-Matrix пикает ШК
         if (ss.isSC(idd, "Сотрудники")) {
@@ -228,8 +230,9 @@ class AccMark : BarcodeDataReceiver() {
 
         //если пикаем Data-Matrix
         if (codeId == barcodeId) {
+            barcoderes["Box"] = "0"
             val testBatcode = Barcode.replace("'", "''")
-            val textQuery = "SELECT " +
+            textQuery = "SELECT " +
                         "\$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен ," +
                         "SUBSTRING(\$Спр.МаркировкаТовара.ДокОтгрузки , 5 , 9) as ДокОтгрузки ," +
                         "SUBSTRING(\$Спр.МаркировкаТовара.Маркировка , 1 , 31) as Маркировка ," +
@@ -243,8 +246,9 @@ class AccMark : BarcodeDataReceiver() {
             //если мы натыкаемся на пустое значение, значит нужно его записать
             if (dtMark.isEmpty()) {
                 FExcStr.text = "Маркировка не найдена. Давайте занесем её в базу."
+                if (barcoderes["id"] == null) barcoderes["id"] = ""
                 if (barcoderes["Mark"] == null) barcoderes["Mark"] = barcode
-                if (barcoderes["Box"] == null) barcoderes["Box"] = "1" //так как это DataMatrix, то каждый код уникален, значение всегда должно равняться единице
+                //if (barcoderes["Box"] == null) barcoderes["Box"] = "0" //так как это DataMatrix, то каждый код уникален, значение всегда должно равняться единице
                 dtMark.add(barcoderes)    //заполняем значениями пустой список
                 markItemDT = dtMark       //и выкидываем это дальше
                 }
@@ -255,8 +259,21 @@ class AccMark : BarcodeDataReceiver() {
                 }
             }
         else {
-            val itemTemp = RefItem()
 
+            val itemTemp = RefItem()
+            val dtMarkBox = ss.executeWithReadNew(textQuery) ?: return false
+            barcoderes["Box"] = "1"
+            //теперь случай, когда сканируется коробочная маркировка товара, то есть ШК в 20-21 символ
+            if (barcode.length >= 20) {
+                FExcStr.text = "Коробочная маркировка"
+                markBox = barcode
+                if (barcoderes["id"] == null) barcoderes["id"] = ""
+                if (barcoderes["Mark"] == null) barcoderes["Mark"] = markBox
+                dtMarkBox.add(barcoderes)
+                goodVoise()
+                refreshActivity()
+                return true
+            }
             if (itemTemp.foundBarcode(Barcode)) {
                 FExcStr.text = "Товар найден, сканируйте маркировку"
                 item = RefItem()
@@ -267,13 +284,7 @@ class AccMark : BarcodeDataReceiver() {
                 badVoise()
                 return false
             }
-            //теперь случай, когда сканируется коробочная маркировка товара, то есть ШК в 20-21 символ0
-            if (barcode.length >= 20) {
-                markBox = barcode
-                if (barcoderes["Mark"] == null) barcoderes["Mark"] = markBox
-            }
         }
-
         goodVoise()
         refreshActivity()
         return true
@@ -305,8 +316,6 @@ class AccMark : BarcodeDataReceiver() {
                 badVoise()
                 return false
             }
-            goodVoise()
-            refreshActivity()
         }
         return false*/
     }

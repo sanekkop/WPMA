@@ -400,7 +400,7 @@
                 android:id="@+id/btnMark"
                 android:layout_width="0dp"
                 android:layout_weight="2"
-                android:text="Маркировка"
+                android:text="Маркировка - *"
                 android:textSize="18sp" />
 
             <TextView

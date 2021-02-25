@@ -905,6 +905,12 @@ class ItemCard : Search() {
     //тотальная ебань
     //класс для обработки события при нажатии на кнопку о принятии товара
     private fun completeAccept(): Boolean {
+
+        if (!checkMark()) {
+            //не указана маркировка
+            FExcStr.text = "Маркированный товар! Сканируйте маркировку!"
+            return false
+        }
         val docForQuery = currentRowAcceptedItem["iddoc"].toString()
         var textQuery = ""
         //Сколько в накладной изначально
@@ -1356,4 +1362,39 @@ class ItemCard : Search() {
         return coef
     }
 
+    private fun checkMark(): Boolean {
+
+        var textQuery = "SELECT " +
+                "ISNULL(journ.iddoc, AC.iddoc ) as iddoc , " +
+                "AC.iddoc as ACiddoc , " +
+                "FROM " +
+                " DH\$АдресПоступление as AC (nolock) " +
+                "INNER JOIN _1sjourn as journAC (nolock) " +
+                "     ON journAC.iddoc = AC.iddoc " +
+                "LEFT JOIN _1sjourn as journ (nolock) " +
+                "     ON journ.iddoc = right(AC.\$АдресПоступление.ДокументОснование , 9) " +
+                "WHERE" +
+                " AC.iddoc = '${idDoc}' "
+
+        val naklAccTemp = ss.executeWithReadNew(textQuery)
+        if (naklAccTemp == null || naklAccTemp.isEmpty())
+        {
+            //не вышли на накладную - косяк какой-то
+           return false
+        }
+        //не пусто
+        textQuery = "select id as ID , " +
+                "\$Спр.МаркировкаТовара.Маркировка as Mark , " +
+                "-1*(isFolder-2) as Box ," +
+                "\$Спр.МаркировкаТовара.Товар as item " +
+                "from \$Спр.МаркировкаТовара (nolock) " +
+                "where (\$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAccTemp[0]["ACiddoc"].toString(), "АдресПоступление")}' " +
+                "or \$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAccTemp[0]["iddoc"].toString(), "ПриходнаяКредит")}' )" +
+                "and \$Спр.МаркировкаТовара.Товар = '${item.id}' "
+        val markItemDT = ss.executeWithReadNew(textQuery) ?: return false
+        if (markItemDT.isEmpty()) {
+            return false
+        }
+        return true
+    }
 }

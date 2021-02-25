@@ -123,25 +123,14 @@ class AccMark : BarcodeDataReceiver() {
         var markItemDTNew : MutableList<MutableMap<String, String>> = mutableListOf()
         for (rowDT in markItemDT) {
             if (rowDT["id"].toString() == "null" || rowDT["id"].toString() == "") {
-                if (rowDT["Box"] == "0") {
-                    val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+                val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
                     dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(itemID, "Спр.Товары")
                     dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(idDoc, "АдресПоступление")
                     dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString()
                     dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = rowDT["Box"].toString()
                     if (!execCommandNoFeedback("MarkInsert", dataMapWrite)) {
                         markItemDTNew.add(rowDT)
-                    }
-                }
-                if (rowDT["Box"] == "1") {
-                    val dataMapBox: MutableMap<String, Any> = mutableMapOf()
-                    dataMapBox["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ""        //ss.extendID(itemID, "Спр.Товары")
-                    dataMapBox["Спр.СинхронизацияДанных.ДокументВход"] = ""        //ss.extendID(idDoc, "АдресПоступление")
-                    dataMapBox["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString()
-                    dataMapBox["Спр.СинхронизацияДанных.ДатаВход2"] = rowDT["Box"].toString()
-                    if (!execCommandNoFeedback("MarkInsert", dataMapBox)) {
-                        markItemDTNew.add(rowDT)
-                    }
+
                 }
             } else continue
         }
@@ -168,6 +157,7 @@ class AccMark : BarcodeDataReceiver() {
 
         var textQuery = "SELECT " +
                 "ISNULL(journ.iddoc, AC.iddoc ) as iddoc , " +
+                "AC.iddoc as ACiddoc , " +
                 "ISNULL(journ.docno, journAC.docno ) as DocNo , " +
                 "CAST(LEFT(ISNULL(journ.date_time_iddoc, journAC.date_time_iddoc ), 8) as datetime) as DateDoc , " +
                 "CONVERT(char(8), CAST(LEFT(ISNULL(journ.date_time_iddoc, journAC.date_time_iddoc ),8) as datetime), 4) as DateDocText " +
@@ -200,17 +190,21 @@ class AccMark : BarcodeDataReceiver() {
         naklAcc = naklAccTemp[0]
         textQuery = "select id as ID , " +
                     "\$Спр.МаркировкаТовара.Маркировка as Mark , " +
-                    "isFolder as Box " +
+                    "-1*(isFolder-2) as Box ," +
+                    "\$Спр.МаркировкаТовара.Товар as item " +
                     "from \$Спр.МаркировкаТовара (nolock) " +
-                    "where \$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAcc["iddoc"].toString(), "ПриходнаяКредит")}' " +
+                    "where (\$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAcc["ACiddoc"].toString(), "АдресПоступление")}' " +
+                    "or \$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAcc["iddoc"].toString(), "ПриходнаяКредит")}' )" +
                     "and \$Спр.МаркировкаТовара.Товар = '${itemID}' "
-        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-        val markItemDT = ss.executeWithReadNew(textQuery) ?: return
+        markItemDT = ss.executeWithReadNew(textQuery) ?: return
 
+        /*
         if (markItemDT.isNotEmpty()) {
             //существует документ!
             return
         }
+
+         */
         refreshActivity()
         return
     }
@@ -227,97 +221,37 @@ class AccMark : BarcodeDataReceiver() {
            badVoise()
            return false
         }
-
-        //если пикаем Data-Matrix
-        if (codeId == barcodeId) {
-            barcoderes["Box"] = "0"
-            val testBatcode = Barcode.replace("'", "''")
-            textQuery = "SELECT " +
-                        "\$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен ," +
-                        "SUBSTRING(\$Спр.МаркировкаТовара.ДокОтгрузки , 5 , 9) as ДокОтгрузки ," +
-                        "SUBSTRING(\$Спр.МаркировкаТовара.Маркировка , 1 , 31) as Маркировка ," +
-                        "\$Спр.МаркировкаТовара.Товар as Товар , " +
-                        "ID as id " +
-                        "FROM \$Спр.МаркировкаТовара (nolock) " +
-                        "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') "
-
-            val dtMark = ss.executeWithReadNew(textQuery) ?: return false
-
-            //если мы натыкаемся на пустое значение, значит нужно его записать
-            if (dtMark.isEmpty()) {
-                FExcStr.text = "Маркировка не найдена. Давайте занесем её в базу."
-                if (barcoderes["id"] == null) barcoderes["id"] = ""
-                if (barcoderes["Mark"] == null) barcoderes["Mark"] = barcode
-                //if (barcoderes["Box"] == null) barcoderes["Box"] = "0" //так как это DataMatrix, то каждый код уникален, значение всегда должно равняться единице
-                dtMark.add(barcoderes)    //заполняем значениями пустой список
-                markItemDT = dtMark       //и выкидываем это дальше
-                }
-            else {
-                FExcStr.text = "Такая маркировка уже есть в базе!"
-                badVoise()
-                return false
-                }
-            }
-        else {
-
-            val itemTemp = RefItem()
-            val dtMarkBox = ss.executeWithReadNew(textQuery) ?: return false
-            barcoderes["Box"] = "1"
-            //теперь случай, когда сканируется коробочная маркировка товара, то есть ШК в 20-21 символ
-            if (barcode.length >= 20) {
-                FExcStr.text = "Коробочная маркировка"
-                markBox = barcode
-                if (barcoderes["id"] == null) barcoderes["id"] = ""
-                if (barcoderes["Mark"] == null) barcoderes["Mark"] = markBox
-                dtMarkBox.add(barcoderes)
-                goodVoise()
-                refreshActivity()
-                return true
-            }
-            if (itemTemp.foundBarcode(Barcode)) {
-                FExcStr.text = "Товар найден, сканируйте маркировку"
-                item = RefItem()
-                item.foundID(itemTemp.id)
-            }
-            else {
-                FExcStr.text = ("ВНИМАНИЕ! Товар не найден!")
-                badVoise()
-                return false
-            }
+        val itemTemp = RefItem()
+        if (itemTemp.foundBarcode(Barcode)) {
+            FExcStr.text = "Это товар, сканируйте маркировку!"
+            badVoise()
+            return false
         }
+        val testBatcode = Barcode.replace("'", "''")
+        textQuery = "SELECT " +
+                "-1*(isFolder-2) as Box ," +
+                "SUBSTRING(\$Спр.МаркировкаТовара.Маркировка , 1 , 31) as Mark ," +
+                "\$Спр.МаркировкаТовара.Товар as item , " +
+                "ID as id " +
+                "FROM \$Спр.МаркировкаТовара (nolock) " +
+                "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') "
+
+        val dtMark = ss.executeWithReadNew(textQuery) ?: return false
+        if (dtMark.isNotEmpty()) {
+            FExcStr.text = "Такая маркировка уже есть в базе!"
+            badVoise()
+            return false
+        }
+        val columnArray: MutableMap<String, String> = mutableMapOf()
+        columnArray["Box"] = if(codeId == barcodeId) "0" else "1"
+        columnArray["id"] = ""
+        columnArray["Mark"] = barcode
+        columnArray["item"] = itemID
+        markItemDT.add(columnArray)
+        FExcStr.text = "Маркировка добавлена."
         goodVoise()
         refreshActivity()
         return true
-
-       /*
-        val textQuery: String
-        val dt: Array<Array<String>>
-
-        val qrCod = "010290001205009421tWp&YkCA+fZ;v91EE0692MB6116Q1iCFsD2BeI+6YKpLAhUAFVJajQx6CvM+ZQhA="
-
-        if (ss.CurrentAction == Global.ActionSet.ScanQRCode && codeId == barcodeId) {//заодно проверим DataMatrix ли пришедший код
-            //найдем маркировку в справочнике МаркировкаТовара
-
-            val testBatcode = Barcode.replace("'", "''")
-            textQuery =
-                "SELECT \$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен " +
-                        "FROM \$Спр.МаркировкаТовара (nolock) " +
-                        "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') " +
-                        "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' " +
-                        "and \$Спр.МаркировкаТовара.ФлагПоступления = 1 " +
-                        "and ((\$Спр.МаркировкаТовара.ФлагОтгрузки = 0 and \$Спр.МаркировкаТовара.ДокОтгрузки = '   0     0   ' )" +
-                        "or (\$Спр.МаркировкаТовара.ФлагОтгрузки = 1 and \$Спр.МаркировкаТовара.ДокОтгрузки = '${ss.extendID(docCC!!.ID, "КонтрольНабора")}'))"
-            val dtMark = ss.executeWithReadNew(textQuery) ?: return true
-            if (barcode == qrCod) {
-                FExcStr.text = ("Данный QR-code уже существует!")
-                badVoise()
-            }
-            if (dtMark == null) {
-                badVoise()
-                return false
-            }
-        }
-        return false*/
     }
 
     private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
@@ -355,9 +289,9 @@ class AccMark : BarcodeDataReceiver() {
         number.setTextColor(-0x1000000)
 
         var boxes = TextView(this)
-        boxes.text = "Упаковка"
+        boxes.text = "Уп."
         boxes.typeface = Typeface.SERIF
-        boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.3).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.1).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         boxes.gravity = Gravity.CENTER
         boxes.textSize = 20F
         boxes.setTextColor(-0x1000000)
@@ -366,7 +300,7 @@ class AccMark : BarcodeDataReceiver() {
         mark.text = "Маркировка"
         mark.typeface = Typeface.SERIF
         mark.gravity = Gravity.CENTER
-        mark.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.6).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+        mark.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.8).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
         mark.textSize = 20F
         mark.setTextColor(-0x1000000)
 
@@ -391,21 +325,21 @@ class AccMark : BarcodeDataReceiver() {
             number.typeface = Typeface.SERIF
             number.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.1).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             number.gravity = Gravity.CENTER
-            number.textSize = 20F
+            number.textSize = 18F
             number.setTextColor(-0x1000000)
             boxes = TextView(this)
             boxes.text = rowDT["Box"].toString().trim()
             boxes.typeface = Typeface.SERIF
-            boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.3).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+            boxes.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.1).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             boxes.gravity = Gravity.CENTER
-            boxes.textSize = 20F
+            boxes.textSize = 18F
             boxes.setTextColor(-0x1000000)
             mark = TextView(this)
-            mark.text = rowDT["Mark"].toString().trim().substring(0,31)       //в базу пишем полностью, на терминале покажем только 31 символ
+            mark.text = if (rowDT["Mark"].toString().trim().length > 31) rowDT["Mark"].toString().trim().substring(0,31) else rowDT["Mark"].toString().trim()       //в базу пишем полностью, на терминале покажем только 31 символ
             mark.typeface = Typeface.SERIF
-            mark.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.6).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
+            mark.layoutParams = LinearLayout.LayoutParams((ss.widthDisplay * 0.8).toInt(), ViewGroup.LayoutParams.WRAP_CONTENT)
             mark.gravity = Gravity.CENTER
-            mark.textSize = 20F
+            mark.textSize = 14F
             mark.setTextColor(-0x1000000)
             linearLayout.addView(number)
             linearLayout.addView(boxes)

@@ -84,6 +84,7 @@ class MainActivity :  BarcodeDataReceiver() {
         if ((ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA ) == -1)
             ||(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE ) == -1)
             ||(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE ) == -1))
+           // ||(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE) == -1))
         {
             ActivityCompat.requestPermissions(this,arrayOf(Manifest.permission.CAMERA,Manifest.permission.INTERNET,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE),0)
         }

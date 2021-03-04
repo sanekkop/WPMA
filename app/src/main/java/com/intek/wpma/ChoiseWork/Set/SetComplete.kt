@@ -9,13 +9,13 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.ChoiseWork.Menu
 import com.intek.wpma.MainActivity
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.ScanActivity
+import kotlinx.android.synthetic.main.activity_set.*
 import kotlinx.android.synthetic.main.activity_set_complete.*
 import kotlinx.android.synthetic.main.activity_set_complete.FExcStr
 import kotlinx.android.synthetic.main.activity_watch_table_part.*
@@ -41,7 +41,7 @@ class SetComplete : BarcodeDataReceiver() {
                         reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
-                        FExcStr.text = "Не удалось отсканировать штрихкод!" + e.toString()
+                        FExcStr.text = ("Не удалось отсканировать штрихкод!$e")
                         badVoise()
                    }
 
@@ -99,6 +99,12 @@ class SetComplete : BarcodeDataReceiver() {
             enterCountPlace.visibility = View.VISIBLE
         }
         docSet = intent.extras!!.getString("iddoc")!!
+
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return
+        }
+
         val textQuery =
             "SELECT " +
                     "journForBill.docno as DocNo, " +
@@ -119,10 +125,11 @@ class SetComplete : BarcodeDataReceiver() {
                     "ON journForBill.iddoc = Bill.iddoc " +
                     "WHERE DocCCHead.iddoc = '$docSet'"
         val dataTable = ss.executeWithRead(textQuery)
-        previousAction.text = if (dataTable!![1][5].toInt() == 1) "(C) " else {
-            ""
-        } + dataTable[1][3].trim() + "-" +
-                dataTable[1][4] + " Заявка " + dataTable[1][0] + " (" + dataTable[1][1] + ")"
+        previousAction.text = if (dataTable!![1][5].toInt() == 1) "(C) " else  "" +
+                dataTable[1][3].trim() + "-" +
+                dataTable[1][4] + " Заявка " +
+                dataTable[1][0] + " (" +
+                dataTable[1][1] + ")"
         if (dataTable[1][5].toInt() == 1) DocView.text = "САМОВЫВОЗ" else DocView.text = "ДОСТАВКА"
         //тут этот код дублирую, чтобы поймать нажатие на enter после ввода колва с уже установленным принтером
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
@@ -136,7 +143,7 @@ class SetComplete : BarcodeDataReceiver() {
                     val count = enterCountPlace.text.toString().toInt()
                     places = count
                     enterCountPlace.visibility = View.INVISIBLE
-                    countPlace.text = "Колво мест: $places"
+                    countPlace.text = ("Колво мест: $places")
                     countPlace.visibility = View.VISIBLE
                     FExcStr.text = "Ожидание команды"
                 } catch (e: Exception) {
@@ -158,11 +165,14 @@ class SetComplete : BarcodeDataReceiver() {
     private fun reactionBarcode(Barcode: String): Boolean {
         val idd: String = "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
 
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return false
+        }
 
         if (ss.isSC(idd, "Принтеры")) {
             //получим путь принтера
-            if(!ss.FPrinter.foundIDD(idd))
-            {
+            if(!ss.FPrinter.foundIDD(idd)) {
                 return false
             }
             printer.text = ss.FPrinter.path
@@ -235,7 +245,6 @@ class SetComplete : BarcodeDataReceiver() {
         startActivity(setInitialization)
         finish()
 
-
         return true
     }
 
@@ -251,6 +260,9 @@ class SetComplete : BarcodeDataReceiver() {
         }
 
         enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
+            if (!isOnline(this)) {                                      //проверим интернет-соединение
+                FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            }
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                 if (ss.isMobile){  //спрячем клаву
                     val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -261,7 +273,7 @@ class SetComplete : BarcodeDataReceiver() {
                     val count = enterCountPlace.text.toString().toInt()
                     places = count
                     enterCountPlace.visibility = View.INVISIBLE
-                    countPlace.text = "Колво мест: $places"
+                    countPlace.text = ("Колво мест: $places")
                     countPlace.visibility = View.VISIBLE
                     FExcStr.text = "Ожидание команды"
                 } catch (e: Exception) {

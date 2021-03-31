@@ -84,6 +84,7 @@ class MainActivity :  BarcodeDataReceiver() {
         if ((ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA ) == -1)
             ||(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE ) == -1)
             ||(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE ) == -1))
+           // ||(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE) == -1))
         {
             ActivityCompat.requestPermissions(this,arrayOf(Manifest.permission.CAMERA,Manifest.permission.INTERNET,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE),0)
         }
@@ -93,6 +94,7 @@ class MainActivity :  BarcodeDataReceiver() {
         ss.badvoise.load(this, R.raw.bad,1)
         ss.goodvoise.load(this, R.raw.good,1)
         ss.clickvoise.load(this, R.raw.click, 1)
+        ss.tickvoise.load(this, R.raw.tick, 1)
         if(ss.isMobile) {
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {

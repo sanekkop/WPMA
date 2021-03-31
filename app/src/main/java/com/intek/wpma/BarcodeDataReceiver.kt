@@ -1,12 +1,11 @@
 package com.intek.wpma
 
-import android.R.bool
-import android.R.string
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.Camera
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -99,6 +98,10 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
 
     fun clickVoise() {
         ss.clickvoise.play(1, 1F, 1F, 1, 0, 1F)
+    }
+
+    fun tickVoise() {
+        ss.tickvoise.play(1, 1F, 1F, 1, 0, 1F)
     }
 
     /// <summary>
@@ -528,4 +531,9 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                 or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
     }
 
+    open fun isOnline(context: Context): Boolean {
+        val cm = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
+        val netInfo = cm.activeNetworkInfo
+        return netInfo != null && netInfo.isConnectedOrConnecting
+    }
 }

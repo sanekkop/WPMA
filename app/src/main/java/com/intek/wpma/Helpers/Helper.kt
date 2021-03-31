@@ -36,17 +36,10 @@ class Helper {
         val fio = FIO.trim()
         var space = false
         var surname = false
-        for (i in fio.indices)
-        {
+        for (i in fio.indices) {
             val ch = fio.substring(i, i+1)
-            if (!surname)
-            {
-                result += ch
-            }
-            if (space)
-            {
-                result += "$ch."
-            }
+            if (!surname) result += ch
+            if (space) result += "$ch."
             surname = if (ch == " ") true else surname
             space = ch == " "
         }

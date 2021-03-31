@@ -27,7 +27,6 @@ import kotlinx.android.synthetic.main.activity_accept.scroll
 import kotlinx.android.synthetic.main.activity_accept.table
 import kotlinx.android.synthetic.main.activity_yap_item.*
 
-
 open class Search : BarcodeDataReceiver() {
 
     var oldx = 0F

@@ -45,7 +45,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
     var codeId: String = ""             //показатель по которому можно различать типы штрих-кодов
-
     val barcodeDataReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             Log.d("IntentApiSample: ", "onReceive")
@@ -58,7 +57,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                         codeId = intent.getStringExtra("codeId")!!
                         this@SetInitialization.reactionBarcode(barcode)
                     } catch (e: Exception) {
-                        FExcStr.text = "Не удалось отсканировать штрихкод!" + e.toString()
+                        FExcStr.text = ("Не удалось отсканировать штрихкод!$e")
                         badVoise()
                     }
                 }
@@ -115,8 +114,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             ss.CurrentMode = Global.Mode.SetInicialization
             ss.CurrentAction = Global.ActionSet.Waiting
 
-            if (!toModeSetInicialization())
-            {
+            if (!toModeSetInicialization()) {
                 badVoise()
                 quitModesSet()
                 val menu = Intent(this, Menu::class.java)
@@ -147,8 +145,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         else if (parentForm == "SetComplete") {
             try {
                 getDocsSet()
-                if (!toModeSetInicialization())
-                {
+                if (!toModeSetInicialization()) {
                     //облом выходим обратно
                     badVoise()
                     quitModesSet()
@@ -191,6 +188,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x < oldx) {
                     FExcStr.text = "Подгружаю список..."
+
+                    if (!isOnline(this)) {                                      //проверим интернет-соединение
+                        FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                        return false
+                    }
+
                     //перейдем на форму просмотра
                     val watchForm = Intent(this, WatchTablePart::class.java)
                     watchForm.putExtra("iddoc", docSet!!.id)
@@ -231,7 +234,9 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     } // ToModeSetInicialization
 
     private fun getDocsSet() {
-
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+        }
         var textQuery =
         "SELECT " +
                 "journ.iddoc as IDDOC " +
@@ -245,7 +250,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 "and DocCC.\$КонтрольНабора.Дата2 = :EmptyDate " +
                 "and not DocCC.\$КонтрольНабора.Дата1 = :EmptyDate " +
                 "and journ.ismark = 0 "
-
         textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         val dataTable = ss.executeWithReadNew(textQuery)
@@ -260,7 +264,10 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     }
 
     private fun toModeSet(AdressID: String?, iddoc: String?): Boolean {
-
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return false
+        }
         var textQuery =
             "DECLARE @curdate DateTime; " +
                     "SELECT @curdate = DATEADD(DAY, 1 - DAY(curdate), curdate) FROM _1ssystem (nolock); " +
@@ -335,7 +342,6 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     (if (iddoc != null) "and DocCC.iddoc = :iddoc " else "") +
                     "order by " +
                     "DocCCHead.\$КонтрольНабора.Сектор , Sections.\$Спр.Секции.Маршрут , LINENO_"
-
         textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
         textQuery = textQuery.replace(":Docs", ss.helper.listToStringWithQuotes(docsSet))
         textQuery = ss.querySetParam(textQuery, "Warehouse", ss.Const.mainWarehouse)
@@ -410,6 +416,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             dataTable[1][26].toInt()                    //FlagDelivery
         )
 
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return false
+        }
+
         //проверим есть ли маркировка
         if (isMarkProduct(ccItem!!.ID)) {
             //проверим колво занятых маркировок с набранным колвом текущей позиции
@@ -444,7 +455,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             }
         }
 
-        if (countFact ==0) {
+        if (countFact == 0) {
             ss.CurrentAction = Global.ActionSet.ScanAdress
             FExcStr.text = whatUNeed()
         }
@@ -527,6 +538,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     }
 
     private fun refreshRowSum(): Boolean {
+
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return false
+        }
+
         var textQuery =
             "select " +
                     "sum(DocCC.\$КонтрольНабора.Сумма ) as Sum, " +
@@ -552,6 +569,10 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     }
 
     private fun multiplesOKEI2(CCItem: Model.StructItemSet): Model.StructItemSet {
+
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+        }
 
         var item: Model.StructItemSet = CCItem
         var textQuery = "SELECT " +
@@ -632,6 +653,10 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     } // QuitModesSet
 
     private fun reactionBarcode(Barcode: String) {
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return
+        }
         var isObject = true
         val barcoderes: MutableMap<String, String> = ss.helper.disassembleBarcode(Barcode.replace("\r\n",""))
         val typeBarcode = barcoderes["Type"].toString()
@@ -760,6 +785,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         if (ss.CurrentAction == Global.ActionSet.ScanQRCode && codeId == barcodeId){//заодно проверим DataMatrix ли пришедший код
             //найдем маркировку в справочнике МаркировкаТовара
             val testBatcode = Barcode.replace("'","''")
+
+            if (!isOnline(this)) {                                      //проверим интернет-соединение
+                FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                return false
+            }
+
             textQuery =
                 "SELECT \$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен " +
                         "FROM \$Спр.МаркировкаТовара (nolock) " +
@@ -780,6 +811,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     return false
                 }
                 dtMark[0]["Отгружен"].toString() == "0" -> {
+
+                    if (!isOnline(this)) {                                      //проверим интернет-соединение
+                        FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                        return false
+                    }
+
                     //взведем фдаг отгрузки + проставим док отгрузки
                     textQuery =
                         "UPDATE \$Спр.МаркировкаТовара " +
@@ -850,6 +887,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     count.text = ((ccItem!!.Count - countFact).toString() + " шт по 1")
                 }
                 else -> {
+
+                    if (!isOnline(this)) {                                      //проверим интернет-соединение
+                        FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                        return false
+                    }
+
                     //маркировка уже есть, надо сверить количество которео уже собрали и которое отсканировали по Qr кодам
                     //проверим колво занятых маркировок с набранным колвом текущей позиции
                     textQuery =
@@ -895,6 +938,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             return false
         }
         if (ss.CurrentAction == Global.ActionSet.ScanItem) {
+
+            if (!isOnline(this)) {                                      //проверим интернет-соединение
+                FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                return false
+            }
+
             textQuery =
                 "SELECT " +
                         "Units.parentext as ItemID, " +
@@ -994,6 +1043,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     if (ccItem!!.Details > 0) {
                         ss.CurrentAction = Global.ActionSet.ScanPart
                     } else {
+
+                        if (!isOnline(this)) {                                      //проверим интернет-соединение
+                            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                            return false
+                        }
                         //проверим есть ли маркировка
                         textQuery =
                             "SELECT \$Спр.МаркировкаТовара.Товар " +
@@ -1010,6 +1064,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                     FExcStr.text = whatUNeed()
                     return true
                 } else if (ss.CurrentAction == Global.ActionSet.ScanBox) {
+
+                    if (!isOnline(this)) {                                      //проверим интернет-соединение
+                        FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                        return false
+                    }
                     //СКАНИРОВАНИЕ КОРОБКИ
                     if (section!!.Type.toInt() != 12) {
                         FExcStr.text = ("Неверно! " + whatUNeed())
@@ -1104,6 +1163,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 //                FExcStr = "Возможность дробить строку отключена!";
 //                return false;
 //            }
+
+            if (!isOnline(this)) {                                      //проверим интернет-соединение
+                FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                return false
+            }
+
             //добавить строчку надо
             var textQuery =
                 "begin tran; " +
@@ -1138,6 +1203,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             //Писать будем в добавленную, так лучше! Поэтому обновляем корректную строчку
             currLine = dt[1][0].toInt()
         }
+
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return false
+        }
+
         //фиксируем строку
         var textQuery =
             "UPDATE DT\$КонтрольНабора WITH (rowlock) " +
@@ -1201,6 +1272,10 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         when (ss.CurrentMode) {
 
             Global.Mode.Set -> {
+                if (!isOnline(this)) {                                      //проверим интернет-соединение
+                    FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                    return
+                }
                 if (!enterCount.isVisible) {
                     rKSet(keyCode)
                 }
@@ -1232,6 +1307,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 //            }
 
             FExcStr.text = "Подгружаю список..."
+
+            if (!isOnline(this)) {                                      //проверим интернет-соединение
+                FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                return
+            }
             //перейдем на форму просмотра
             val watchForm = Intent(this, WatchTablePart::class.java)
             watchForm.putExtra("iddoc", docSet!!.id)
@@ -1261,6 +1341,10 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         }
         //нажали ENTER
         if (keyCode == 66){
+            if (!isOnline(this)) {                                      //проверим интернет-соединение
+                FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                return
+            }
             if (ss.CurrentAction == Global.ActionSet.ScanQRCode){
                 if(countFact != 0){
                     //пытаются завершить набор позиции, не набрав всю строку с маркировкой
@@ -1351,6 +1435,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         if (docsSet.isEmpty()) {
             return true
         }
+
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return false
+        }
+
         val textQuery = "SELECT " +
                 "SetTable.Item as Item , " +
                 "min(Item.\$Спр.Товары.ИнвКод ) as InvCode , " +
@@ -1391,6 +1481,11 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
     private fun toModeSetComplete(): Boolean {
         //var empbtyBox = false
+
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return false
+        }
         //Проверим нет ли сборочного с пустой коробкой, его в первую очередь будем закрывать
         var textQuery = "SELECT " +
                 "journ.iddoc as IDDOC " +
@@ -1430,6 +1525,10 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
             return false
         }
 
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return false
+        }
         ss.CurrentMode = Global.Mode.SetComplete
         //перейдем на форму завершения набора
         val setComplete = Intent(this, SetComplete::class.java)
@@ -1443,6 +1542,12 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
     }
 
     private fun loadDocSet(iddoc: String): Boolean {
+
+        if (!isOnline(this)) {                                      //проверим интернет-соединение
+            FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+            return false
+        }
+
         var textQuery =
                 "SELECT top 1 " +
                     "journ.iddoc as IDDOC, " +

@@ -16,12 +16,9 @@ import kotlinx.android.synthetic.main.activity_accept.*
 import kotlinx.android.synthetic.main.activity_none_item.*
 import kotlinx.android.synthetic.main.activity_none_item.FExcStr
 import kotlinx.android.synthetic.main.activity_none_item.btnScan
-import kotlinx.android.synthetic.main.activity_none_item.table
 import kotlinx.android.synthetic.main.activity_none_item.scroll
-import kotlinx.android.synthetic.main.activity_none_item.palletPal
+import kotlinx.android.synthetic.main.activity_none_item.table
 import kotlinx.android.synthetic.main.activity_yap_item.*
-import java.lang.Exception
-
 
 class NoneItem : Search() {
 
@@ -333,7 +330,7 @@ class NoneItem : Search() {
     override fun reactionBarcode(Barcode: String): Boolean {
         //если таковой имеется, то присваеваем айдишник и ищем в списке непринятого
         
-        if (itm.foundBarcode(Barcode) == true) {
+        if (itm.foundBarcode(Barcode)) {
             var findItemInTable = false
             for (DR in noneAccItemLocal) {
                 if (itm.id == DR["id"].toString()) {
@@ -373,6 +370,7 @@ class NoneItem : Search() {
 
     override fun reactionKey(keyCode: Int, event: KeyEvent?):Boolean {
         if (keyCode == 4) {
+            clickVoise()
             ss.CurrentMode = Global.Mode.Waiting
             val acBack = Intent(this, Search::class.java)
             startActivity(acBack)
@@ -380,6 +378,7 @@ class NoneItem : Search() {
         }
 
         if (ss.helper.whatDirection(keyCode) == "Right") {
+            clickVoise()
             ss.CurrentMode = Global.Mode.Waiting
             val backHead = Intent(this, Search::class.java)
             startActivity(backHead)
@@ -392,6 +391,7 @@ class NoneItem : Search() {
 
         if (ss.helper.whatInt(keyCode) != -1) {             //артикуля, ля, ля, ля
             searchArt.text = (searchArt.text.toString().trim() + ss.helper.whatInt(keyCode).toString())
+            clickVoise()
             refreshActivity()
         }
 
@@ -425,12 +425,13 @@ class NoneItem : Search() {
     }
 
     fun reactionKeyLocal(keyCode: Int):Boolean {
+        tickVoise()
         var res = true
         if (noneAccItemLocal.isEmpty()) {
             return false
         }
         //тут частенько вылетает сделаем через попытку
-        var oldCurrentLine = currentLine
+        val oldCurrentLine = currentLine
         table.getChildAt(currentLine).setBackgroundColor(Color.WHITE)
         if (ss.helper.whatDirection(keyCode) == "Down") {
             if (currentLine < noneAccItemLocal.count()) {

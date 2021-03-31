@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="ChoiseWork.Accept.CrossDoc.CrossCard">
+
+    <TextView
+        android:id="@+id/shapka"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center_horizontal"
+        android:text="Приемка товара"
+        android:textColor="#000"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/tableLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.05"
+        app:layout_constraintHorizontal_bias="0.029"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0"
+        app:layout_constraintWidth_percent="0.99" />
+
+    <TableLayout
+        android:id="@+id/tableLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+
+        android:background="#40e0d0"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.18"
+        app:layout_constraintHorizontal_bias="0.012"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.064"
+        app:layout_constraintWidth_percent="0.6">
+
+        <TextView
+            android:id="@+id/itemName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:textColor="#000" />
+
+    </TableLayout>
+
+    <TableLayout
+        android:id="@+id/tableLayout2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="540dp"
+        app:layout_constraintBottom_toTopOf="@+id/tabCount"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHeight_percent="0.18"
+        app:layout_constraintHorizontal_bias="0.66"
+        app:layout_constraintStart_toEndOf="@id/tableLayout"
+        app:layout_constraintTop_toBottomOf="@+id/shapka"
+        app:layout_constraintVertical_bias="0"
+        app:layout_constraintWidth_percent="0.4">
+
+        <TableRow android:background="#FFF000">
+
+            <TextView
+                android:id="@+id/zonaHand"
+                android:layout_width="fill_parent"
+                android:layout_height="match_parent"
+                android:gravity="end"
+                android:textColor="#000"
+                android:textSize="16sp" />
+
+        </TableRow>
+
+        <TableRow android:background="#FFF000">
+
+            <TextView
+                android:id="@+id/zonaTech"
+                android:layout_width="fill_parent"
+                android:layout_height="match_parent"
+                android:gravity="end"
+                android:textSize="16sp"
+                android:textColor="#000" />
+
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="35dp"
+                android:gravity="end"
+                android:padding="5dp"
+                android:text="Деталей: "
+                android:textColor="#000"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/details"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="10dp"
+                android:text="0"
+                android:textColor="#000" />
+
+        </TableRow>
+
+    </TableLayout>
+
+    <TableLayout
+        android:id="@+id/tabCount"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:shrinkColumns="*"
+        android:stretchColumns="*"
+        app:layout_constraintBottom_toTopOf="@+id/FExcStr"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tableLayout"
+        app:layout_constraintWidth_percent="0.99">
+
+        <TableRow android:paddingBottom="1px">
+
+            <TextView
+                android:id="@+id/textSht"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="Шт. "
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbCoef0"
+                android:layout_width="0dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="#a9a9a9"
+                android:padding="10dp"
+                android:text="1"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbCount0"
+                android:layout_width="0dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbRes0"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="#a9a9a9"
+                android:clickable="false"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbBarcode0"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:background="#a9a9a9"
+                android:clickable="false"
+                android:gravity="start"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="12sp" />
+
+        </TableRow>
+
+        <TableRow android:paddingBottom="1px">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="Упак. "
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbCoef1"
+                android:layout_width="0dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbCount1"
+                android:layout_width="0dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbRes1"
+                android:layout_width="0dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="#a9a9a9"
+                android:clickable="false"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbBarcode1"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:background="#a9a9a9"
+                android:clickable="false"
+                android:gravity="start"
+                android:padding="10dp"
+                android:textSize="12sp" />
+
+        </TableRow>
+
+        <TableRow android:paddingBottom="1px">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="Место "
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbCoef2"
+                android:layout_width="0dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbCount2"
+                android:layout_width="0dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbRes2"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="#a9a9a9"
+                android:clickable="false"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbBarcode2"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:background="#a9a9a9"
+                android:clickable="false"
+                android:gravity="start"
+                android:padding="10dp"
+                android:textSize="12sp" />
+
+        </TableRow>
+
+        <TableRow android:paddingBottom="1px">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="Набор "
+                android:textColor="#ff0000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbCoef3"
+                android:layout_width="0dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbCount3"
+                android:layout_width="0dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbRes3"
+                android:layout_width="0dp"
+                android:layout_marginEnd="2dp"
+                android:layout_marginRight="2dp"
+                android:layout_weight="1"
+                android:background="#ff0000"
+                android:clickable="false"
+                android:padding="10dp"
+                android:textColor="#ffff"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tbBarcode3"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:background="#a9a9a9"
+                android:clickable="false"
+                android:gravity="start"
+                android:padding="10dp"
+                android:textSize="12sp" />
+
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:id="@+id/storageSize"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:background="#9932cc"
+                android:gravity="center"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:padding="1dp"
+                android:text="Кол-во"
+                android:textColor="#000"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/pricePrih"
+                android:layout_width="0dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="Цена:"
+                android:textColor="#ff0000"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnPrinItem"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:text="Принять"
+                android:textSize="18sp" />
+
+        </TableRow>
+
+        <TableRow>
+
+            <Button
+                android:id="@+id/btnMark"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:text="Маркировка - *"
+                android:textSize="18sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:padding="1dp"
+                android:text=""
+                android:textColor="#000"
+                android:textSize="15sp" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:text="макрк-вок"
+                android:textColor="#ff0000"
+                android:textStyle="bold" />
+
+
+            <TextView
+                android:id="@+id/markCount"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:gravity="center"
+                android:padding="10dp"
+                android:textColor="#000"
+                android:textSize="18sp" />
+
+        </TableRow>
+    </TableLayout>
+
+    <TextView
+        android:id="@+id/FExcStr"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:gravity="center"
+        android:textColor="#070AA0"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

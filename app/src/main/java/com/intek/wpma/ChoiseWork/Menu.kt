@@ -11,14 +11,12 @@ import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.ChoiseWork.Accept.AccMenu
 import com.intek.wpma.ChoiseWork.Revise.MarkMenu
-import com.intek.wpma.ChoiseWork.Revise.ReviseMark
 import com.intek.wpma.ChoiseWork.Set.SetInitialization
 import com.intek.wpma.ChoiseWork.Shipping.ChoiseWorkShipping
 import com.intek.wpma.Global
 import com.intek.wpma.MainActivity
 import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_menu.*
-
 
 class Menu : BarcodeDataReceiver() {
 
@@ -32,8 +30,8 @@ class Menu : BarcodeDataReceiver() {
                 val version = intent.getIntExtra("version", 0)
                 if (version >= 1) {
                     try {
-                        barcode = intent.getStringExtra("data")
-                        codeId = intent.getStringExtra("codeId")
+                        barcode = intent.getStringExtra("data")!!
+                        codeId = intent.getStringExtra("codeId")!!
                         reactionBarcode(barcode)
                     }
                     catch (e: Exception){
@@ -44,7 +42,6 @@ class Menu : BarcodeDataReceiver() {
             }
         }
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -102,8 +99,7 @@ class Menu : BarcodeDataReceiver() {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
-        if (keyCode == 4)
-        {
+        if (keyCode == 4) {
             //нажали назад
             val main = Intent(this, MainActivity::class.java)
             startActivity(main)

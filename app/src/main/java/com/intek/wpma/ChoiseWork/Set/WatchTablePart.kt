@@ -93,6 +93,12 @@ class WatchTablePart : BarcodeDataReceiver() {
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x > oldx) {
                     FExcStr.text = "Подгружаю список..."
+
+                    if (!isOnline(this)) {                                      //проверим интернет-соединение
+                        FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
+                        return false
+                    }
+
                     //перейдем на форму просмотра
                     val setInitialization = Intent(this, SetInitialization::class.java)
                     setInitialization.putExtra("DocSetID", iddoc)

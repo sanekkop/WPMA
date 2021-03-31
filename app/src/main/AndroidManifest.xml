@@ -53,6 +53,12 @@
         <activity android:name=".ChoiseWork.Revise.MarkMenu" />
         <activity android:name=".ChoiseWork.Revise.ReMark" />
         <activity android:name=".ChoiseWork.Accept.AccMark" />
+        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossCard"/>
+        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossYepItem"/>
+        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossMark"/>
+        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossDoc"/>
+        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossNonItem"/>
+        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossInfo"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

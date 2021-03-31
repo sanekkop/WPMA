@@ -41,7 +41,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
@@ -101,8 +101,6 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_show_info_new_comp)
         title = ss.title
-        //badDoc["ID"] = intent.extras!!.getString("BadDocID")!!
-        //badDoc["View"] = intent.extras!!.getString("BadDocView")!!
         badDoc = NewComplectation.badDoc
         docDown = NewComplectation.docDown
         downSituation = NewComplectation.downSituation
@@ -131,7 +129,6 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
     }
 
     private fun refreshRoute() {
-
         var textQuery = "select * from WPM_fn_ViewBillStatus(:iddoc)"
         textQuery = ss.querySetParam(textQuery, "iddoc", badDoc["ID"].toString())
         textQuery =  ss.querySetParam(textQuery, "View", badDoc["Veiw"].toString())
@@ -140,7 +137,6 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
-
         refreshActivity()
         return true
     }
@@ -172,11 +168,11 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
     }
 
     private fun refreshActivity() {
+        Shapka.text = ("Комплектация в " +
+                    (if (ss.CurrentMode == Global.Mode.NewComplectation) "тележку" else "адрес") +
+                    " (новая)" + "\n" + badDoc["View"].toString()) //SS.QueryParser("lblDocInfo")
 
-        Shapka.text =
-            "Комплектация в " + (if (ss.CurrentMode == Global.Mode.NewComplectation) "тележку" else "адрес") + " (новая)" + "\n" + badDoc["View"].toString() //SS.QueryParser("lblDocInfo")
         if (ccrp.isNotEmpty()) {
-
             for (DR in ccrp) {
 
                 val row1 = TableRow(this)
@@ -207,7 +203,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 nmest.setBackgroundColor(Color.GREEN)
 
                 val address = TextView(this)
-                address.text = " " + ss.helper.getShortFIO(DR["employer"].toString())
+                address.text = (" " + ss.helper.getShortFIO(DR["employer"].toString()))
                 address.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.4).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -238,7 +234,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 val linearLayout2 = LinearLayout(this)
 
                 val mest = TextView(this)
-                mest.text = " -" + DR["number"]
+                mest.text = (" -" + DR["number"])
                 mest.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.1).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -256,7 +252,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 kmest.textSize = 16F
 
                 val code = TextView(this)
-                code.text = " " +
+                code.text = (" " +
                         if (ss.isVoidDate((DR["date2"].toString()))) ss.helper.shortDate(DR["date1"].toString())
                         else {
                             ss.helper.shortDate(DR["date2"].toString())
@@ -264,7 +260,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                         " " + ss.helper.timeToString(DR["time1"].toString().toInt()) +
                         " - " + if (DR["time2"] != "0") ss.helper.timeToString(
                     DR["time2"].toString().toInt()
-                )  else  "..."
+                )  else  "...")
                 code.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.4).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -282,7 +278,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
                 sum.textSize = 16F
 
                 val nstrok = TextView(this)
-                nstrok.text = DR["boxes"] + " "
+                nstrok.text = (DR["boxes"] + " ")
                 nstrok.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.2).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT

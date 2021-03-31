@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:scrollbarFadeDuration="10"
+    tools:context="ChoiseWork.Accept.CrossDoc.CrossNonItem">
+
+    <TextView
+        android:id="@+id/head"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Приемка (НЕ принятый товар)"
+        android:textColor="#000"
+        android:textSize="20sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/printPal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="(принтер не выбран)"
+        android:textColor="#228B22"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/head" />
+
+    <ScrollView
+        android:id="@+id/scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/nadp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/printPal">
+
+        <TableLayout
+            android:id="@+id/table"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_horizontal"
+            android:scrollbarAlwaysDrawHorizontalTrack="false"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+        </TableLayout>
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/searchArt"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@drawable/bg"
+        android:state_window_focused="true"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/ItemName"
+        app:layout_constraintEnd_toStartOf="@+id/nadp"
+        app:layout_constraintHeight_percent="0.05"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/nadp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:gravity="center"
+        android:text="&lt;-- поиск по артикулам"
+        android:textColor="#000"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toTopOf="@+id/ItemName"
+        app:layout_constraintEnd_toStartOf="@+id/btnScan"
+        app:layout_constraintHeight_percent="0.05"
+        app:layout_constraintWidth_percent="0.45" />
+
+    <TextView
+        android:id="@+id/ItemName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textColor="#000"
+        app:layout_constraintBottom_toTopOf="@id/FExcStr"
+        app:layout_constraintEnd_toStartOf="@+id/btnScan"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <Button
+        android:id="@+id/btnScan"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Scan"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toTopOf="@+id/FExcStr"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <TextView
+        android:id="@+id/FExcStr"
+        android:layout_width="match_parent"
+        android:layout_height="98dp"
+        android:gravity="center"
+        android:text="Выберите режим работы"
+        android:textColor="#070AA0"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

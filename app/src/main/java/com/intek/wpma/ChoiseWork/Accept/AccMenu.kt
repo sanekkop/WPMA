@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.KeyEvent
 import android.widget.Toast
 import com.intek.wpma.*
+import com.intek.wpma.ChoiseWork.Accept.CrossDoc.CrossDoc
 import com.intek.wpma.ChoiseWork.Menu
 import kotlinx.android.synthetic.main.activity_acc_menu.*
 import kotlinx.android.synthetic.main.activity_acc_menu.FExcStr
@@ -90,9 +91,9 @@ class AccMenu : BarcodeDataReceiver() {
         btnAcc.setOnClickListener {
             startActivity(1)
         }
-  /*      btnCrossDoc.setOnClickListener {
+        btnCross.setOnClickListener {
             startActivity(2)
-        } */
+        }
 
 
     }
@@ -133,13 +134,12 @@ class AccMenu : BarcodeDataReceiver() {
 
       private fun startActivity(num: Int) {
           var intent: Intent
-       //   val toast = Toast.makeText(applicationContext, "Режим находится в разработке!", Toast.LENGTH_LONG)
           intent = Intent(this, Menu::class.java)
           when (num)
           {
               0 -> intent = Intent(this, Menu::class.java)
               1 -> intent = Intent(this, Search::class.java)  //toast.show()
-            //  2 -> intent = Intent(this, CrossDoc::class.java)
+              2 -> intent = Intent(this, CrossDoc::class.java)
           }
           startActivity(intent)
           finish()

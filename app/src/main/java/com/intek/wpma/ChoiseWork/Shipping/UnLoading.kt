@@ -16,7 +16,6 @@ import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
 import kotlinx.android.synthetic.main.activity_unloading.*
 
-
 class UnLoading : BarcodeDataReceiver() {
 
     private var currentAction: Global.ActionSet = Global.ActionSet.ScanBox
@@ -35,7 +34,7 @@ class UnLoading : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(

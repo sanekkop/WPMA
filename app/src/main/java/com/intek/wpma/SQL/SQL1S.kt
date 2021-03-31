@@ -40,6 +40,7 @@ object SQL1S : SQLSynchronizer() {
     val badvoise = SoundPool(1, AudioManager.STREAM_MUSIC,0)
     val goodvoise = SoundPool(1, AudioManager.STREAM_MUSIC,0)
     val clickvoise = SoundPool(1, AudioManager.STREAM_MUSIC, 0)
+    val tickvoise = SoundPool(1, AudioManager.STREAM_MUSIC, 0)
     /*Конструктор класса
 
      */
@@ -591,6 +592,12 @@ object SQL1S : SQLSynchronizer() {
                 iddocid = IDDorID.substring(4)
             }
         }
+      /*  val textQuery = "SELECT IDDOC, IDDOCDEF, DATE_TIME_IDDOC, DOCNO, ISMARK, " + getSynh("IDD") + " as IDD" +
+                " FROM _1SJOURN (nolock) WHERE ISMARK = 0 and " + if (ThisID) "IDDOC" else {
+            getSynh("IDD")
+        } + "='" + iddocid + "'"
+
+        val dt = executeWithReadNew(textQuery)*/
         val dt = executeWithReadNew(
             "SELECT IDDOC, IDDOCDEF, DATE_TIME_IDDOC, DOCNO, ISMARK, " + getSynh("IDD") + " as IDD" +
                     " FROM _1SJOURN (nolock) WHERE ISMARK = 0 and " + if (ThisID) "IDDOC" else {

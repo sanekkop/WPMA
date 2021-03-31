@@ -100,6 +100,10 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         ss.clickvoise.play(1, 1F, 1F, 1, 0, 1F)
     }
 
+    fun tickVoise() {
+        ss.tickvoise.play(1, 1F, 1F, 1, 0, 1F)
+    }
+
     /// <summary>
     /// формирует строку присвоений для инструкции SET в UPDATE из переданной таблицы
     /// Поддерживает типы - int, DateTime, string

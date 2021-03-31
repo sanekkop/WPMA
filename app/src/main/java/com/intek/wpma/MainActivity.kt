@@ -94,6 +94,7 @@ class MainActivity :  BarcodeDataReceiver() {
         ss.badvoise.load(this, R.raw.bad,1)
         ss.goodvoise.load(this, R.raw.good,1)
         ss.clickvoise.load(this, R.raw.click, 1)
+        ss.tickvoise.load(this, R.raw.tick, 1)
         if(ss.isMobile) {
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {

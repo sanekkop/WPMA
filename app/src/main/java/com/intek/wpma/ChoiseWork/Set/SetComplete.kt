@@ -148,7 +148,7 @@ class SetComplete : BarcodeDataReceiver() {
         if (ss.isMobile){
             btnScanSetComplete.visibility = View.VISIBLE
             btnScanSetComplete!!.setOnClickListener {
-                val scanAct = Intent(this@SetComplete, ScanActivity::class.java)
+                val scanAct = Intent(this, ScanActivity::class.java)
                 scanAct.putExtra("ParentForm","SetComplete")
                 startActivity(scanAct)
             }

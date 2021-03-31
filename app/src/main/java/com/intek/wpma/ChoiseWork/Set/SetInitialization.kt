@@ -1377,7 +1377,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
                 "on SetTable.Item = Item.ID " +
                 "INNER JOIN \$Спр.КатегорииТоваров as Category (nolock) " +
                 "on Item.\$Спр.Товары.Категория = Category.ID " +
-                "where Category.\$Спр.КатегорииТоваров.Маркировка = 1 " +
+                "where Category.\$Спр.КатегорииТоваров.Маркировка > 0 " +
                 "group by SetTable.Item " +
                 "having not SUM(SetTable.CountCC ) = SUM(SetTable.CountMark ) "
         val dt = ss.executeWithReadNew(textQuery) ?: return true

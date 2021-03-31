@@ -431,7 +431,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                     "INNER JOIN \$Спр.КатегорииТоваров  as Categories (nolock) " +
                     "ON Categories.id = Product.\$Спр.Товары.Категория " +
                     "WHERE " +
-                    "Product.id = '${ItemID}' and Categories.\$Спр.КатегорииТоваров.Маркировка = 1 "
+                    "Product.id = '${ItemID}' and Categories.\$Спр.КатегорииТоваров.Маркировка > 0 "
 
         val dt = ss.executeWithReadNew(textQuery) ?: return false
         return dt.isNotEmpty()

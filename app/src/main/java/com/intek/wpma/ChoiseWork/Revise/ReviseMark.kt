@@ -111,19 +111,39 @@ class ReviseMark : BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
-        val helper = Helper()
-        val barcoderes = helper.disassembleBarcode(Barcode)
-        if (codeId == barcodeId){
-            val testBatcode = Barcode.replace("'","''")
-            val textQuery =
-                "SELECT " +
-                    "\$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен ," +
-                    "SUBSTRING(\$Спр.МаркировкаТовара.ДокОтгрузки , 5 , 9) as ДокОтгрузки ," +
-                    "\$Спр.МаркировкаТовара.Товар as Товар " +
-                "FROM \$Спр.МаркировкаТовара (nolock) " +
-                "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') "
 
-            val dtMark = ss.executeWithReadNew(textQuery) ?: return false
+        if (codeId == barcodeId) {
+            val testBatcode = Barcode.replace("'", "''")
+            var textQuery =
+                "SELECT " +
+                        "\$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен ," +
+                        "SUBSTRING(\$Спр.МаркировкаТовара.ДокОтгрузки , 5 , 9) as ДокОтгрузки ," +
+                        "\$Спр.МаркировкаТовара.Товар as Товар " +
+                        "FROM \$Спр.МаркировкаТовара (nolock) " +
+                        "where \$Спр.МаркировкаТовара.УИТ = SUBSTRING('${testBatcode.trim()}',1,31) "
+
+            var dtMark = ss.executeWithReadNew(textQuery) ?: return false
+            when {
+                dtMark.count() > 1 -> {
+                    FExcStr.text = "ВНИМАНИЕ! Маркировка задвоена!"
+                    return false
+                }
+                dtMark.count() == 1 -> {
+                    mark = dtMark[0]
+                    goodVoise()
+                    refreshActivity()
+                    return true
+                }
+            }
+            textQuery =
+                "SELECT " +
+                        "\$Спр.МаркировкаТовара.ФлагОтгрузки as Отгружен ," +
+                        "SUBSTRING(\$Спр.МаркировкаТовара.ДокОтгрузки , 5 , 9) as ДокОтгрузки ," +
+                        "\$Спр.МаркировкаТовара.Товар as Товар " +
+                        "FROM \$Спр.МаркировкаТовара (nolock) " +
+                        "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') "
+
+            dtMark = ss.executeWithReadNew(textQuery) ?: return false
             when {
                 dtMark.isEmpty() -> {
                     FExcStr.text = "Маркировка не найдена"

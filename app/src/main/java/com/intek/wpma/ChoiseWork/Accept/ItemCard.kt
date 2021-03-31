@@ -7,33 +7,33 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
 import com.intek.wpma.Helpers.Helper
-import com.intek.wpma.MainActivity
 import com.intek.wpma.Model.Model
 import com.intek.wpma.R
-import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefItem
 import kotlinx.android.synthetic.main.activity_search_acc.*
 import kotlinx.android.synthetic.main.activity_search_acc.FExcStr
 import kotlinx.android.synthetic.main.activity_search_acc.details
-import kotlinx.android.synthetic.main.activity_set.*
 
 
 class ItemCard : Search() {
 
-    var currentRowAcceptedItem: MutableMap<String, String> = mutableMapOf()
-    var AcceptedItem: MutableMap<String, String> = mutableMapOf()
-    var units: MutableList<MutableMap<String, String>> = mutableListOf()
-    var fUnits: MutableList<MutableMap<String, String>> = mutableListOf()
-    val newBarcodes: MutableList<String> = mutableListOf()
-    var idDoc = ""
-    var allCount = 0
-    val model = Model()
-    var item = RefItem()
-    var bufferWarehouse = "" //переменка для товара на главном
-    var flagBarcode = ""
-    var isMoveButon = true
-    var xCoor = 2
-    var yCoor = 4
+    private var currentRowAcceptedItem: MutableMap<String, String> = mutableMapOf()
+    private var acceptedItem: MutableMap<String, String> = mutableMapOf()
+    private var units: MutableList<MutableMap<String, String>> = mutableListOf()
+    private var fUnits: MutableList<MutableMap<String, String>> = mutableListOf()
+    private val newBarcodes: MutableList<String> = mutableListOf()
+    private var idDoc = ""
+    private var allCount = 0
+    private val model = Model()
+    private var item = RefItem()
+    private var bufferWarehouse = "" //переменка для товара на главном
+    private var flagBarcode = ""
+    private var isMoveButon = true
+    private var xCoor = 2
+    private var yCoor = 4
+    private var countMarkUnit = 0
+    private var countMarkPac = 0
+    private var countItemAcc = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +43,9 @@ class ItemCard : Search() {
         title = ss.title
         item.foundID(intent.extras!!.getString("itemID")!!)
         idDoc = intent.extras!!.getString("iddoc")!!
+        countMarkPac = if (intent.extras!!.getString("countMarkPac").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkPac").toString().toInt()
+        countMarkUnit = if (intent.extras!!.getString("countMarkUnit").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkUnit").toString().toInt()
+        countItemAcc = if (intent.extras!!.getString("countItemAcc").isNullOrEmpty()) 0 else intent.extras!!.getString("countItemAcc").toString().toInt()
 
         btnPrinItem.setOnClickListener {
             //обработчик события при нажатии на кнопку принятия товара
@@ -66,6 +69,8 @@ class ItemCard : Search() {
             backH.putExtra("flagBarcode", flagBarcode)
             backH.putExtra("itemID", item.id)
             backH.putExtra("iddoc", idDoc)
+            backH.putExtra("countItemAcc", acceptedItem["AcceptCount"].toString())
+
             startActivity(backH)
             finish()
         }
@@ -90,7 +95,7 @@ class ItemCard : Search() {
 
     }
 
-    fun toModeAcceptedItem() {
+    private fun toModeAcceptedItem() {
         //Подтянем данные о не принятой позиции
         getCurrentRowAcceptedItem()
         //подтянем склад буфер
@@ -165,11 +170,11 @@ class ItemCard : Search() {
         textQuery = ss.querySetParam(textQuery, "MainWarehouse", ss.Const.mainWarehouse)
         val datTab = ss.executeWithReadNew(textQuery) ?: return
         if (datTab.isNotEmpty()) {
-            AcceptedItem["BalanceMain"] = datTab[0]["BalanceMain"].toString()
-            AcceptedItem["BalanceBuffer"] = datTab[0]["BalanceBuffer"].toString()
-            AcceptedItem["AdressMain"] = datTab[0]["AdressMain"].toString()
-            AcceptedItem["AdressBuffer"] = datTab[0]["AdressBuffer"].toString()
-            AcceptedItem["IsRepeat"] = "0"
+            acceptedItem["BalanceMain"] = datTab[0]["BalanceMain"].toString()
+            acceptedItem["BalanceBuffer"] = datTab[0]["BalanceBuffer"].toString()
+            acceptedItem["AdressMain"] = datTab[0]["AdressMain"].toString()
+            acceptedItem["AdressBuffer"] = datTab[0]["AdressBuffer"].toString()
+            acceptedItem["IsRepeat"] = "0"
         }
     }
 
@@ -198,42 +203,45 @@ class ItemCard : Search() {
     private fun refreshItemProper() {
 
         if (currentRowAcceptedItem.isNotEmpty()) {
-
-            AcceptedItem["id"] = currentRowAcceptedItem["id"].toString()
-            AcceptedItem["Name"] = currentRowAcceptedItem["ItemName"].toString()
-            AcceptedItem["InvCode"] = currentRowAcceptedItem["InvCode"].toString()
-            AcceptedItem["Acticle"] = currentRowAcceptedItem["Article"].toString()
-            AcceptedItem["Count"] = currentRowAcceptedItem["Count"].toString()
-            AcceptedItem["AcceptCount"] = currentRowAcceptedItem["Count"].toString()
-            AcceptedItem["Price"] = currentRowAcceptedItem["Price"].toString()
-            AcceptedItem["Acceptance"] = "1"
-            AcceptedItem["Details"] = currentRowAcceptedItem["Details"].toString()
-            AcceptedItem["NowDetails"] = AcceptedItem["Details"].toString()
-            AcceptedItem["ToMode"] = "Acceptance"
-            AcceptedItem["BindingAdressFlag"] = "0"
-            AcceptedItem["SeasonGroup"] = currentRowAcceptedItem["SeasonGroup"].toString()
-            AcceptedItem["FlagFarWarehouse"] = currentRowAcceptedItem["FlagFarWarehouse"].toString()
-            AcceptedItem["StoregeSize"] = currentRowAcceptedItem["StoregeSize"].toString()
-            AcceptedItem["BaseUnitID"] = item.getAttribute("БазоваяЕдиницаШК").toString()
-            AcceptedItem["MinParty"] = item.getAttribute("МинПартия").toString()
+            shapka.text = "Приемка товара"
+            btnPrinItem.text = "Принять"
+            acceptedItem["id"] = currentRowAcceptedItem["id"].toString()
+            acceptedItem["Name"] = currentRowAcceptedItem["ItemName"].toString()
+            acceptedItem["InvCode"] = currentRowAcceptedItem["InvCode"].toString()
+            acceptedItem["Acticle"] = currentRowAcceptedItem["Article"].toString()
+            acceptedItem["Count"] = currentRowAcceptedItem["Count"].toString()
+            acceptedItem["AcceptCount"] = if (countItemAcc > 0) countItemAcc.toString() else currentRowAcceptedItem["Count"].toString()
+            acceptedItem["Price"] = currentRowAcceptedItem["Price"].toString()
+            acceptedItem["Acceptance"] = "1"
+            acceptedItem["Details"] = currentRowAcceptedItem["Details"].toString()
+            acceptedItem["NowDetails"] = acceptedItem["Details"].toString()
+            acceptedItem["ToMode"] = "Acceptance"
+            acceptedItem["BindingAdressFlag"] = "0"
+            acceptedItem["SeasonGroup"] = currentRowAcceptedItem["SeasonGroup"].toString()
+            acceptedItem["FlagFarWarehouse"] = currentRowAcceptedItem["FlagFarWarehouse"].toString()
+            acceptedItem["StoregeSize"] = currentRowAcceptedItem["StoregeSize"].toString()
+            acceptedItem["BaseUnitID"] = item.getAttribute("БазоваяЕдиницаШК").toString()
+            acceptedItem["MinParty"] = item.getAttribute("МинПартия").toString()
         } else {
-            AcceptedItem["id"] = item.id
-            AcceptedItem["Name"] = item.name
-            AcceptedItem["InvCode"] = item.invCode
-            AcceptedItem["Acticle"] = item.getAttribute("Артикул").toString()
-            AcceptedItem["Count"] = "0"
-            AcceptedItem["AcceptCount"] = "0"
-            AcceptedItem["Price"] = item.getAttribute("Прих_Цена").toString()
-            AcceptedItem["Acceptance"] = "1"
-            AcceptedItem["Details"] = item.getAttribute("КоличествоДеталей").toString()
-            AcceptedItem["NowDetails"] = AcceptedItem["Details"].toString()
-            AcceptedItem["ToMode"] = "Acceptance"
-            AcceptedItem["BindingAdressFlag"] = "0"
-            AcceptedItem["SeasonGroup"] = ""
-            AcceptedItem["FlagFarWarehouse"] = ""
-            AcceptedItem["StoregeSize"] = "0"
-            AcceptedItem["BaseUnitID"] = item.getAttribute("БазоваяЕдиницаШК").toString()
-            AcceptedItem["MinParty"] = item.getAttribute("МинПартия").toString()
+            shapka.text = "Редактирование товара"
+            btnPrinItem.text = "Сохранить"
+            acceptedItem["id"] = item.id
+            acceptedItem["Name"] = item.name
+            acceptedItem["InvCode"] = item.invCode
+            acceptedItem["Acticle"] = item.getAttribute("Артикул").toString()
+            acceptedItem["Count"] = "0"
+            acceptedItem["AcceptCount"] = if (countItemAcc > 0) countItemAcc.toString() else "0"
+            acceptedItem["Price"] = item.getAttribute("Прих_Цена").toString()
+            acceptedItem["Acceptance"] = "1"
+            acceptedItem["Details"] = item.getAttribute("КоличествоДеталей").toString()
+            acceptedItem["NowDetails"] = acceptedItem["Details"].toString()
+            acceptedItem["ToMode"] = "Acceptance"
+            acceptedItem["BindingAdressFlag"] = "0"
+            acceptedItem["SeasonGroup"] = ""
+            acceptedItem["FlagFarWarehouse"] = ""
+            acceptedItem["StoregeSize"] = "0"
+            acceptedItem["BaseUnitID"] = item.getAttribute("БазоваяЕдиницаШК").toString()
+            acceptedItem["MinParty"] = item.getAttribute("МинПартия").toString()
         }
 
         //begin internal command
@@ -280,7 +288,7 @@ class ItemCard : Search() {
         }
         //Добавляем что принимается не все
         var coef = 1
-        if (allCount > AcceptedItem["AcceptCount"].toString().toInt()) {
+        if (allCount > acceptedItem["AcceptCount"].toString().toInt()) {
             for (dr in units) {
                 if (dr["OKEI"] == model.okeiPackage) {
                     coef = dr["Coef"].toString().toInt()
@@ -288,32 +296,32 @@ class ItemCard : Search() {
                 }
             }
             excStr += " " + model.getStrPackageCount(
-                AcceptedItem["AcceptCount"].toString().toInt(),
+                acceptedItem["AcceptCount"].toString().toInt(),
                 coef
             ) + " из " + model.getStrPackageCount(allCount, coef)
         }
 
         storageSize.text =
-            AcceptedItem["StoregeSize"]                                              //размер хранения
-        if (AcceptedItem["StoregeSize"].toString().toFloat() > 0) {
+            acceptedItem["StoregeSize"]                                              //размер хранения
+        if (acceptedItem["StoregeSize"].toString().toFloat() > 0) {
             storageSize.visibility = View.VISIBLE
         } else {
             storageSize.visibility = View.INVISIBLE
         }
         itemName.text =
-            AcceptedItem["Name"]                                                      //полное наименование товара
+            acceptedItem["Name"]                                                      //полное наименование товара
         details.text =
-            AcceptedItem["Details"]                                                        //кол-во деталей товара, подтягиваем если есть, если нет заполняем, иначе 0
+            acceptedItem["Details"]                                                        //кол-во деталей товара, подтягиваем если есть, если нет заполняем, иначе 0
         shapka.text =
-            (AcceptedItem["InvCode"].toString() + "Приемка товара")                         //код товара
+            (acceptedItem["InvCode"].toString() + "Приемка товара")                         //код товара
         pricePrih.text =
-            ("Цена: " + AcceptedItem["Price"].toString())                                //цена товара
-        tbCount0.text = AcceptedItem["AcceptCount"].toString()
+            ("Цена: " + acceptedItem["Price"].toString())                                //цена товара
+        tbCount0.text = acceptedItem["AcceptCount"].toString()
         tbCoef0.text = "1"
-        zonaHand.text = (AcceptedItem["AdressMain"].toString()
-            .trim() + ": " + AcceptedItem["BalanceMain"].toString() + " шт")
-        zonaTech.text = (AcceptedItem["AdressBuffer"].toString()
-            .trim() + ": " + AcceptedItem["BalanceBuffer"].toString() + " шт")
+        zonaHand.text = (acceptedItem["AdressMain"].toString()
+            .trim() + ": " + acceptedItem["BalanceMain"].toString() + " шт")
+        zonaTech.text = (acceptedItem["AdressBuffer"].toString()
+            .trim() + ": " + acceptedItem["BalanceBuffer"].toString() + " шт")
         if (units.isNotEmpty()) {
             for (dr in units) {
                 var findUnits = false
@@ -344,7 +352,7 @@ class ItemCard : Search() {
                     }
                     model.okeiPack -> {
                         tbCount1.text =
-                            (AcceptedItem["AcceptCount"].toString().toInt() / dr["Coef"].toString()
+                            (acceptedItem["AcceptCount"].toString().toInt() / dr["Coef"].toString()
                                 .toInt()).toString()
                         if (dr["Barcode"].toString().trim() != "") {
                             tbBarcode1.text =
@@ -355,7 +363,7 @@ class ItemCard : Search() {
                     }
                     model.okeiPackage -> {
                         tbCount2.text =
-                            (AcceptedItem["AcceptCount"].toString().toInt() / dr["Coef"].toString()
+                            (acceptedItem["AcceptCount"].toString().toInt() / dr["Coef"].toString()
                                 .toInt()).toString()
                         if (dr["Barcode"].toString().trim() != "") {
                             tbBarcode2.text =
@@ -366,7 +374,7 @@ class ItemCard : Search() {
                     }
                     model.okeiKit -> {
                         tbCount3.text =
-                            (AcceptedItem["AcceptCount"].toString().toInt() / dr["Coef"].toString()
+                            (acceptedItem["AcceptCount"].toString().toInt() / dr["Coef"].toString()
                                 .toInt()).toString()
                         if (dr["Barcode"].toString().trim() != "") {
                             tbBarcode3.text =
@@ -380,22 +388,23 @@ class ItemCard : Search() {
         }
 
         //обновим количество необходимое для приемки
-        tbRes0.text = AcceptedItem["Count"].toString() //сумма принимаемого товара в общей сложности
-        tbRes1.text = if (tbCoef1.text.toString().toInt() > 0) (AcceptedItem["Count"].toString()
+        tbRes0.text = acceptedItem["Count"].toString() //сумма принимаемого товара в общей сложности
+        tbRes1.text = if (tbCoef1.text.toString().toInt() > 0) (acceptedItem["Count"].toString()
             .toInt() / tbCoef1.text.toString().toInt()).toString() else "0"
-        tbRes2.text = if (tbCoef2.text.toString().toInt() > 0) (AcceptedItem["Count"].toString()
+        tbRes2.text = if (tbCoef2.text.toString().toInt() > 0) (acceptedItem["Count"].toString()
             .toInt() / tbCoef2.text.toString().toInt()).toString() else "0"
-        tbRes3.text = if (tbCoef3.text.toString().toInt() > 0) (AcceptedItem["Count"].toString()
+        tbRes3.text = if (tbCoef3.text.toString().toInt() > 0) (acceptedItem["Count"].toString()
             .toInt() / tbCoef3.text.toString().toInt()).toString() else "0"
 
+        markCount.text = checkMark().toString()
         //определяем, как был найден товар, перед тем, как зайти в карточку
         when (flagBarcode) {
             "0" -> {
-                excStr += (AcceptedItem["InvCode"].toString() +
+                excStr += (acceptedItem["InvCode"].toString() +
                         "найден в ручную!")
             }
             "1" -> {
-                excStr += (AcceptedItem["InvCode"].toString() +
+                excStr += (acceptedItem["InvCode"].toString() +
                         "найден по штрихкоду!")
             }
             //пока не требуется, но пусть будет
@@ -405,13 +414,13 @@ class ItemCard : Search() {
                 FExcStr.setTextColor(Color.RED)
             } */
         }
-        if (tbCoef2.text == "0" && yCoor == 4) xCoor = 1 else xCoor = 2
+        xCoor = if (tbCoef2.text == "0" && yCoor == 4) 1 else 2
 
         refreshActivElement()
         FExcStr.text = excStr
     }
 
-    fun refreshActivElement() {
+    private fun refreshActivElement() {
         //для начала обнулим все цвета
         tbCoef0.setBackgroundColor(Color.WHITE)
         tbCoef1.setBackgroundColor(Color.WHITE)
@@ -502,15 +511,15 @@ class ItemCard : Search() {
                 .toInt() != tbCount0.text.toString().toInt() && tbCount3.text.toString()
                 .toInt() * tbCoef3.text.toString().toInt() > 0
         ) tbCount3.setTextColor(Color.RED)
-        AcceptedItem["AcceptCount"] = tbCount0.text.toString()
-        AcceptedItem["NowDetails"] = details.text.toString()
+        acceptedItem["AcceptCount"] = tbCount0.text.toString()
+        acceptedItem["NowDetails"] = details.text.toString()
     }
 
     override fun reactionBarcode(Barcode: String): Boolean {
 
         //для начала проверим этот ШК, может он уже у кого-то есть
         val itemTemp = RefItem()
-        if (itemTemp.foundBarcode(Barcode) == true) {
+        if (itemTemp.foundBarcode(Barcode)) {
             if (itemTemp.id != item.id) {
                 badVoise()
                 FExcStr.text = "Штрих-код от другой позиции " + itemTemp.invCode
@@ -559,12 +568,24 @@ class ItemCard : Search() {
         }
 
         if (keyCode == 69) {
+            //перед переходом сохраним карточку
+            if (!saveUnitItem()) {
+                badVoise()
+                FExcStr.text = "Не удалось записать позицию!"
+                return false
+            }
+            if (!ibsLockuot("int_ref_Товары_" + (item.id + "_unit"))) {
+                //если не удалось разблокировать то просто напишем об этом
+                FExcStr.text = "Не удалось разблокировать товар!"
+                return false
+            }
             // -  переход в режим маркирвоки
             val backH = Intent(this, AccMark::class.java)
             backH.putExtra("ParentForm", "ItemCard")
             backH.putExtra("flagBarcode", flagBarcode)
             backH.putExtra("itemID", item.id)
             backH.putExtra("iddoc", idDoc)
+            backH.putExtra("countItemAcc", acceptedItem["AcceptCount"].toString())
             startActivity(backH)
             finish()
             return true
@@ -612,7 +633,7 @@ class ItemCard : Search() {
         if (keyCode == 67) {
             //это делете, обнулим значение если это коэффициент
             isMoveButon = true
-            var textForEdit = ""
+            val textForEdit: String
             when (yCoor) {
                 1 -> {
                     textForEdit = details.text.toString().trim()
@@ -622,7 +643,7 @@ class ItemCard : Search() {
                 2 -> {
                     textForEdit = tbCount0.text.toString().trim()
                     if (xCoor == 2) if (textForEdit.count() == 1) tbCount0.text =
-                        AcceptedItem["Count"].toString() else tbCount0.text =
+                        acceptedItem["Count"].toString() else tbCount0.text =
                         textForEdit.substring(0, textForEdit.count() - 1)
                 }
                 3 -> {
@@ -732,7 +753,7 @@ class ItemCard : Search() {
         //Поиск по коэффициенту (Среди НЕ новых единиц - они приоритетные)
         for (dr in fUnits) {
             if (dr["Coef"].toString() == coef.toString()) {
-                val currOKEI = dr["OKEI"].toString();
+                val currOKEI = dr["OKEI"].toString()
                 if (dr["Barcode"].toString()
                         .trim() == "" && currOKEI == okei && dr["ID"].toString() != ss.getVoidID()
                 ) {
@@ -745,7 +766,7 @@ class ItemCard : Search() {
         //Поиск по коэффициенту
         for (dr in fUnits) {
             if (dr["Coef"].toString() == coef.toString()) {
-                val currOKEI = dr["OKEI"].toString();
+                val currOKEI = dr["OKEI"].toString()
                 if (dr["Barcode"].toString().trim() == "" && currOKEI == okei) {
                     //есть единица с пустым штрихкодом - будем использовать ее
                     dr["Barcode"] = barcode
@@ -756,7 +777,7 @@ class ItemCard : Search() {
         //Поиск по ОКЕИ (Среди НЕ новых единиц - они приоритетные)
         for (dr in fUnits) {
             if (dr["OKEI"].toString() == okei) {
-                val currOKEI = dr["OKEI"].toString();
+                val currOKEI = dr["OKEI"].toString()
                 if (dr["Barcode"].toString()
                         .trim() == "" && currOKEI != model.okeiUnit && dr["ID"].toString() != ss.getVoidID()
                 ) {
@@ -770,7 +791,7 @@ class ItemCard : Search() {
         //Поиск по ОКЕИ
         for (dr in fUnits) {
             if (dr["OKEI"].toString() == okei) {
-                val currOKEI = dr["OKEI"].toString();
+                val currOKEI = dr["OKEI"].toString()
                 if (dr["Barcode"].toString().trim() == "" && currOKEI != model.okeiUnit) {
                     //Есть с пустым ШК и другим коэффициентом, имзеним это...
                     dr["Barcode"] = barcode
@@ -909,18 +930,23 @@ class ItemCard : Search() {
     //класс для обработки события при нажатии на кнопку о принятии товара
     private fun completeAccept(): Boolean {
 
-        if (!checkMark()) {
+        if (checkMark() == 0) {
             //не указана маркировка
-            FExcStr.text = "Маркированный товар! Сканируйте маркировку!"
+            if (ss.excStr == "") {
+                FExcStr.text = "Маркированный товар! Сканируйте маркировку!"
+            }
+            else {
+                FExcStr.text = ss.excStr
+            }
             return false
         }
         val docForQuery = currentRowAcceptedItem["iddoc"].toString()
-        var textQuery = ""
+        var textQuery: String
         //Сколько в накладной изначально
-        if (AcceptedItem["AcceptCount"].toString().toInt() > currentRowAcceptedItem["Count"].toString().toInt()) {
+        if (acceptedItem["AcceptCount"].toString().toInt() > currentRowAcceptedItem["Count"].toString().toInt()) {
             FExcStr.text =("Нельзя принять по данной накладной более " + currentRowAcceptedItem["Count"].toString() + " штук!")
             return false
-        } else if (AcceptedItem["AcceptCount"].toString().toInt() == 0) {
+        } else if (acceptedItem["AcceptCount"].toString().toInt() == 0) {
             FExcStr.text = "Нельзя принять нулевое количество!"
             return false
         }
@@ -943,15 +969,346 @@ class ItemCard : Search() {
             FExcStr.text = "Недопустимое количество! Повторите приемку позиции!"
             return false
         }
-        if (dTCurrState[0]["Count"].toString().toInt() < AcceptedItem["AcceptCount"].toString().toInt()) {
+        if (dTCurrState[0]["Count"].toString().toInt() < acceptedItem["AcceptCount"].toString().toInt()) {
             FExcStr.text = "Недопустимое количество! Повторите приемку позиции!"
             return false
         }
         //Скорректируем начальное количество
         val beginCount = dTCurrState[0]["Count"].toString().toInt()
 
-        var needNew: Int = 0
-        var coefPlace: Int = 0 //Коэффициент мест, по нему будет расчитывать количество этикеток
+       //запишем единицы
+       if (!saveUnitItem()) {
+           return false
+       }
+
+        //ТЕПЕРЬ ПОЕХАЛА ЗАПИСЬ ДОКУМЕНТА
+        //Расчитаем число этикеток
+        val labelCount: Int = if (flagBarcode != "0") 0 else 1
+
+        //Для начала подсосем есть ли уже принятые и не напечатанные строки в накладной
+        textQuery =
+            "SELECT " +
+                    "ACDT.LineNo_ as LineNo_, " +
+                    "ACDT.\$АдресПоступление.Количество as Count, " +
+                    "ACDT.\$АдресПоступление.КоличествоЭтикеток as LabelCount " +
+                    "FROM " +
+                    "DT\$АдресПоступление as ACDT (nolock) " +
+                    "WHERE " +
+                    "ACDT.iddoc = :Doc " +
+                    "and ACDT.\$АдресПоступление.Товар = :Item " +
+                    "and ACDT.\$АдресПоступление.ФлагПечати = 1 " +
+                    "and ACDT.\$АдресПоступление.Сотрудник0 = :Employer"
+        textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
+        textQuery = ss.querySetParam(textQuery, "Item", item.id)
+        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+        val alreadyDT = ss.executeWithReadNew(textQuery) ?: return false
+
+        var allCountAccepted: Int = acceptedItem["AcceptCount"].toString().toInt()
+        if (alreadyDT.isEmpty() && allCountAccepted < beginCount) {
+            //Нуно создать новую строку
+            textQuery = "SELECT max(DT\$АдресПоступление .lineno_) + 1 as NewLineNo_ " +
+                    "FROM DT\$АдресПоступление " +
+                    "WHERE DT\$АдресПоступление .iddoc = :Doc"
+            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
+            val datTab = ss.executeWithReadNew(textQuery) ?: return false
+            val newLineNo = datTab[0]["NewLineNo_"].toString()
+
+            textQuery = "INSERT INTO DT\$АдресПоступление VALUES " +
+                    "(:Doc, :LineNo_, :Number, :Item, :Count, :EmptyID, :Coef, 1, :Employer, " +
+                    ":Adress, :EmptyDate, :NowTime, 1, :LabelCount, :UnitID, 0, 0, :PalletID); " +
+                    "UPDATE DT\$АдресПоступление " +
+                    "SET \$АдресПоступление.Количество = :RemainedCount" +
+                    "WHERE DT\$АдресПоступление .iddoc = :Doc and " +
+                    "DT\$АдресПоступление .lineno_ = :RemainedLineNo_"
+            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
+            textQuery = ss.querySetParam(textQuery, "LineNo_", newLineNo)
+            textQuery = ss.querySetParam(textQuery, "Number", currentRowAcceptedItem["Number"].toString())
+            textQuery = ss.querySetParam(textQuery, "Item", item.id)
+            textQuery = ss.querySetParam(textQuery, "Count", acceptedItem["AcceptCount"].toString().toInt())
+            textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
+            textQuery = ss.querySetParam(textQuery, "Coef", 1)
+            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+            textQuery = ss.querySetParam(textQuery, "Adress", ss.getVoidID())
+            textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+            textQuery = ss.querySetParam(textQuery, "LabelCount", labelCount)
+            textQuery = ss.querySetParam(textQuery, "UnitID", currentRowAcceptedItem["Unit"].toString())
+            textQuery = ss.querySetParam(textQuery, "RemainedLineNo_", currentRowAcceptedItem["LineNO_"].toString())
+            textQuery = ss.querySetParam(textQuery, "RemainedCount", beginCount - acceptedItem["AcceptCount"].toString().toInt())
+            textQuery = ss.querySetParam(textQuery, "PalletID", ss.FPallet.id)
+            if (!ss.executeWithoutRead(textQuery)) {
+                return false
+            }
+        }
+        else if (alreadyDT.isEmpty() && acceptedItem["AcceptCount"].toString().toInt() >= beginCount) {
+            //Товар, будем писать в туже стоку
+            textQuery = "UPDATE DT\$АдресПоступление " +
+                    "SET " +
+                    "\$АдресПоступление.Количество = :Count," +
+                    "\$АдресПоступление.Сотрудник0 = :Employer," +
+                    "\$АдресПоступление.Дата0 = :EmptyDate," +
+                    "\$АдресПоступление.Время0 = :NowTime," +
+                    "\$АдресПоступление.Состояние0 = 1," +
+                    "\$АдресПоступление.КоличествоЭтикеток = :LabelCount," +
+                    "\$АдресПоступление.ФлагПечати = 1," +
+                    "\$АдресПоступление.Паллета = :PalletID " +
+                    "WHERE " +
+                    "DT\$АдресПоступление .iddoc = :Doc " +
+                    "and DT\$АдресПоступление .lineno_ = :LineNo_"
+            textQuery = ss.querySetParam(textQuery, "Count", acceptedItem["AcceptCount"].toString().toInt())
+            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
+            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+            textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+            textQuery = ss.querySetParam(textQuery, "PalletID", ss.FPallet.id)
+            textQuery = ss.querySetParam(textQuery, "LabelCount", labelCount)
+            textQuery = ss.querySetParam(textQuery, "LineNo_", currentRowAcceptedItem["LineNO_"].toString())
+            if (!ss.executeWithoutRead(textQuery)) {
+                return false
+            }
+        }
+        else if (alreadyDT.isNotEmpty() && acceptedItem["AcceptCount"].toString().toInt() < beginCount) {
+            //Нуно создать новую строку на новую паллету
+            textQuery =
+                "SELECT max(DT\$АдресПоступление .lineno_) + 1 as NewLineNo_ " +
+                        "FROM DT\$АдресПоступление WHERE " +
+                        "DT\$АдресПоступление .iddoc = :Doc"
+            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
+            val daTab = ss.executeWithReadNew(textQuery) ?: return false
+            val newLineNo = daTab[0]["NewLineNo_"].toString()
+
+            textQuery = "INSERT INTO DT\$АдресПоступление VALUES " +
+                    "(:Doc, :LineNo_, :Number, :Item, :Count, :EmptyID, :Coef, 1, :Employer, " +
+                    ":Adress, :EmptyDate, :NowTime, 1, :LabelCount, :UnitID, 0, 0, :PalletID); " +
+                    "UPDATE DT\$АдресПоступление " +
+                    "SET \$АдресПоступление.Количество = :RemainedCount" +
+                    "WHERE DT\$АдресПоступление .iddoc = :Doc and DT\$АдресПоступление .lineno_ = :RemainedLineNo_"
+            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
+            textQuery = ss.querySetParam(textQuery, "LineNo_", newLineNo)
+            textQuery = ss.querySetParam(textQuery, "Number", currentRowAcceptedItem["Number"].toString())
+            textQuery = ss.querySetParam(textQuery, "Item", item.id)
+            textQuery = ss.querySetParam(textQuery, "Count",acceptedItem["AcceptCount"].toString())
+            textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
+            textQuery = ss.querySetParam(textQuery, "Coef", 1)
+            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+            textQuery = ss.querySetParam(textQuery, "Adress", ss.getVoidID())
+            textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+            textQuery = ss.querySetParam(textQuery, "LabelCount", labelCount)
+            textQuery = ss.querySetParam(textQuery, "UnitID", currentRowAcceptedItem["Unit"].toString())
+            textQuery = ss.querySetParam(textQuery, "RemainedLineNo_", currentRowAcceptedItem["LineNO_"].toString())
+            textQuery = ss.querySetParam(textQuery, "RemainedCount",beginCount - acceptedItem["AcceptCount"].toString().toInt())
+            textQuery = ss.querySetParam(textQuery, "PalletID", ss.FPallet.id)
+            if (!ss.executeWithoutRead(textQuery)) {
+                return false
+            }
+            //теперь еще обновим непринятые строки
+            allCountAccepted = alreadyDT[0]["Count"].toString().toInt() + acceptedItem["AcceptCount"].toString().toInt()
+            textQuery = "UPDATE DT\$АдресПоступление " +
+                    "SET " +
+                    "\$АдресПоступление.Количество = :RemainedCount " +
+                    "WHERE " +
+                    "DT\$АдресПоступление .iddoc = :Doc " +
+                    "and DT\$АдресПоступление .lineno_ = :RemainedLineNo_"
+            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
+            textQuery = ss.querySetParam(textQuery, "RemainedLineNo_", currentRowAcceptedItem["LineNO_"].toString())
+            textQuery = ss.querySetParam(textQuery, "RemainedCount", beginCount - acceptedItem["AcceptCount"].toString().toInt())
+            if (!ss.executeWithoutRead(textQuery)) {
+                return false
+            }
+        }
+        else {
+            if (alreadyDT[0]["LineNo_"] == currentRowAcceptedItem["LineNO_"]) {
+                FExcStr.text = "Состояние позиции изменилось! Повторите приемку!"
+                return false
+            }
+            //Уже есть строка принятого, будем писать в изначальную (не принятую)
+            textQuery = "UPDATE DT\$АдресПоступление " +
+                    "SET " +
+                    "\$АдресПоступление.Количество = :Count," +
+                    "\$АдресПоступление.Сотрудник0 = :Employer," +
+                    "\$АдресПоступление.Дата0 = :EmptyDate," +
+                    "\$АдресПоступление.Время0 = :NowTime," +
+                    "\$АдресПоступление.Состояние0 = 1," +
+                    "\$АдресПоступление.КоличествоЭтикеток = :LabelCount," +
+                    "\$АдресПоступление.ФлагПечати = 1," +
+                    "\$АдресПоступление.Паллета = :PalletID " +
+                    "WHERE " +
+                    "DT\$АдресПоступление .iddoc = :Doc " +
+                    "and DT\$АдресПоступление .lineno_ = :LineNo_; "
+            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
+            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+            textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
+            textQuery = ss.querySetParam(textQuery, "PalletID", ss.FPallet.id)
+            textQuery = ss.querySetParam(textQuery, "Count", acceptedItem["AcceptCount"].toString().toInt())
+            textQuery = ss.querySetParam(textQuery, "LabelCount", labelCount)
+            textQuery = ss.querySetParam(textQuery, "LineNo_", currentRowAcceptedItem["LineNO_"].toString())
+            if (!ss.executeWithoutRead(textQuery)) {
+                return false
+            }
+        }
+
+        //Выведем в строку состояния сколько мы приняли за этот раз
+        var tmpCoef: Int = getCoefPackage()
+        if (tmpCoef == 0) {
+            tmpCoef = currentRowAcceptedItem["Coef"].toString().toInt()
+        }
+        FExcStr.text = (acceptedItem["InvCode"].toString().trim() + " принят в количестве " + model.getStrPackageCount(
+            acceptedItem["AcceptCount"].toString().toInt(), tmpCoef
+        ))
+        //begin internal command
+        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(ss.FEmployer.id, "Спр.Сотрудники")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = ss.extendID(item.id, "Спр.Товары")
+        dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(docForQuery, "АдресПоступление")
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = "AcceptItem (Принял товар)"
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = acceptedItem["AcceptCount"].toString()
+        execCommandNoFeedback("Internal", dataMapWrite)
+        //end internal command
+        if (!ibsLockuot("int_ref_Товары_" + (item.id + "_unit"))) {
+            //если не удалось разблокировать то просто напишем об этом
+            FExcStr.text = "Не удалось разблокировать товар!"
+        }
+        //обновим данные табличек и выйдем наружу
+        return true
+    }
+
+    private fun createUnit(okei: String, coef: Int, barcode: String): Boolean {
+        //Нужно создать новую единицу
+        var textQuery =
+            "UPDATE \$Спр.ЕдиницыШК " +
+                    "SET " +
+                    "\$Спр.ЕдиницыШК.Штрихкод = :Barcode, " +
+                    "\$Спр.ЕдиницыШК.Коэффициент = :Coef, " +
+                    "\$Спр.ЕдиницыШК.ОКЕИ = :OKEI, " +
+                    "\$Спр.ЕдиницыШК.ФлагРегистрацииМОД = 1, " +
+                    "parentext = :ItemID " +
+                    "WHERE \$Спр.ЕдиницыШК .id in (" +
+                    "SELECT top 1 Units.id FROM \$Спр.ЕдиницыШК as Units (nolock) " +
+                    "WHERE Units.parentext = :ItemForUnits " +
+                    "ORDER BY Units.ismark DESC)"
+        textQuery = ss.querySetParam(textQuery, "Barcode", barcode)
+        textQuery = ss.querySetParam(textQuery, "Coef", coef)
+        textQuery = ss.querySetParam(textQuery, "ItemID", item.id)
+        textQuery = ss.querySetParam(textQuery, "OKEI", okei)
+        textQuery = ss.querySetParam(textQuery, "ItemForUnits", ss.Const.itemForUnits)
+        return ss.executeWithoutRead(textQuery)
+    }
+
+    private fun addPackNorm(packNorm: String, okei: String): String {
+        var packNormLocal = packNorm
+        for (dr in fUnits) {
+            if (dr["OKEI"].toString() == okei && dr["Coef"].toString().toInt() != 0) {
+                packNormLocal += "/" + dr["Coef"].toString()
+                if (okei == model.okeiKit) {
+                    packNormLocal += "!"
+                } else if (okei == model.okeiPackage) {
+                    packNormLocal += "*"
+                }
+                break
+            }
+        }
+        return packNormLocal
+    }
+
+    private fun getCoefPackage(): Int {
+        var coef = 0
+        var textQuery =
+            "SELECT TOP 1 " +
+                    "Units.\$Спр.ЕдиницыШК.Коэффициент as Coef " +
+                    "FROM " +
+                    "\$Спр.ЕдиницыШК as Units (nolock) " +
+                    "WHERE " +
+                    "Units.\$Спр.ЕдиницыШК.ОКЕИ = :OKEI " +
+                    "and Units.ismark = 0 " +
+                    "and Units.parentext = :Item " +
+                    "ORDER BY Units.\$Спр.ЕдиницыШК.Коэффициент "
+        textQuery = ss.querySetParam(textQuery, "Item", item.id)
+        textQuery = ss.querySetParam(textQuery, "OKEI", model.okeiPackage)
+
+        val dtdt = ss.executeWithReadNew(textQuery) ?: return coef
+        coef = if (dtdt.isEmpty()) {
+            1
+        } else {
+            dtdt[0]["Coef"].toString().toFloat().toInt()
+        }
+        return coef
+    }
+
+    private fun checkMark(): Int {
+
+        ss.excStr = ""
+        var textQuery = "SELECT " +
+                "Category.\$Спр.КатегорииТоваров.Маркировка as Маркировка " +
+                "from \$Спр.Товары as Item (nolock) " +
+                "INNER JOIN \$Спр.КатегорииТоваров as Category (nolock) " +
+                "on Item.\$Спр.Товары.Категория = Category.ID " +
+                "where Category.\$Спр.КатегорииТоваров.Маркировка > 0 " +
+                "and Item.id = '${item.id}' "
+        val dt = ss.executeWithReadNew(textQuery)
+            if (dt == null)
+            {
+               ss.excStr = "Не удалось выполнить запрос флага маркировки"
+               return 0
+            }
+        if (dt.isEmpty()) return 1
+
+        textQuery = "SELECT " +
+                "ISNULL(journ.iddoc, AC.iddoc ) as iddoc , " +
+                "AC.iddoc as ACiddoc " +
+                "FROM " +
+                " DH\$АдресПоступление as AC (nolock) " +
+                "INNER JOIN _1sjourn as journAC (nolock) " +
+                "     ON journAC.iddoc = AC.iddoc " +
+                "LEFT JOIN _1sjourn as journ (nolock) " +
+                "     ON journ.iddoc = right(AC.\$АдресПоступление.ДокументОснование , 9) " +
+                "WHERE" +
+                " AC.iddoc = '${idDoc}' "
+
+        val naklAccTemp = ss.executeWithReadNew(textQuery)
+        if (naklAccTemp == null || naklAccTemp.isEmpty())
+        {
+            //не вышли на накладную - косяк какой-то
+            ss.excStr = "Не удалось найти накладную"
+            return 0
+        }
+
+        //проверим сканировали ли маркировки в экране для маркировок
+        if (countMarkPac == 0 && countMarkUnit == 0)
+        {
+            FExcStr.text = "Маркированный товар! Сканируйте маркировку!"
+            return 0
+        }
+        if (countMarkPac == 0 && countMarkUnit < acceptedItem["AcceptCount"].toString().toInt())
+        {
+            FExcStr.text = "Недостаточно штучных маркировок!"
+            return 0
+        }
+
+        //не пусто
+        textQuery = "select id as ID , " +
+                "\$Спр.МаркировкаТовара.Маркировка as Mark , " +
+                "-1*(isFolder-2) as Box ," +
+                "\$Спр.МаркировкаТовара.Товар as item " +
+                "from \$Спр.МаркировкаТовара (nolock) " +
+                "where (\$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAccTemp[0]["ACiddoc"].toString(), "АдресПоступление")}' " +
+                "or \$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAccTemp[0]["iddoc"].toString(), "ПриходнаяКредит")}' )" +
+                "and \$Спр.МаркировкаТовара.Товар = '${item.id}' "
+        val markItemDT = ss.executeWithReadNew(textQuery)
+        if (markItemDT == null)
+        {
+            ss.excStr = "Не удалось выполнить запрос маркировок"
+            return 0
+        }
+
+        if (markItemDT.isEmpty()) {
+            //раз сюда пришли, значит там что-то сканировали, просто еще не создалось
+            return countMarkPac+countMarkUnit
+        }
+        return markItemDT.count()
+    }
+
+    private fun saveUnitItem():Boolean {
+        var needNew = 0
+        var textQuery: String
+        var coefPlace = 0 //Коэффициент мест, по нему будет расчитывать количество этикеток
         val tmpDT: MutableList<MutableMap<String, String>> = mutableListOf()
         for (dr in fUnits) {
             if (dr["Coef"].toString().toInt() == 1 && dr["OKEI"].toString() != model.okeiUnit) {
@@ -967,7 +1324,7 @@ class ItemCard : Search() {
                     textQuery = "UPDATE \$Спр.ЕдиницыШК " +
                             "SET " +
                             "ismark = 1 " +
-                            "WHERE \$Спр.ЕдиницыШК .id = :ID ";
+                            "WHERE \$Спр.ЕдиницыШК .id = :ID "
                     textQuery = ss.querySetParam(textQuery, "ID", dr["ID"].toString())
                     if (!ss.executeWithoutRead(textQuery)) {
                         return false
@@ -1012,7 +1369,7 @@ class ItemCard : Search() {
 
         if (needNew > 0) {
             //Есть новые...
-            var currentRow: Int = 0
+            var currentRow = 0
             //Теперь также пишем новые
             for (dr in fUnits) {
                 if (dr["Coef"].toString().toInt() == 0) {
@@ -1052,22 +1409,22 @@ class ItemCard : Search() {
         packNorm = addPackNorm(packNorm, model.okeiKit)
         packNorm = addPackNorm(packNorm, model.okeiPack)
         packNorm = addPackNorm(packNorm, model.okeiPackage)
-        if (packNorm == "") {
-            packNorm = "1"
+        packNorm = if (packNorm == "") {
+            "1"
         } else {
-            packNorm = packNorm.substring(1)  //Отрезаем первый символ "/"
+            packNorm.substring(1)  //Отрезаем первый символ "/"
         }
 
-        if (AcceptedItem["MinParty"].toString().toInt() > 0)
-            packNorm = ">" + AcceptedItem["MinParty"].toString() + "/" + packNorm
+        if (acceptedItem["MinParty"].toString().toInt() > 0)
+            packNorm = ">" + acceptedItem["MinParty"].toString() + "/" + packNorm
 
         textQuery = "UPDATE \$Спр.Товары " +
                 "SET \$Спр.Товары.НормаУпаковки = :PackNorm , " +
                 "\$Спр.Товары.КоличествоДеталей = :Details " +
-                "WHERE \$Спр.Товары .id = :ItemID";
+                "WHERE \$Спр.Товары .id = :ItemID"
         textQuery = ss.querySetParam(textQuery, "ItemID", item.id)
         textQuery = ss.querySetParam(textQuery, "PackNorm", packNorm)
-        textQuery = ss.querySetParam(textQuery, "Details", AcceptedItem["NowDetails"].toString())
+        textQuery = ss.querySetParam(textQuery, "Details", acceptedItem["NowDetails"].toString())
         if (!ss.executeWithoutRead(textQuery)) {
             return false
         }
@@ -1111,303 +1468,7 @@ class ItemCard : Search() {
             return false
         }
         //Конец куска с заменой ШК у базовой единицы
-
-        //ТЕПЕРЬ ПОЕХАЛА ЗАПИСЬ ДОКУМЕНТА
-        //Расчитаем число этикеток
-        var labelCount = 0
-        if (flagBarcode != "0") {
-            labelCount = 0
-        } else {
-            labelCount = 1
-        }
-
-        //Для начала подсосем есть ли уже принятые и не напечатанные строки в накладной
-        textQuery =
-            "SELECT " +
-                    "ACDT.LineNo_ as LineNo_, " +
-                    "ACDT.\$АдресПоступление.Количество as Count, " +
-                    "ACDT.\$АдресПоступление.КоличествоЭтикеток as LabelCount " +
-                    "FROM " +
-                    "DT\$АдресПоступление as ACDT (nolock) " +
-                    "WHERE " +
-                    "ACDT.iddoc = :Doc " +
-                    "and ACDT.\$АдресПоступление.Товар = :Item " +
-                    "and ACDT.\$АдресПоступление.ФлагПечати = 1 " +
-                    "and ACDT.\$АдресПоступление.Сотрудник0 = :Employer"
-        textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
-        textQuery = ss.querySetParam(textQuery, "Item", item.id)
-        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-        val alreadyDT = ss.executeWithReadNew(textQuery) ?: return false
-
-        var allCountAccepted: Int = AcceptedItem["AcceptCount"].toString().toInt()
-        if (alreadyDT.isEmpty() && allCountAccepted < beginCount) {
-            //Нуно создать новую строку
-            textQuery = "SELECT max(DT\$АдресПоступление .lineno_) + 1 as NewLineNo_ " +
-                    "FROM DT\$АдресПоступление " +
-                    "WHERE DT\$АдресПоступление .iddoc = :Doc"
-            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
-            val datTab = ss.executeWithReadNew(textQuery) ?: return false
-            val newLineNo_ = datTab[0]["NewLineNo_"].toString()
-
-            textQuery = "INSERT INTO DT\$АдресПоступление VALUES " +
-                    "(:Doc, :LineNo_, :Number, :Item, :Count, :EmptyID, :Coef, 1, :Employer, " +
-                    ":Adress, :EmptyDate, :NowTime, 1, :LabelCount, :UnitID, 0, 0, :PalletID); " +
-                    "UPDATE DT\$АдресПоступление " +
-                    "SET \$АдресПоступление.Количество = :RemainedCount" +
-                    "WHERE DT\$АдресПоступление .iddoc = :Doc and " +
-                    "DT\$АдресПоступление .lineno_ = :RemainedLineNo_"
-            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
-            textQuery = ss.querySetParam(textQuery, "LineNo_", newLineNo_)
-            textQuery = ss.querySetParam(textQuery, "Number", currentRowAcceptedItem["Number"].toString())
-            textQuery = ss.querySetParam(textQuery, "Item", item.id)
-            textQuery = ss.querySetParam(textQuery, "Count", AcceptedItem["AcceptCount"].toString().toInt())
-            textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
-            textQuery = ss.querySetParam(textQuery, "Coef", 1)
-            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-            textQuery = ss.querySetParam(textQuery, "Adress", ss.getVoidID())
-            textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-            textQuery = ss.querySetParam(textQuery, "LabelCount", labelCount)
-            textQuery = ss.querySetParam(textQuery, "UnitID", currentRowAcceptedItem["Unit"].toString())
-            textQuery = ss.querySetParam(textQuery, "RemainedLineNo_", currentRowAcceptedItem["LineNO_"].toString())
-            textQuery = ss.querySetParam(textQuery, "RemainedCount", beginCount - AcceptedItem["AcceptCount"].toString().toInt())
-            textQuery = ss.querySetParam(textQuery, "PalletID", ss.FPallet.id)
-            if (!ss.executeWithoutRead(textQuery)) {
-                return false
-            }
-        } else if (alreadyDT.isEmpty() && AcceptedItem["AcceptCount"].toString().toInt() >= beginCount) {
-            //Товар, будем писать в туже стоку
-            textQuery = "UPDATE DT\$АдресПоступление " +
-                    "SET " +
-                    "\$АдресПоступление.Количество = :Count," +
-                    "\$АдресПоступление.Сотрудник0 = :Employer," +
-                    "\$АдресПоступление.Дата0 = :EmptyDate," +
-                    "\$АдресПоступление.Время0 = :NowTime," +
-                    "\$АдресПоступление.Состояние0 = 1," +
-                    "\$АдресПоступление.КоличествоЭтикеток = :LabelCount," +
-                    "\$АдресПоступление.ФлагПечати = 1," +
-                    "\$АдресПоступление.Паллета = :PalletID " +
-                    "WHERE " +
-                    "DT\$АдресПоступление .iddoc = :Doc " +
-                    "and DT\$АдресПоступление .lineno_ = :LineNo_"
-            textQuery = ss.querySetParam(textQuery, "Count", AcceptedItem["AcceptCount"].toString().toInt())
-            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
-            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-            textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-            textQuery = ss.querySetParam(textQuery, "PalletID", ss.FPallet.id)
-            textQuery = ss.querySetParam(textQuery, "LabelCount", labelCount)
-            textQuery = ss.querySetParam(textQuery, "LineNo_", currentRowAcceptedItem["LineNO_"].toString())
-            if (!ss.executeWithoutRead(textQuery)) {
-                return false
-            }
-        } else if (alreadyDT.isNotEmpty() && AcceptedItem["AcceptCount"].toString().toInt() < beginCount) {
-            //Нуно создать новую строку на новую паллету
-            textQuery =
-                "SELECT max(DT\$АдресПоступление .lineno_) + 1 as NewLineNo_ " +
-                        "FROM DT\$АдресПоступление WHERE " +
-                        "DT\$АдресПоступление .iddoc = :Doc"
-            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
-            val daTab = ss.executeWithReadNew(textQuery) ?: return false
-            val newLineNo_ = daTab[0]["NewLineNo_"].toString()
-
-            textQuery = "INSERT INTO DT\$АдресПоступление VALUES " +
-                    "(:Doc, :LineNo_, :Number, :Item, :Count, :EmptyID, :Coef, 1, :Employer, " +
-                    ":Adress, :EmptyDate, :NowTime, 1, :LabelCount, :UnitID, 0, 0, :PalletID); " +
-                    "UPDATE DT\$АдресПоступление " +
-                    "SET \$АдресПоступление.Количество = :RemainedCount" +
-                    "WHERE DT\$АдресПоступление .iddoc = :Doc and DT\$АдресПоступление .lineno_ = :RemainedLineNo_";
-            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
-            textQuery = ss.querySetParam(textQuery, "LineNo_", newLineNo_)
-            textQuery = ss.querySetParam(textQuery, "Number", currentRowAcceptedItem["Number"].toString())
-            textQuery = ss.querySetParam(textQuery, "Item", item.id)
-            textQuery = ss.querySetParam(textQuery, "Count",AcceptedItem["AcceptCount"].toString())
-            textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
-            textQuery = ss.querySetParam(textQuery, "Coef", 1)
-            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-            textQuery = ss.querySetParam(textQuery, "Adress", ss.getVoidID())
-            textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-            textQuery = ss.querySetParam(textQuery, "LabelCount", labelCount)
-            textQuery = ss.querySetParam(textQuery, "UnitID", currentRowAcceptedItem["Unit"].toString())
-            textQuery = ss.querySetParam(textQuery, "RemainedLineNo_", currentRowAcceptedItem["LineNO_"].toString())
-            textQuery = ss.querySetParam(textQuery, "RemainedCount",beginCount - AcceptedItem["AcceptCount"].toString().toInt())
-            textQuery = ss.querySetParam(textQuery, "PalletID", ss.FPallet.id)
-            if (!ss.executeWithoutRead(textQuery)) {
-                return false
-            }
-            //теперь еще обновим непринятые строки
-            allCountAccepted = alreadyDT[0]["Count"].toString().toInt() + AcceptedItem["AcceptCount"].toString().toInt()
-            textQuery = "UPDATE DT\$АдресПоступление " +
-                    "SET " +
-                    "\$АдресПоступление.Количество = :RemainedCount " +
-                    "WHERE " +
-                    "DT\$АдресПоступление .iddoc = :Doc " +
-                    "and DT\$АдресПоступление .lineno_ = :RemainedLineNo_"
-            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
-            textQuery = ss.querySetParam(textQuery, "RemainedLineNo_", currentRowAcceptedItem["LineNO_"].toString())
-            textQuery = ss.querySetParam(textQuery, "RemainedCount", beginCount - AcceptedItem["AcceptCount"].toString().toInt())
-            if (!ss.executeWithoutRead(textQuery)) {
-                return false
-            }
-        } else {
-            if (alreadyDT[0]["LineNo_"] == currentRowAcceptedItem["LineNO_"]) {
-                FExcStr.text = "Состояние позиции изменилось! Повторите приемку!"
-                return false
-            }
-            //Уже есть строка принятого, будем писать в изначальную (не принятую)
-            textQuery = "UPDATE DT\$АдресПоступление " +
-                    "SET " +
-                    "\$АдресПоступление.Количество = :Count," +
-                    "\$АдресПоступление.Сотрудник0 = :Employer," +
-                    "\$АдресПоступление.Дата0 = :EmptyDate," +
-                    "\$АдресПоступление.Время0 = :NowTime," +
-                    "\$АдресПоступление.Состояние0 = 1," +
-                    "\$АдресПоступление.КоличествоЭтикеток = :LabelCount," +
-                    "\$АдресПоступление.ФлагПечати = 1," +
-                    "\$АдресПоступление.Паллета = :PalletID " +
-                    "WHERE " +
-                    "DT\$АдресПоступление .iddoc = :Doc " +
-                    "and DT\$АдресПоступление .lineno_ = :LineNo_; "
-            textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
-            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-            textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-            textQuery = ss.querySetParam(textQuery, "PalletID", ss.FPallet.id)
-            textQuery = ss.querySetParam(textQuery, "Count", AcceptedItem["AcceptCount"].toString().toInt())
-            textQuery = ss.querySetParam(textQuery, "LabelCount", labelCount)
-            textQuery = ss.querySetParam(textQuery, "LineNo_", currentRowAcceptedItem["LineNO_"].toString())
-            if (!ss.executeWithoutRead(textQuery)) {
-                return false
-            }
-        }
-
-        //Выведем в строку состояния сколько мы приняли за этот раз
-        var tmpCoef: Int = getCoefPackage()
-        if (tmpCoef == 0) {
-            tmpCoef = currentRowAcceptedItem["Coef"].toString().toInt()
-        }
-        FExcStr.text = (AcceptedItem["InvCode"].toString().trim() + " принят в количестве " + model.getStrPackageCount(
-            AcceptedItem["AcceptCount"].toString().toInt(), tmpCoef
-        ))
-        //begin internal command
-        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(ss.FEmployer.id, "Спр.Сотрудники")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"] = ss.extendID(item.id, "Спр.Товары")
-        dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(docForQuery, "АдресПоступление")
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = "AcceptItem (Принял товар)"
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = AcceptedItem["AcceptCount"].toString()
-        execCommandNoFeedback("Internal", dataMapWrite)
-        //end internal command
-        if (!ibsLockuot("int_ref_Товары_" + (item.id + "_unit"))) {
-            //если не удалось разблокировать то просто напишем об этом
-            FExcStr.text = "Не удалось разблокировать товар!"
-        }
-        //обновим данные табличек и выйдем наружу
         return true
     }
 
-    private fun createUnit(okei: String, coef: Int, barcode: String): Boolean {
-        //Нужно создать новую единицу
-        var textQuery =
-            "UPDATE \$Спр.ЕдиницыШК " +
-                    "SET " +
-                    "\$Спр.ЕдиницыШК.Штрихкод = :Barcode, " +
-                    "\$Спр.ЕдиницыШК.Коэффициент = :Coef, " +
-                    "\$Спр.ЕдиницыШК.ОКЕИ = :OKEI, " +
-                    "\$Спр.ЕдиницыШК.ФлагРегистрацииМОД = 1, " +
-                    "parentext = :ItemID " +
-                    "WHERE \$Спр.ЕдиницыШК .id in (" +
-                    "SELECT top 1 Units.id FROM \$Спр.ЕдиницыШК as Units (nolock) " +
-                    "WHERE Units.parentext = :ItemForUnits " +
-                    "ORDER BY Units.ismark DESC)";
-        textQuery = ss.querySetParam(textQuery, "Barcode", barcode)
-        textQuery = ss.querySetParam(textQuery, "Coef", coef)
-        textQuery = ss.querySetParam(textQuery, "ItemID", item.id)
-        textQuery = ss.querySetParam(textQuery, "OKEI", okei)
-        textQuery = ss.querySetParam(textQuery, "ItemForUnits", ss.Const.itemForUnits)
-        return ss.executeWithoutRead(textQuery)
-    }
-
-    private fun addPackNorm(packNorm: String, okei: String): String {
-        var packNorm = packNorm
-        for (dr in fUnits) {
-            if (dr["OKEI"].toString() == okei && dr["Coef"].toString().toInt() != 0) {
-                packNorm += "/" + dr["Coef"].toString();
-                if (okei == model.okeiKit) {
-                    packNorm += "!";
-                } else if (okei == model.okeiPackage) {
-                    packNorm += "*";
-                }
-                break
-            }
-        }
-        return packNorm
-    }
-
-    private fun getCoefPackage(): Int {
-        var coef = 0;
-        var textQuery =
-            "SELECT TOP 1 " +
-                    "Units.\$Спр.ЕдиницыШК.Коэффициент as Coef " +
-                    "FROM " +
-                    "\$Спр.ЕдиницыШК as Units (nolock) " +
-                    "WHERE " +
-                    "Units.\$Спр.ЕдиницыШК.ОКЕИ = :OKEI " +
-                    "and Units.ismark = 0 " +
-                    "and Units.parentext = :Item " +
-                    "ORDER BY Units.\$Спр.ЕдиницыШК.Коэффициент "
-        textQuery = ss.querySetParam(textQuery, "Item", item.id)
-        textQuery = ss.querySetParam(textQuery, "OKEI", model.okeiPackage)
-
-        val dtdt = ss.executeWithReadNew(textQuery) ?: return coef
-        if (dtdt.isEmpty()) {
-            coef = 1
-        } else {
-            coef = dtdt[0]["Coef"].toString().toFloat().toInt()
-        }
-        return coef
-    }
-
-    private fun checkMark(): Boolean {
-
-        var textQuery = "SELECT " +
-                "Category.\$Спр.КатегорииТоваров.Маркировка as Маркировка " +
-                "from \$Спр.Товары as Item (nolock) " +
-                "INNER JOIN \$Спр.КатегорииТоваров as Category (nolock) " +
-                "on Item.\$Спр.Товары.Категория = Category.ID " +
-                "where Category.\$Спр.КатегорииТоваров.Маркировка > 0 " +
-                "and Item.id = '${item.id}' "
-        val dt = ss.executeWithReadNew(textQuery) ?: return true
-        if (dt.isEmpty()) return true
-
-        textQuery = "SELECT " +
-                "ISNULL(journ.iddoc, AC.iddoc ) as iddoc , " +
-                "AC.iddoc as ACiddoc , " +
-                "FROM " +
-                " DH\$АдресПоступление as AC (nolock) " +
-                "INNER JOIN _1sjourn as journAC (nolock) " +
-                "     ON journAC.iddoc = AC.iddoc " +
-                "LEFT JOIN _1sjourn as journ (nolock) " +
-                "     ON journ.iddoc = right(AC.\$АдресПоступление.ДокументОснование , 9) " +
-                "WHERE" +
-                " AC.iddoc = '${idDoc}' "
-
-        val naklAccTemp = ss.executeWithReadNew(textQuery)
-        if (naklAccTemp == null || naklAccTemp.isEmpty())
-        {
-            //не вышли на накладную - косяк какой-то
-           return false
-        }
-        //не пусто
-        textQuery = "select id as ID , " +
-                "\$Спр.МаркировкаТовара.Маркировка as Mark , " +
-                "-1*(isFolder-2) as Box ," +
-                "\$Спр.МаркировкаТовара.Товар as item " +
-                "from \$Спр.МаркировкаТовара (nolock) " +
-                "where (\$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAccTemp[0]["ACiddoc"].toString(), "АдресПоступление")}' " +
-                "or \$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAccTemp[0]["iddoc"].toString(), "ПриходнаяКредит")}' )" +
-                "and \$Спр.МаркировкаТовара.Товар = '${item.id}' "
-        val markItemDT = ss.executeWithReadNew(textQuery) ?: return false
-        if (markItemDT.isEmpty()) {
-            return false
-        }
-        return true
-    }
 }

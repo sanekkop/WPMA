@@ -380,7 +380,7 @@ class Correct : BarcodeDataReceiver() {
                                     "INNER JOIN \$Спр.КатегорииТоваров  as Categories (nolock) " +
                                     "ON Categories.id = Product.\$Спр.Товары.Категория " +
                                     "WHERE " +
-                                    "Product.id = '${ccItem!!.ID}' and Categories.\$Спр.КатегорииТоваров.Маркировка = 1 "
+                                    "Product.id = '${ccItem!!.ID}' and Categories.\$Спр.КатегорииТоваров.Маркировка > 0 "
                             val dt = ss.executeWithRead(textQuery)
 
                             //есть маркировка, пусть сканируют QR-code

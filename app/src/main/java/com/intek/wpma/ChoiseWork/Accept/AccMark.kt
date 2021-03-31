@@ -24,14 +24,18 @@ import kotlinx.android.synthetic.main.activity_set.*
 
 class AccMark : BarcodeDataReceiver() {
 
-    var idDoc = ""
-    var flagBarcode = ""
-    var itemID = ""
-    var markItemDT : MutableList<MutableMap<String, String>> = mutableListOf()
+    private var idDoc = ""
+    private var flagBarcode = ""
+    private var itemID = ""
+    private var markItemDT : MutableList<MutableMap<String, String>> = mutableListOf()
     private var naklAcc: MutableMap<String,String> = mutableMapOf()
-    private var markBox = ""  //ШК коробочной маркировки
-    var item = RefItem()
-    val hh = Helper()
+    private var item = RefItem()
+    private val hh = Helper()
+    private var countMarkUnit = 0
+    private var countMarkPac = 0
+    private var countMarkPacOld = 0
+    private var countMarkUnitOld = 0
+    private var countItemAcc = 0
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -99,6 +103,13 @@ class AccMark : BarcodeDataReceiver() {
         title = ss.title
         itemID = intent.extras!!.getString("itemID")!!
         idDoc = intent.extras!!.getString("iddoc")!!
+        countMarkPacOld = if (intent.extras!!.getString("countMarkPac").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkPac").toString().toInt()
+        countMarkUnitOld = if (intent.extras!!.getString("countMarkUnit").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkUnit").toString().toInt()
+        countItemAcc = if (intent.extras!!.getString("countItemAcc").isNullOrEmpty()) 0 else intent.extras!!.getString("countItemAcc").toString().toInt()
+
+        countMarkUnit = countMarkUnitOld
+        countMarkPac = countMarkPacOld
+
         item.foundID(itemID)
 
         if (ss.isMobile) {
@@ -120,13 +131,13 @@ class AccMark : BarcodeDataReceiver() {
 
     private fun completeAccMark() {
         //нет еще такого будем создавать
-        var markItemDTNew : MutableList<MutableMap<String, String>> = mutableListOf()
+        val markItemDTNew : MutableList<MutableMap<String, String>> = mutableListOf()
         for (rowDT in markItemDT) {
             if (rowDT["id"].toString() == "null" || rowDT["id"].toString() == "") {
                 val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
                     dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(itemID, "Спр.Товары")
                     dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(idDoc, "АдресПоступление")
-                    dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString()
+                    dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString().replace("'","''")
                     dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = rowDT["Box"].toString()
                     if (!execCommandNoFeedback("MarkInsert", dataMapWrite)) {
                         markItemDTNew.add(rowDT)
@@ -140,6 +151,9 @@ class AccMark : BarcodeDataReceiver() {
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
             itemCardInit.putExtra("iddoc", idDoc)
+            itemCardInit.putExtra("countMarkUnit", countMarkUnit.toString())
+            itemCardInit.putExtra("countMarkPac", countMarkPac.toString())
+            itemCardInit.putExtra("countItemAcc", countItemAcc.toString())
             startActivity(itemCardInit)
             finish()
             return
@@ -150,6 +164,8 @@ class AccMark : BarcodeDataReceiver() {
         badVoise()
         markItemDT.clear()
         markItemDT.addAll(markItemDTNew)
+        refreshActivity()
+
     }
 
     //наличие маркировок по товару
@@ -182,6 +198,9 @@ class AccMark : BarcodeDataReceiver() {
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
             itemCardInit.putExtra("iddoc", idDoc)
+            itemCardInit.putExtra("countMarkUnit", countMarkUnitOld.toString())
+            itemCardInit.putExtra("countMarkPac", countMarkPacOld.toString())
+            itemCardInit.putExtra("countItemAcc", countItemAcc.toString())
             startActivity(itemCardInit)
             finish()
             return
@@ -210,10 +229,18 @@ class AccMark : BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
+
+        //для быстродействия сначал проверим а не сканировалась ли она уже
+        for (rowDT in markItemDT) {
+            if (rowDT["Mark"].toString() == barcode) {
+                FExcStr.text = "Такая маркировка уже есть в списке!"
+                badVoise()
+                return false
+            }
+        }
         val barcoderes = hh.disassembleBarcode(Barcode)
-        val typeBarcode = barcoderes["Type"].toString()
         val idd = barcoderes["IDD"].toString()
-        var textQuery = ""
+        var textQuery: String
 
         //если вместо Data-Matrix пикает ШК
         if (ss.isSC(idd, "Сотрудники")) {
@@ -228,6 +255,26 @@ class AccMark : BarcodeDataReceiver() {
             return false
         }
         val testBatcode = Barcode.replace("'", "''")
+        //для убыстрения сделаем проверку сначала по УИТ
+        textQuery = "SELECT " +
+                "-1*(isFolder-2) as Box ," +
+                "SUBSTRING(\$Спр.МаркировкаТовара.Маркировка , 1 , 31) as Mark ," +
+                "\$Спр.МаркировкаТовара.Товар as item , " +
+                "ID as id " +
+                "FROM \$Спр.МаркировкаТовара (nolock) " +
+                "where \$Спр.МаркировкаТовара.УИТ = SUBSTRING('${testBatcode.trim()}',1,31) "
+        var dtMark = ss.executeWithReadNew(textQuery) ?: return false
+        if(codeId == barcodeId && Barcode.trim().length >= 30) {
+            countMarkUnit ++
+        }
+        else {
+            countMarkPac ++
+        }
+        if (dtMark.isNotEmpty()) {
+            FExcStr.text = "Такая маркировка уже есть в базе!"
+            badVoise()
+            return false
+        }
         textQuery = "SELECT " +
                 "-1*(isFolder-2) as Box ," +
                 "SUBSTRING(\$Спр.МаркировкаТовара.Маркировка , 1 , 31) as Mark ," +
@@ -236,15 +283,22 @@ class AccMark : BarcodeDataReceiver() {
                 "FROM \$Спр.МаркировкаТовара (nolock) " +
                 "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') "
 
-        val dtMark = ss.executeWithReadNew(textQuery) ?: return false
+        dtMark = ss.executeWithReadNew(textQuery) ?: return false
+        if(codeId == barcodeId && Barcode.trim().length >= 30) {
+            countMarkUnit ++
+        }
+        else {
+            countMarkPac ++
+        }
         if (dtMark.isNotEmpty()) {
             FExcStr.text = "Такая маркировка уже есть в базе!"
             badVoise()
             return false
         }
         val columnArray: MutableMap<String, String> = mutableMapOf()
-        columnArray["Box"] = if(codeId == barcodeId) "0" else "1"
+        columnArray["Box"] = if(codeId == barcodeId && Barcode.trim().length >= 30) "0" else "1"
         columnArray["id"] = ""
+        //columnArray["Mark"] = if (columnArray["Box"] == "1" && barcode.substring(0,2) =="00" && Barcode.trim().length > 18) barcode.substring(2) else barcode
         columnArray["Mark"] = barcode
         columnArray["item"] = itemID
         markItemDT.add(columnArray)
@@ -263,6 +317,11 @@ class AccMark : BarcodeDataReceiver() {
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
             itemCardInit.putExtra("iddoc", idDoc)
+            itemCardInit.putExtra("countMarkUnit", countMarkUnitOld.toString())
+            itemCardInit.putExtra("countMarkPac", countMarkPacOld.toString())
+            itemCardInit.putExtra("countItemAcc", countItemAcc.toString())
+
+
             startActivity(itemCardInit)
             finish()
             return true

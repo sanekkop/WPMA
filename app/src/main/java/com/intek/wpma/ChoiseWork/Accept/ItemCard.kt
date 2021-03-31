@@ -522,7 +522,7 @@ class ItemCard : Search() {
         if (itemTemp.foundBarcode(Barcode)) {
             if (itemTemp.id != item.id) {
                 badVoise()
-                FExcStr.text = "Штрих-код от другой позиции " + itemTemp.invCode
+                FExcStr.text = ("Штрих-код от другой позиции " + itemTemp.invCode)
                 return false
             }
         }

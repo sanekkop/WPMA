@@ -424,7 +424,7 @@ class NoneItem : Search() {
         return true
     }
 
-    fun reactionKeyLocal(keyCode: Int):Boolean {
+    private fun reactionKeyLocal(keyCode: Int):Boolean {
         tickVoise()
         var res = true
         if (noneAccItemLocal.isEmpty()) {

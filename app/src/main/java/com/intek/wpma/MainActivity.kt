@@ -16,6 +16,8 @@ import com.intek.wpma.ChoiseWork.Shipping.FreeComplectation
 import com.intek.wpma.ChoiseWork.Shipping.NewComplectation
 import com.intek.wpma.Ref.RefEmployer
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 
 class MainActivity :  BarcodeDataReceiver() {
@@ -109,29 +111,8 @@ class MainActivity :  BarcodeDataReceiver() {
 
         if (!updateProgram()) return
 
-        //для начала запустим GetDataTime для обратной совместимости, ведь там он прописывает версию ТСД
-        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
-        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = ss.vers
-        if (!execCommandNoFeedback("GetDateTime", dataMapWrite)) {
-            badVoise()
-            val toast = Toast.makeText(applicationContext, "Не удалось подключиться к базе!", Toast.LENGTH_SHORT)
-            toast.show()
-            return
-        }
+        initTSD()
 
-        // получим номер терминала
-        val textQuery = "SELECT code as code FROM \$Спр.Терминалы (nolock) WHERE descr = '${ss.ANDROID_ID}'"
-        val dataTable = ss.executeWithReadNew(textQuery) ?:return
-        if (dataTable.isEmpty()){
-            val toast = Toast.makeText(applicationContext, "Терминал не опознан!", Toast.LENGTH_SHORT)
-            toast.show()
-            return
-        }
-        ss.terminal = dataTable[0]["code"].toString()
-        //Подтянем настройку обмена МОД
-        ss.Const.refresh()
-        ss.title = ss.fullVers + " " + ss.terminal.trim()
-        title = ss.title
     }
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
 
@@ -143,6 +124,9 @@ class MainActivity :  BarcodeDataReceiver() {
         return super.onKeyDown(keyCode, event)
     }
     private fun reactionBarcode(Barcode: String) {
+        if (!initTSD()) {
+            return
+        }
         //расшифруем IDD
         //ИДД = "99990" + СокрЛП(Сред(ШК,3,2)) + "00" + Сред(ШК,5,8);
         //99990010010982023
@@ -172,6 +156,7 @@ class MainActivity :  BarcodeDataReceiver() {
                 return
             }
             scanRes = null      //если выходят с телефона, переприсвоим
+            ss.FEmployer = RefEmployer()
             val main = Intent(this, MainActivity::class.java)
             startActivity(main)
             finish()
@@ -180,7 +165,7 @@ class MainActivity :  BarcodeDataReceiver() {
         else {
             //не логирован
            if (!ss.FEmployer.foundIDD(idd)) {
-                actionLbl.text = "Нет действий с ШК в данном режиме!"
+               actionLbl.text = "Нет действий с ШК в данном режиме!"
                badVoise()
                return
             }
@@ -188,6 +173,7 @@ class MainActivity :  BarcodeDataReceiver() {
             //инициализация входа
             if (!login(ss.FEmployer.id)) {
                 actionLbl.text = "Ошибка входа в систему!"
+                ss.FEmployer = RefEmployer()
                 badVoise()
                 return
             }
@@ -239,4 +225,32 @@ class MainActivity :  BarcodeDataReceiver() {
         return false
     }
 
+    private fun initTSD():Boolean{
+        //для начала запустим GetDataTime для обратной совместимости, ведь там он прописывает версию ТСД
+        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = ss.vers
+        if (!execCommandNoFeedback("GetDateTime", dataMapWrite)) {
+            badVoise()
+            //FExcStr.text = "Не удалось подключиться к базе!"
+            return false
+        }
+        // получим номер терминала
+        val textQuery = "SELECT code as code FROM \$Спр.Терминалы (nolock) WHERE descr = '${ss.ANDROID_ID}'"
+        val dataTable = ss.executeWithReadNew(textQuery) ?:return false
+        if (dataTable.isEmpty()){
+           // FExcStr.text = "Терминал не опознан!"
+            return false
+        }
+        ss.terminal = dataTable[0]["code"].toString()
+        //Подтянем настройку обмена МОД
+        ss.Const.refresh()
+        ss.title = ss.fullVers + " " + ss.terminal.trim()
+        title = ss.title
+
+        GlobalScope.launch {
+            updateInitialize(this@MainActivity)
+       }
+        return true
+
+    }
 }

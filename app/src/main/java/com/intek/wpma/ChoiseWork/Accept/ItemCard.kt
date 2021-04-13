@@ -28,7 +28,7 @@ class ItemCard : Search() {
     private var item = RefItem()
     private var bufferWarehouse = "" //переменка для товара на главном
     private var flagBarcode = ""
-    private var isMoveButon = true
+    private var isMoveButton = true
     private var xCoor = 2
     private var yCoor = 4
     private var countMarkUnit = 0
@@ -550,7 +550,7 @@ class ItemCard : Search() {
                 "Up" -> yCoor = if (yCoor == 1) 5 else yCoor - 1
                 "Down" -> yCoor = if (yCoor == 5) 1 else yCoor + 1
             }
-            isMoveButon = true
+            isMoveButton = true
         }
 
         //вроде все как надо, но почему-то выдает ошибку при нажатии
@@ -595,44 +595,44 @@ class ItemCard : Search() {
             val thisInt = ss.helper.whatInt(keyCode).toString()
             when (yCoor) {
                 1 -> details.text =
-                    (if (isMoveButon) thisInt else details.text.toString() + thisInt).toInt()
+                    (if (isMoveButton) thisInt else details.text.toString() + thisInt).toInt()
                         .toString()
                 2 -> {
                     if (xCoor == 2) tbCount0.text =
-                        (if (isMoveButon) thisInt else tbCount0.text.toString() + thisInt).toInt()
+                        (if (isMoveButton) thisInt else tbCount0.text.toString() + thisInt).toInt()
                             .toString()
                 }
                 3 -> {
                     if (xCoor == 1) tbCoef1.text =
-                        (if (isMoveButon) thisInt else tbCoef1.text.toString() + thisInt).toInt()
+                        (if (isMoveButton) thisInt else tbCoef1.text.toString() + thisInt).toInt()
                             .toString()
                     else tbCount1.text =
-                        (if (isMoveButon) thisInt else tbCount1.text.toString() + thisInt).toInt()
+                        (if (isMoveButton) thisInt else tbCount1.text.toString() + thisInt).toInt()
                             .toString()
                 }
                 4 -> {
                     if (xCoor == 1) tbCoef2.text =
-                        (if (isMoveButon) thisInt else tbCoef2.text.toString() + thisInt).toInt()
+                        (if (isMoveButton) thisInt else tbCoef2.text.toString() + thisInt).toInt()
                             .toString()
                     else tbCount2.text =
-                        (if (isMoveButon) thisInt else tbCount2.text.toString() + thisInt).toInt()
+                        (if (isMoveButton) thisInt else tbCount2.text.toString() + thisInt).toInt()
                             .toString()
                 }
                 5 -> {
                     if (xCoor == 1) tbCoef3.text =
-                        (if (isMoveButon) thisInt else tbCoef3.text.toString() + thisInt).toInt()
+                        (if (isMoveButton) thisInt else tbCoef3.text.toString() + thisInt).toInt()
                             .toString()
                     else tbCount3.text =
-                        (if (isMoveButon) thisInt else tbCount3.text.toString() + thisInt).toInt()
+                        (if (isMoveButton) thisInt else tbCount3.text.toString() + thisInt).toInt()
                             .toString()
                 }
             }
-            isMoveButon = false
+            isMoveButton = false
         }
 
         if (keyCode == 67) {
             //это делете, обнулим значение если это коэффициент
-            isMoveButon = true
+            isMoveButton = true
             val textForEdit: String
             when (yCoor) {
                 1 -> {

@@ -21,7 +21,13 @@ import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefItem
 import com.intek.wpma.ScanActivity
+import kotlinx.android.synthetic.main.activity_acc_mark.*
 import kotlinx.android.synthetic.main.activity_cross_mark.*
+import kotlinx.android.synthetic.main.activity_cross_mark.FExcStr
+import kotlinx.android.synthetic.main.activity_cross_mark.btnFinishAccMarkMode
+import kotlinx.android.synthetic.main.activity_cross_mark.btnScan
+import kotlinx.android.synthetic.main.activity_cross_mark.lblPlacer
+import kotlinx.android.synthetic.main.activity_cross_mark.table
 
 class CrossMark : BarcodeDataReceiver() {
 
@@ -30,8 +36,13 @@ class CrossMark : BarcodeDataReceiver() {
     private var itemID = ""
     private var markItemDT : MutableList<MutableMap<String, String>> = mutableListOf()
     private var naklAcc: MutableMap<String,String> = mutableMapOf()
-    var item = RefItem()
+    private var item = RefItem()
     private val hh = Helper()
+    private var countMarkUnit = 0
+    private var countMarkPac = 0
+    private var countMarkPacOld = 0
+    private var countMarkUnitOld = 0
+    private var countItemAcc = 0
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -82,7 +93,8 @@ class CrossMark : BarcodeDataReceiver() {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        return if (reactionKey(keyCode)) true else super.onKeyDown(keyCode, event)
+
+        return if (reactionKey(keyCode, event)) true else super.onKeyDown(keyCode, event)
     }
 
     companion object {
@@ -93,35 +105,46 @@ class CrossMark : BarcodeDataReceiver() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_cross_mark)
+        setContentView(R.layout.activity_acc_mark)
         flagBarcode = intent.extras!!.getString("flagBarcode")!!
         title = ss.title
         itemID = intent.extras!!.getString("itemID")!!
         idDoc = intent.extras!!.getString("iddoc")!!
+        countMarkPacOld = if (intent.extras!!.getString("countMarkPac").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkPac").toString().toInt()
+        countMarkUnitOld = if (intent.extras!!.getString("countMarkUnit").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkUnit").toString().toInt()
+        countItemAcc = if (intent.extras!!.getString("countItemAcc").isNullOrEmpty()) 0 else intent.extras!!.getString("countItemAcc").toString().toInt()
+
+        countMarkUnit = countMarkUnitOld
+        countMarkPac = countMarkPacOld
+
         item.foundID(itemID)
 
         if (ss.isMobile) {
             btnScan.visibility = View.VISIBLE
             btnScan!!.setOnClickListener {
-                val scanAct = Intent(this@CrossMark, ScanActivity::class.java)
-                scanAct.putExtra("ParentForm", "AccMark")
+                val scanAct = Intent(this, ScanActivity::class.java)
+                scanAct.putExtra("ParentForm", "CrossMark")
                 startActivity(scanAct)
             }
         }
         btnFinishAccMarkMode!!.setOnClickListener {
+            //если нажали финиш, значит переходим в режим погрузки
             completeAccMark()
-        }       //если нажали финиш, значит переходим в режим погрузки
+        }
+
         toModeAccMarkInicialization()
     }
 
-    private fun completeAccMark() {         //нет еще такого будем создавать
+
+    private fun completeAccMark() {
+        //нет еще такого будем создавать
         val markItemDTNew : MutableList<MutableMap<String, String>> = mutableListOf()
         for (rowDT in markItemDT) {
             if (rowDT["id"].toString() == "null" || rowDT["id"].toString() == "") {
                 val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
                 dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(itemID, "Спр.Товары")
                 dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(idDoc, "АдресПоступление")
-                dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString()
+                dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString().replace("'","''")
                 dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = rowDT["Box"].toString()
                 if (!execCommandNoFeedback("MarkInsert", dataMapWrite)) {
                     markItemDTNew.add(rowDT)
@@ -130,20 +153,26 @@ class CrossMark : BarcodeDataReceiver() {
             } else continue
         }
         if (markItemDTNew.isEmpty()) {
-            val itemCardInit = Intent(this, ItemCard::class.java)
-            itemCardInit.putExtra("ParentForm", "AccMark")
+            val itemCardInit = Intent(this, CrossCard::class.java)
+            itemCardInit.putExtra("ParentForm", "CrossMark")
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
             itemCardInit.putExtra("iddoc", idDoc)
+            itemCardInit.putExtra("countMarkUnit", countMarkUnit.toString())
+            itemCardInit.putExtra("countMarkPac", countMarkPac.toString())
+            itemCardInit.putExtra("countItemAcc", countItemAcc.toString())
             startActivity(itemCardInit)
             finish()
             return
         }
+
         //ошибка
         FExcStr.text = "Не все маркировки отправленны!"
         badVoise()
         markItemDT.clear()
         markItemDT.addAll(markItemDTNew)
+        refreshActivity()
+
     }
 
     //наличие маркировок по товару
@@ -167,14 +196,18 @@ class CrossMark : BarcodeDataReceiver() {
                 " AC.iddoc = '${idDoc}' "
 
         val naklAccTemp = ss.executeWithReadNew(textQuery)
-        if (naklAccTemp == null || naklAccTemp.isEmpty()) {
+        if (naklAccTemp == null || naklAccTemp.isEmpty())
+        {
             //не вышли на накладную - косяк какой-то
             ss.excStr = "Ошибка перехода в режим маркировки!"
-            val itemCardInit = Intent(this, ItemCard::class.java)
-            itemCardInit.putExtra("ParentForm", "AccMark")
+            val itemCardInit = Intent(this, CrossCard::class.java)
+            itemCardInit.putExtra("ParentForm", "CrossMark")
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
             itemCardInit.putExtra("iddoc", idDoc)
+            itemCardInit.putExtra("countMarkUnit", countMarkUnitOld.toString())
+            itemCardInit.putExtra("countMarkPac", countMarkPacOld.toString())
+            itemCardInit.putExtra("countItemAcc", countItemAcc.toString())
             startActivity(itemCardInit)
             finish()
             return
@@ -190,14 +223,31 @@ class CrossMark : BarcodeDataReceiver() {
                 "or \$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAcc["iddoc"].toString(), "ПриходнаяКредит")}' )" +
                 "and \$Спр.МаркировкаТовара.Товар = '${itemID}' "
         markItemDT = ss.executeWithReadNew(textQuery) ?: return
+
+        /*
+        if (markItemDT.isNotEmpty()) {
+            //существует документ!
+            return
+        }
+
+         */
         refreshActivity()
         return
     }
 
     private fun reactionBarcode(Barcode: String): Boolean {
+
+        //для быстродействия сначал проверим а не сканировалась ли она уже
+        for (rowDT in markItemDT) {
+            if (rowDT["Mark"].toString() == barcode) {
+                FExcStr.text = "Такая маркировка уже есть в списке!"
+                badVoise()
+                return false
+            }
+        }
         val barcoderes = hh.disassembleBarcode(Barcode)
         val idd = barcoderes["IDD"].toString()
-        val textQuery: String
+        var textQuery: String
 
         //если вместо Data-Matrix пикает ШК
         if (ss.isSC(idd, "Сотрудники")) {
@@ -212,6 +262,26 @@ class CrossMark : BarcodeDataReceiver() {
             return false
         }
         val testBatcode = Barcode.replace("'", "''")
+        //для убыстрения сделаем проверку сначала по УИТ
+        textQuery = "SELECT " +
+                "-1*(isFolder-2) as Box ," +
+                "SUBSTRING(\$Спр.МаркировкаТовара.Маркировка , 1 , 31) as Mark ," +
+                "\$Спр.МаркировкаТовара.Товар as item , " +
+                "ID as id " +
+                "FROM \$Спр.МаркировкаТовара (nolock) " +
+                "where \$Спр.МаркировкаТовара.УИТ = SUBSTRING('${testBatcode.trim()}',1,31) "
+        var dtMark = ss.executeWithReadNew(textQuery) ?: return false
+        if(codeId == barcodeId && Barcode.trim().length >= 30) {
+            countMarkUnit ++
+        }
+        else {
+            countMarkPac ++
+        }
+        if (dtMark.isNotEmpty()) {
+            FExcStr.text = "Такая маркировка уже есть в базе!"
+            badVoise()
+            return false
+        }
         textQuery = "SELECT " +
                 "-1*(isFolder-2) as Box ," +
                 "SUBSTRING(\$Спр.МаркировкаТовара.Маркировка , 1 , 31) as Mark ," +
@@ -220,15 +290,22 @@ class CrossMark : BarcodeDataReceiver() {
                 "FROM \$Спр.МаркировкаТовара (nolock) " +
                 "where \$Спр.МаркировкаТовара.Маркировка like ('%' +SUBSTRING('${testBatcode.trim()}',1,31) + '%') "
 
-        val dtMark = ss.executeWithReadNew(textQuery) ?: return false
+        dtMark = ss.executeWithReadNew(textQuery) ?: return false
+        if(codeId == barcodeId && Barcode.trim().length >= 30) {
+            countMarkUnit ++
+        }
+        else {
+            countMarkPac ++
+        }
         if (dtMark.isNotEmpty()) {
             FExcStr.text = "Такая маркировка уже есть в базе!"
             badVoise()
             return false
         }
         val columnArray: MutableMap<String, String> = mutableMapOf()
-        columnArray["Box"] = if(codeId == barcodeId) "0" else "1"
+        columnArray["Box"] = if(codeId == barcodeId && Barcode.trim().length >= 30) "0" else "1"
         columnArray["id"] = ""
+        //columnArray["Mark"] = if (columnArray["Box"] == "1" && barcode.substring(0,2) =="00" && Barcode.trim().length > 18) barcode.substring(2) else barcode
         columnArray["Mark"] = barcode
         columnArray["item"] = itemID
         markItemDT.add(columnArray)
@@ -238,14 +315,20 @@ class CrossMark : BarcodeDataReceiver() {
         return true
     }
 
-    private fun reactionKey(keyCode: Int): Boolean {
+    private fun reactionKey(keyCode: Int, event: KeyEvent?): Boolean {
+
         // нажали назад, выйдем
         if (keyCode == 4) {
-            val itemCardInit = Intent(this, ItemCard::class.java)
-            itemCardInit.putExtra("ParentForm", "AccMark")
+            val itemCardInit = Intent(this, CrossCard::class.java)
+            itemCardInit.putExtra("ParentForm", "CrossMark")
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
             itemCardInit.putExtra("iddoc", idDoc)
+            itemCardInit.putExtra("countMarkUnit", countMarkUnitOld.toString())
+            itemCardInit.putExtra("countMarkPac", countMarkPacOld.toString())
+            itemCardInit.putExtra("countItemAcc", countItemAcc.toString())
+
+
             startActivity(itemCardInit)
             finish()
             return true
@@ -298,10 +381,10 @@ class CrossMark : BarcodeDataReceiver() {
         for (rowDT in markItemDT) {
             //строки теперь
             linenom++
-            val rowTitl = TableRow(this)
+            val rowTitle = TableRow(this)
             linearLayout = LinearLayout(this)
             val colorline = Color.WHITE
-            rowTitl.setBackgroundColor(colorline)
+            rowTitle.setBackgroundColor(colorline)
             //добавим строки
             number = TextView(this)
             number.text = linenom.toString()
@@ -328,12 +411,12 @@ class CrossMark : BarcodeDataReceiver() {
             linearLayout.addView(boxes)
             linearLayout.addView(mark)
 
-            rowTitl.addView(linearLayout)
-            table.addView(rowTitl)
+            rowTitle.addView(linearLayout)
+            table.addView(rowTitle)
+
         }
         lblPlacer.visibility = View.VISIBLE
         lblPlacer.text = (naklAcc["DocNo"] + " (" + naklAcc["DateDoc"]?.let { hh.shortDate(it) } + ") " + item.invCode + " ВСЕГО МАРКИРОВОК " + linenom.toString())
 
     }
-
 }

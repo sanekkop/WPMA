@@ -8,11 +8,18 @@ import android.hardware.Camera
 import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.intek.wpma.SQL.SQL1S
 import kotlinx.android.synthetic.main.activity_set.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -258,7 +265,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                     "exec IBS_Inicialize_with_DeviceID_new :Employer, :HostName, :DeviceID, @id output; " +
                     "select @id as ID;"
         textQuery = ss.querySetParam(textQuery, "Employer", EmployerID)
-        textQuery = ss.querySetParam(textQuery, "HostName", "Android")
+        textQuery = ss.querySetParam(textQuery, "HostName", "Android-"+ss.terminal.trim())
         textQuery = ss.querySetParam(textQuery, "DeviceID", ss.ANDROID_ID)
         val dt = ss.executeWithRead(textQuery) ?: return false
         if (dt.isEmpty()) {
@@ -535,5 +542,39 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         val cm = context.getSystemService(CONNECTIVITY_SERVICE) as ConnectivityManager
         val netInfo = cm.activeNetworkInfo
         return netInfo != null && netInfo.isConnectedOrConnecting
+    }
+
+    fun updateInitialize(context: Context) {
+        CoroutineScope(IO).launch {
+            delay(10 * 1000L)
+            if (ss.FEmployer.selected) {
+                Handler(Looper.getMainLooper()).post {
+                    var textQuery =
+                        "set nocount on; " +
+                                "declare @id bigint; " +
+                                "exec IBS_update :DeviceID, @id output; " +
+                                "select @id as ID;"
+                    textQuery = ss.querySetParam(textQuery, "DeviceID", ss.ANDROID_ID)
+                    val dt = ss.executeWithRead(textQuery)
+                    if (dt != null && dt.isNotEmpty()) {
+                        val result = dt[1][0].toInt()
+                        if (result == 0 && ss.FEmployer.selected) {
+                            //не нашел по девайс айди, значит надо инициировать
+                            textQuery =
+                                "set nocount on; " +
+                                        "declare @id bigint; " +
+                                        "exec IBS_Inicialize_with_DeviceID_new :Employer, :HostName, :DeviceID, @id output; " +
+                                        "select @id as ID;"
+                            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+                            textQuery = ss.querySetParam(textQuery, "HostName", "Android - " + ss.terminal.trim())
+                            textQuery = ss.querySetParam(textQuery, "DeviceID", ss.ANDROID_ID)
+                            ss.executeWithoutRead(textQuery)
+                        }
+                    }
+                    //Toast.makeText(context, ss.FEmployer.name, Toast.LENGTH_SHORT).show()
+                }
+                updateInitialize(context)
+            }
+        }
     }
 }

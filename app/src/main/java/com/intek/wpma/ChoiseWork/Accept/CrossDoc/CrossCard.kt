@@ -11,6 +11,34 @@ import com.intek.wpma.Model.Model
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefItem
 import kotlinx.android.synthetic.main.activity_cross_acc.*
+import kotlinx.android.synthetic.main.activity_cross_acc.FExcStr
+import kotlinx.android.synthetic.main.activity_cross_acc.btnMark
+import kotlinx.android.synthetic.main.activity_cross_acc.btnPrinItem
+import kotlinx.android.synthetic.main.activity_cross_acc.details
+import kotlinx.android.synthetic.main.activity_cross_acc.itemName
+import kotlinx.android.synthetic.main.activity_cross_acc.pricePrih
+import kotlinx.android.synthetic.main.activity_cross_acc.shapka
+import kotlinx.android.synthetic.main.activity_cross_acc.storageSize
+import kotlinx.android.synthetic.main.activity_cross_acc.tbBarcode0
+import kotlinx.android.synthetic.main.activity_cross_acc.tbBarcode1
+import kotlinx.android.synthetic.main.activity_cross_acc.tbBarcode2
+import kotlinx.android.synthetic.main.activity_cross_acc.tbBarcode3
+import kotlinx.android.synthetic.main.activity_cross_acc.tbCoef0
+import kotlinx.android.synthetic.main.activity_cross_acc.tbCoef1
+import kotlinx.android.synthetic.main.activity_cross_acc.tbCoef2
+import kotlinx.android.synthetic.main.activity_cross_acc.tbCoef3
+import kotlinx.android.synthetic.main.activity_cross_acc.tbCount0
+import kotlinx.android.synthetic.main.activity_cross_acc.tbCount1
+import kotlinx.android.synthetic.main.activity_cross_acc.tbCount2
+import kotlinx.android.synthetic.main.activity_cross_acc.tbCount3
+import kotlinx.android.synthetic.main.activity_cross_acc.tbRes0
+import kotlinx.android.synthetic.main.activity_cross_acc.tbRes1
+import kotlinx.android.synthetic.main.activity_cross_acc.tbRes2
+import kotlinx.android.synthetic.main.activity_cross_acc.tbRes3
+import kotlinx.android.synthetic.main.activity_cross_acc.zonaHand
+import kotlinx.android.synthetic.main.activity_cross_acc.zonaTech
+import kotlinx.android.synthetic.main.activity_crossdoc.*
+import kotlinx.android.synthetic.main.activity_search_acc.*
 
 class CrossCard : CrossDoc() {
 
@@ -25,6 +53,7 @@ class CrossCard : CrossDoc() {
     private var xCoor = 2
     private var yCoor = 4
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_cross_acc)
@@ -34,6 +63,9 @@ class CrossCard : CrossDoc() {
         title = ss.title
         item.foundID(intent.extras!!.getString("itemID")!!)
         idDoc = intent.extras!!.getString("iddoc")!!
+        countMarkPac = if (intent.extras!!.getString("countMarkPac").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkPac").toString().toInt()
+        countMarkUnit = if (intent.extras!!.getString("countMarkUnit").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkUnit").toString().toInt()
+        countItemAcc = if (intent.extras!!.getString("countItemAcc").isNullOrEmpty()) 0 else intent.extras!!.getString("countItemAcc").toString().toInt()
 
         btnPrinItem.setOnClickListener {            //обработчик события при нажатии на кнопку принятия товара
             if (!ss.FPallet.selected) {
@@ -41,7 +73,7 @@ class CrossCard : CrossDoc() {
                 "Сначала отсканируйте паллету!!!".also { FExcStr.text = it }
                 return@setOnClickListener
             } else {
-                if (completeAccept()) {
+                if (completeAccept(idDoc)) {
                     val backH = Intent(this, CrossNonItem::class.java)
                     backH.putExtra("ParentForm", "ItemCard")
                     backH.putExtra("parentIDD", parentIDD)
@@ -59,11 +91,22 @@ class CrossCard : CrossDoc() {
 
         btnMark.setOnClickListener {
             //обработчик события при нажатии на кнопку принятия товара
+            if (!saveUnitItem()) {
+                badVoise()
+                FExcStr.text = "Не удалось записать позицию!"
+                return@setOnClickListener
+            }
+            if (!ibsLockuot("int_ref_Товары_" + (item.id + "_unit"))) {
+                //если не удалось разблокировать то просто напишем об этом
+                FExcStr.text = "Не удалось разблокировать товар!"
+                return@setOnClickListener
+            }
             val backH = Intent(this, CrossMark::class.java)
-            backH.putExtra("ParentForm", "ItemCard")
+            backH.putExtra("ParentForm", "CrossCard")
             backH.putExtra("flagBarcode", flagBarcode)
             backH.putExtra("itemID", item.id)
             backH.putExtra("iddoc", idDoc)
+            backH.putExtra("countItemAcc", acceptedItem["AcceptCount"].toString())
             startActivity(backH)
             finish()
         }
@@ -534,11 +577,23 @@ class CrossCard : CrossDoc() {
         }
 
         if (keyCode == 69) {        // -  переход в режим маркирвоки
+            if (!saveUnitItem()) {
+                badVoise()
+                FExcStr.text = "Не удалось записать позицию!"
+                return false
+            }
+            if (!ibsLockuot("int_ref_Товары_" + (item.id + "_unit"))) {
+                //если не удалось разблокировать то просто напишем об этом
+                FExcStr.text = "Не удалось разблокировать товар!"
+                return false
+            }
+            // -  переход в режим маркирвоки
             val backH = Intent(this, CrossMark::class.java)
             backH.putExtra("ParentForm", "ItemCard")
             backH.putExtra("flagBarcode", flagBarcode)
             backH.putExtra("itemID", item.id)
             backH.putExtra("iddoc", idDoc)
+            backH.putExtra("countItemAcc", acceptedItem["AcceptCount"].toString())
             startActivity(backH)
             finish()
             return true
@@ -638,7 +693,7 @@ class CrossCard : CrossDoc() {
         refreshActivElement()
         changeUnitCoef()
         if (keyCode == 61) {
-            if (completeAccept()) {
+            if (completeAccept(idDoc)) {
                 val backH = Intent(this, CrossNonItem::class.java)
                 backH.putExtra("parentIDD", parentIDD)
                 backH.putExtra("ParentForm", "ItemCard")
@@ -879,4 +934,171 @@ class CrossCard : CrossDoc() {
             //Ввод новых для говноединиц пока не поддерживаем
         }
     }
+
+    private fun saveUnitItem():Boolean {
+        var needNew = 0
+        var textQuery: String
+        var coefPlace = 0 //Коэффициент мест, по нему будет расчитывать количество этикеток
+        val tmpDT: MutableList<MutableMap<String, String>> = mutableListOf()
+        for (dr in fUnits) {
+            if (dr["Coef"].toString().toInt() == 1 && dr["OKEI"].toString() != model.okeiUnit) {
+                FExcStr.text = "Коэффициент 1 может быть только у штуки! Пожалуйста исправьте..."
+                return false
+            }
+            if (dr["OKEI"].toString() == model.okeiPackage) {
+                coefPlace = dr["Coef"].toString().toInt()
+            }
+            if (dr["ID"].toString() != ss.getVoidID()) {
+                //Имеющаяся единица
+                if (dr["Coef"].toString().toInt() == 0) {
+                    textQuery = "UPDATE \$Спр.ЕдиницыШК " +
+                            "SET " +
+                            "ismark = 1 " +
+                            "WHERE \$Спр.ЕдиницыШК .id = :ID "
+                    textQuery = ss.querySetParam(textQuery, "ID", dr["ID"].toString())
+                    if (!ss.executeWithoutRead(textQuery)) {
+                        return false
+                    }
+                } else {
+                    textQuery = "UPDATE \$Спр.ЕдиницыШК " +
+                            "SET " +
+                            "\$Спр.ЕдиницыШК.Штрихкод = :Barcode, " +
+                            "\$Спр.ЕдиницыШК.Коэффициент = :Coef, " +
+                            "\$Спр.ЕдиницыШК.ОКЕИ = :OKEIPackage, " +
+                            "\$Спр.ЕдиницыШК.ФлагРегистрацииМОД = 1 " +
+                            "WHERE \$Спр.ЕдиницыШК .id = :ID "
+                    textQuery = ss.querySetParam(textQuery, "Barcode", dr["Barcode"].toString())
+                    textQuery = ss.querySetParam(textQuery, "Coef", dr["Coef"].toString())
+                    textQuery = ss.querySetParam(textQuery, "ID", dr["ID"].toString())
+                    textQuery = ss.querySetParam(textQuery, "OKEIPackage", dr["OKEI"].toString())
+                    if (!ss.executeWithoutRead(textQuery)) {
+                        return false
+                    }
+                }
+            } else {
+                var findDr = false
+                if (tmpDT.isNotEmpty()) {
+                    for (tmpdr in tmpDT) {
+                        if (tmpdr["Coef"].toString() == dr["Coef"].toString() && tmpdr["OKEI"].toString() == dr["OKEI"].toString()) {
+                            findDr = true
+                            break
+                        }
+                    }
+                }
+                if (dr["Barcode"].toString().trim() != "" || !findDr) {
+                    needNew++
+                }
+            }
+
+            val tmpdr: MutableMap<String, String> = mutableMapOf()
+            tmpdr["Coef"] = dr["Coef"].toString()
+            tmpdr["OKEI"] = dr["OKEI"].toString()
+            tmpDT.add(tmpdr)
+        }
+        tmpDT.clear()
+
+        if (needNew > 0) {
+            //Есть новые...
+            var currentRow = 0
+            //Теперь также пишем новые
+            for (dr in fUnits) {
+                if (dr["Coef"].toString().toInt() == 0) {
+                    continue
+                }
+                if (dr["ID"].toString() == ss.getVoidID()) {
+                    var findDr = false
+                    if (tmpDT.isNotEmpty()) {
+                        for (tmpdr in tmpDT) {
+                            if (tmpdr["Coef"].toString() == dr["Coef"].toString() && tmpdr["OKEI"].toString() == dr["OKEI"].toString()) {
+                                findDr = true
+                                break
+                            }
+                        }
+                    }
+                    if (dr["Barcode"].toString().trim() == "" && findDr) {
+                        continue
+                    }
+                    if (!createUnit(
+                            dr["OKEI"].toString(),
+                            dr["Coef"].toString().toInt(),
+                            dr["Barcode"].toString()
+                        )
+                    ) {
+                        return false
+                    }
+                    currentRow++
+                }
+                val tmpdr: MutableMap<String, String> = mutableMapOf()
+                tmpdr["Coef"] = dr["Coef"].toString()
+                tmpdr["OKEI"] = dr["OKEI"].toString()
+                tmpDT.add(tmpdr)
+            }
+        }
+        //Запишем норму упаковки в товар
+        var packNorm = ""
+        packNorm = addPackNorm(packNorm, model.okeiKit)
+        packNorm = addPackNorm(packNorm, model.okeiPack)
+        packNorm = addPackNorm(packNorm, model.okeiPackage)
+        packNorm = if (packNorm == "") {
+            "1"
+        } else {
+            packNorm.substring(1)  //Отрезаем первый символ "/"
+        }
+
+        if (acceptedItem["MinParty"].toString().toInt() > 0)
+            packNorm = ">" + acceptedItem["MinParty"].toString() + "/" + packNorm
+
+        textQuery = "UPDATE \$Спр.Товары " +
+                "SET \$Спр.Товары.НормаУпаковки = :PackNorm , " +
+                "\$Спр.Товары.КоличествоДеталей = :Details " +
+                "WHERE \$Спр.Товары .id = :ItemID"
+        textQuery = ss.querySetParam(textQuery, "ItemID", item.id)
+        textQuery = ss.querySetParam(textQuery, "PackNorm", packNorm)
+        textQuery = ss.querySetParam(textQuery, "Details", acceptedItem["NowDetails"].toString())
+        if (!ss.executeWithoutRead(textQuery)) {
+            return false
+        }
+
+        //Если ШК с базовой единицы слетел, то поставим его назад этим чудовищным запросом
+        textQuery = "declare @idbase char(9) " +
+                "declare @idbar char(9) " +
+                "declare @barcode varchar(50) " +
+                "select @idbase = RefE.id from \$Спр.Товары as RefG (nolock) " +
+                "inner join \$Спр.ЕдиницыШК as RefE (nolock) " +
+                "on RefE.id = RefG.\$Спр.Товары.БазоваяЕдиницаШК " +
+                "where RefG.id = :ItemID and RefE.\$Спр.ЕдиницыШК.Штрихкод = ''; " +
+                "if @idbase is not null begin " +
+                "select @idbar = RefE.id, @barcode = RefE.\$Спр.ЕдиницыШК.Штрихкод from \$Спр.ЕдиницыШК as RefE (nolock) " +
+                "where " +
+                "RefE.parentext = :ItemID " +
+                "and RefE.\$Спр.ЕдиницыШК.ОКЕИ = :OKEI " +
+                "and not RefE.\$Спр.ЕдиницыШК.Штрихкод = ''; " +
+                "if @idbar is not null begin " +
+                "begin tran; " +
+                "update \$Спр.ЕдиницыШК " +
+                "set \$Спр.ЕдиницыШК.Штрихкод = @barcode " +
+                "where id = @idbase; " +
+                "if @@rowcount = 0 " +
+                "rollback tran " +
+                "else begin " +
+                "update \$Спр.ЕдиницыШК " +
+                "set \$Спр.ЕдиницыШК.Штрихкод = '' " +
+                "where id = @idbar; " +
+                "if @@rowcount = 0 " +
+                "rollback tran " +
+                "else " +
+                "commit tran " +
+                "end " +
+                "end " +
+                "end"
+
+        textQuery = ss.querySetParam(textQuery, "OKEI", model.okeiUnit)
+        textQuery = ss.querySetParam(textQuery, "ItemID", item.id)
+        if (!ss.executeWithoutRead(textQuery)) {
+            return false
+        }
+        //Конец куска с заменой ШК у базовой единицы
+        return true
+    }
+
 }

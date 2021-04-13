@@ -638,8 +638,5 @@ object SQL1S : SQLSynchronizer() {
         }
         else null
     }
-
-
-
 }//class SQLSynhronizer
 

@@ -41,6 +41,9 @@ open class CrossDoc : BarcodeDataReceiver() {
     var acceptedItem: MutableMap<String, String> = mutableMapOf()
     var model = Model()
     var item = RefItem()
+    var countMarkUnit = 0
+    var countMarkPac = 0
+    var countItemAcc = 0
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -459,11 +462,16 @@ open class CrossDoc : BarcodeDataReceiver() {
 
     //тотальная ебань
     //класс для обработки события при нажатии на кнопку о принятии товара
-    fun completeAccept(): Boolean {
+    fun completeAccept(idDoc:String): Boolean {
 
-        if (!checkMark()) {
+        if (checkMark(idDoc) == 0) {
             //не указана маркировка
-            FExcStr.text = "Маркированный товар! Сканируйте маркировку!"
+            if (ss.excStr == "") {
+                FExcStr.text = "Маркированный товар! Сканируйте маркировку!"
+            }
+            else {
+                FExcStr.text = ss.excStr
+            }
             return false
         }
         val docForQuery = currentRowAcceptedItem["iddoc"].toString()
@@ -719,7 +727,8 @@ open class CrossDoc : BarcodeDataReceiver() {
             if (!ss.executeWithoutRead(textQuery)) {
                 return false
             }
-        } else if (alreadyDT.isEmpty() && acceptedItem["AcceptCount"].toString().toInt() >= beginCount) {
+        }
+        else if (alreadyDT.isEmpty() && acceptedItem["AcceptCount"].toString().toInt() >= beginCount) {
             //Товар, будем писать в туже стоку
             textQuery = "UPDATE DT\$АдресПоступление " +
                     "SET " +
@@ -744,7 +753,8 @@ open class CrossDoc : BarcodeDataReceiver() {
             if (!ss.executeWithoutRead(textQuery)) {
                 return false
             }
-        } else if (alreadyDT.isNotEmpty() && acceptedItem["AcceptCount"].toString().toInt() < beginCount) {
+        }
+        else if (alreadyDT.isNotEmpty() && acceptedItem["AcceptCount"].toString().toInt() < beginCount) {
             //Нуно создать новую строку на новую паллету
             textQuery =
                 "SELECT max(DT\$АдресПоступление .lineno_) + 1 as NewLineNo_ " +
@@ -792,7 +802,8 @@ open class CrossDoc : BarcodeDataReceiver() {
             if (!ss.executeWithoutRead(textQuery)) {
                 return false
             }
-        } else {
+        }
+        else {
             if (alreadyDT[0]["LineNo_"] == currentRowAcceptedItem["LineNO_"]) {
                 FExcStr.text = "Состояние позиции изменилось! Повторите приемку!"
                 return false
@@ -848,7 +859,7 @@ open class CrossDoc : BarcodeDataReceiver() {
         return true
     }
 
-    private fun createUnit(okei: String, coef: Int, barcode: String): Boolean {
+    fun createUnit(okei: String, coef: Int, barcode: String): Boolean {
         //Нужно создать новую единицу
         var textQuery =
             "UPDATE \$Спр.ЕдиницыШК " +
@@ -870,7 +881,7 @@ open class CrossDoc : BarcodeDataReceiver() {
         return ss.executeWithoutRead(textQuery)
     }
 
-    private fun addPackNorm(pacNorm: String, okei: String): String {
+    fun addPackNorm(pacNorm: String, okei: String): String {
         var packNorm = pacNorm
         for (dr in fUnits) {
             if (dr["OKEI"].toString() == okei && dr["Coef"].toString().toInt() != 0) {
@@ -906,8 +917,9 @@ open class CrossDoc : BarcodeDataReceiver() {
         return coef
     }
 
-    private fun checkMark(): Boolean {
+    private fun checkMark(idDocItm:String): Int {
 
+        ss.excStr = ""
         var textQuery = "SELECT " +
                 "Category.\$Спр.КатегорииТоваров.Маркировка as Маркировка " +
                 "from \$Спр.Товары as Item (nolock) " +
@@ -915,12 +927,17 @@ open class CrossDoc : BarcodeDataReceiver() {
                 "on Item.\$Спр.Товары.Категория = Category.ID " +
                 "where Category.\$Спр.КатегорииТоваров.Маркировка > 0 " +
                 "and Item.id = '${item.id}' "
-        val dt = ss.executeWithReadNew(textQuery) ?: return true
-        if (dt.isEmpty()) return true
+        val dt = ss.executeWithReadNew(textQuery)
+        if (dt == null)
+        {
+            ss.excStr = "Не удалось выполнить запрос флага маркировки"
+            return 0
+        }
+        if (dt.isEmpty()) return 1
 
         textQuery = "SELECT " +
                 "ISNULL(journ.iddoc, AC.iddoc ) as iddoc , " +
-                "AC.iddoc as ACiddoc , " +
+                "AC.iddoc as ACiddoc " +
                 "FROM " +
                 " DH\$АдресПоступление as AC (nolock) " +
                 "INNER JOIN _1sjourn as journAC (nolock) " +
@@ -928,14 +945,28 @@ open class CrossDoc : BarcodeDataReceiver() {
                 "LEFT JOIN _1sjourn as journ (nolock) " +
                 "     ON journ.iddoc = right(AC.\$АдресПоступление.ДокументОснование , 9) " +
                 "WHERE" +
-                " AC.iddoc = '${iddoc}' "
+                " AC.iddoc = '${idDocItm}' "
 
         val naklAccTemp = ss.executeWithReadNew(textQuery)
         if (naklAccTemp == null || naklAccTemp.isEmpty())
         {
             //не вышли на накладную - косяк какой-то
-            return false
+            ss.excStr = "Не удалось найти накладную"
+            return 0
         }
+
+        //проверим сканировали ли маркировки в экране для маркировок
+        if (countMarkPac == 0 && countMarkUnit == 0)
+        {
+            FExcStr.text = "Маркированный товар! Сканируйте маркировку!"
+            return 0
+        }
+        if (countMarkPac == 0 && countMarkUnit < acceptedItem["AcceptCount"].toString().toInt())
+        {
+            FExcStr.text = "Недостаточно штучных маркировок!"
+            return 0
+        }
+
         //не пусто
         textQuery = "select id as ID , " +
                 "\$Спр.МаркировкаТовара.Маркировка as Mark , " +
@@ -945,11 +976,19 @@ open class CrossDoc : BarcodeDataReceiver() {
                 "where (\$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAccTemp[0]["ACiddoc"].toString(), "АдресПоступление")}' " +
                 "or \$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAccTemp[0]["iddoc"].toString(), "ПриходнаяКредит")}' )" +
                 "and \$Спр.МаркировкаТовара.Товар = '${item.id}' "
-        val markItemDT = ss.executeWithReadNew(textQuery) ?: return false
-        if (markItemDT.isEmpty()) {
-            return false
+        val markItemDT = ss.executeWithReadNew(textQuery)
+        if (markItemDT == null)
+        {
+            ss.excStr = "Не удалось выполнить запрос маркировок"
+            return 0
         }
-        return true
+
+        if (markItemDT.isEmpty()) {
+            //раз сюда пришли, значит там что-то сканировали, просто еще не создалось
+            return countMarkPac+countMarkUnit
+        }
+        return markItemDT.count()
+
     }
 
     fun updateTableInfo() {

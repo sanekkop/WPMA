@@ -11,12 +11,15 @@ open class SQLSynchronizer
 {
     private val fServerName: Array<String> = arrayOf("192.168.8.4:57068","192.168.8.5:57068") //Наши серваки
     //private val fDBName: String = "int9999001ad4" //База
-    private val fDBName: String? = "int9999001rab"
+    private val fDBName: String = "int9999001rab"
     private val fVers: String = "5.03"    //Номер версии
     val fullVers = "$fVers.11"
     private var myConnection: Connection? = null
     private var myComand: Statement? = null
     protected var myReader: ResultSet? = null
+    private var myComandForCoroutin: Statement? = null
+    protected var myReaderForCoroutin: ResultSet? = null
+
     protected var fExcStr: String? = null
     var permission: Boolean? = null
 
@@ -41,6 +44,7 @@ open class SQLSynchronizer
             val connection = DriverManager.getConnection("jdbc:jtds:sqlserver://$ServName/$fDBName","sa","1419176")
             myConnection = connection
             myComand = connection.createStatement()
+            myComandForCoroutin = connection.createStatement()
             conIsOpen = !connection.isClosed
         }
         catch (e: SQLException) {
@@ -129,6 +133,47 @@ open class SQLSynchronizer
         }
         return true
     }
+    protected fun executeQueryForCoroutin(Query: String, Read: Boolean): Boolean
+    {
+        //Сохраним первоначальое состояние соединения
+        val cs: Boolean = myConnection!!.isClosed
+        if (!openConnection())
+        {
+            return false
+        }
+        try
+        {
+            if (Read)
+            {
+                myReaderForCoroutin = myComandForCoroutin!!.executeQuery(Query)
+            }
+            else
+            {
+                myComandForCoroutin!!.execute(Query)
+            }
+        }
+        catch (e: SQLException)
+        {
+            if (!cs && myConnection!!.isClosed)
+            {
+                //Таким образом, если соединение до выполнения запроса было открыто,
+                //а после выполнения обвалилось (см. выше). Это наверняка эффект "уснувшего" терминала! или моргнувшей сети
+                //От бесконечной рекурсии мы избавились так - был открыт, стал не открыт - повторяем,
+                //при повторе CS полюбому - не открыт, значит дополнительный вызов не произойдет!
+
+                //на всякий случай обождем секунду, может вайфай вернется быстро
+                try {
+                    Thread.sleep(1000)
+                }
+                catch (e: java.lang.Exception) {
+                }
+                return executeQueryForCoroutin(Query, Read)
+            }
+            fExcStr = e.toString()
+            return false
+        }
+        return true
+    }
     // <summary>
     // Выполняет команду на чтение
     // </summary>
@@ -137,5 +182,9 @@ open class SQLSynchronizer
     fun executeQuery(Query: String): Boolean
     {
         return executeQuery(Query, true)
+    }
+    fun executeQueryForCoroutin(Query: String): Boolean
+    {
+        return executeQueryForCoroutin(Query, true)
     }
 }

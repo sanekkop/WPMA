@@ -106,6 +106,11 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
             startActivity(freeComplectationInit)
             finish()
         }
+
+        if (ss.excStr !="" && ss.excStr != "null") {
+            FExcStr.text = ss.excStr
+        }
+        ss.excStr = ""
     }
 
     private fun reactionBarcode(Barcode: String) {

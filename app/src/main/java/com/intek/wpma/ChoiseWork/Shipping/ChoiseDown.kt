@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.provider.Contacts
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -23,12 +24,18 @@ import com.intek.wpma.Ref.RefPrinter
 import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.SQL.SQL1S.Const
 import kotlinx.android.synthetic.main.activity_choise_down.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 
 class ChoiseDown : BarcodeDataReceiver() {
 
     private var rreviousAction = ""
     private var downSituation: MutableList<MutableMap<String, String>> = mutableListOf()
+    private var refresh = false
+
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -165,30 +172,44 @@ class ChoiseDown : BarcodeDataReceiver() {
 
             */
         }
+
         toModeChoiseDown()
     }
 
 
     private fun toModeChoiseDown() {
 
+        Const.refresh()
+        ss.FEmployer.refresh()     // проверим не изменились ли галки на спуск/комплектацию
+        //не может спускать и комплектовать выходим обратно
+        if (!ss.FEmployer.canDown && !ss.FEmployer.canComplectation) {
+            ss.excStr = "Сотрудник не может спускать и комплектовать!"
+            val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
+            startActivity(shoiseWorkInit)
+            finish()
+            return
+        }
+        if (!ss.FEmployer.canDown && ss.FEmployer.canComplectation) {
+            ss.excStr = "Сотрудник не может спускать!"
+            val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
+            startActivity(shoiseWorkInit)
+            finish()
+            return
+        }
+        if (!isOnline(this)) {
+            ss.excStr = "Ошибка сети!"
+            val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
+            startActivity(shoiseWorkInit)
+            finish()
+            return
+        }
         val runnable = Runnable {
-            Const.refresh()
-            ss.FEmployer.refresh()     // проверим не изменились ли галки на спуск/комплектацию
-            //не может спускать и комплектовать выходим обратно
-            if (!ss.FEmployer.canDown && !ss.FEmployer.canComplectation) {
-                val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
-                startActivity(shoiseWorkInit)
-                finish()
-            }
-            if (!ss.FEmployer.canDown && ss.FEmployer.canComplectation) {
-                val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
-                startActivity(shoiseWorkInit)
-                finish()
-            }
             //Сам запрос
+            ss.excStr = ""
             var textQuery = "select * from WPM_fn_GetChoiseDown()"
             val down = ss.executeWithReadNew(textQuery)
             if (down == null){
+                ss.excStr += "Не удалось выполнить запрос задания!"
                 val shoiseWorkInit = Intent(this, ChoiseWorkShipping::class.java)
                 startActivity(shoiseWorkInit)
                 finish()

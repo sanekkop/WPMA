@@ -555,7 +555,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                                 "exec IBS_update :DeviceID, @id output; " +
                                 "select @id as ID;"
                     textQuery = ss.querySetParam(textQuery, "DeviceID", ss.ANDROID_ID)
-                    val dt = ss.executeWithRead(textQuery)
+                    val dt = ss.executeWithReadForCoroutin(textQuery)
                     if (dt != null && dt.isNotEmpty()) {
                         val result = dt[1][0].toInt()
                         if (result == 0 && ss.FEmployer.selected) {
@@ -568,7 +568,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                             textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
                             textQuery = ss.querySetParam(textQuery, "HostName", "Android - " + ss.terminal.trim())
                             textQuery = ss.querySetParam(textQuery, "DeviceID", ss.ANDROID_ID)
-                            ss.executeWithoutRead(textQuery)
+                            ss.executeWithoutReadForCoroutin(textQuery)
                         }
                     }
                     //Toast.makeText(context, ss.FEmployer.name, Toast.LENGTH_SHORT).show()

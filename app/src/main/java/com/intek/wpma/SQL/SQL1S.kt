@@ -98,6 +98,39 @@ object SQL1S : SQLSynchronizer() {
 
         return myArr
     }
+    fun executeWithReadForCoroutin(TextQuery: String): Array<Array<String>>? {
+        var myArr: Array<Array<String>> = emptyArray()
+        if (!executeQueryForCoroutin(queryParser(TextQuery))) {
+            return null
+        }
+        if (myReaderForCoroutin == null) {
+            return null
+        }
+        while (myReaderForCoroutin!!.next()) {
+            var i = 1
+            var columnArray: Array<String> = emptyArray()
+            var rowsArray: Array<String> = emptyArray()
+            while (i <= myReaderForCoroutin!!.metaData.columnCount) {
+                //заполним наименования колонок
+                columnArray += myReaderForCoroutin!!.metaData.getColumnName(i)
+                //а теперь значение
+                rowsArray += if (myReaderForCoroutin!!.getString(myReaderForCoroutin!!.metaData.getColumnName(i)) == null) {
+                    "null"
+                } else
+                    myReaderForCoroutin!!.getString(myReaderForCoroutin!!.metaData.getColumnName(i))
+                i++
+            }
+            if (myArr.isEmpty()) {
+                myArr += columnArray
+            }
+            myArr += rowsArray
+
+        }
+
+        myReaderForCoroutin!!.close()
+
+        return myArr
+    }
 
     fun executeWithReadNew(TextQuery: String): MutableList<MutableMap<String, String>>? {
         val myArr: MutableList<MutableMap<String, String>> = mutableListOf()
@@ -107,24 +140,31 @@ object SQL1S : SQLSynchronizer() {
         if (myReader == null) {
             return null
         }
-        while (myReader!!.next()) {
-            var i = 1
-            val columnArray: MutableMap<String, String> = mutableMapOf()
-            while (i <= myReader!!.metaData.columnCount) {
-                //заполним наименования колонок
-                columnArray[myReader!!.metaData.getColumnName(i)] =
-                    if (myReader!!.getString(myReader!!.metaData.getColumnName(i)) == null) {
-                        "null"
-                    } else
-                        myReader!!.getString(myReader!!.metaData.getColumnName(i))
-                i++
+
+        try {
+            while (myReader!!.next()) {
+                var i = 1
+                val columnArray: MutableMap<String, String> = mutableMapOf()
+                while (i <= myReader!!.metaData.columnCount) {
+                    //заполним наименования колонок
+                    columnArray[myReader!!.metaData.getColumnName(i)] =
+                        if (myReader!!.getString(myReader!!.metaData.getColumnName(i)) == null) {
+                            "null"
+                        } else
+                            myReader!!.getString(myReader!!.metaData.getColumnName(i))
+                    i++
+                }
+                myArr.add(columnArray)
+
             }
-            myArr.add(columnArray)
+            myReader!!.close()
 
+            return myArr
         }
-        myReader!!.close()
-
-        return myArr
+        catch (e:Exception) {
+            excStr = e.toString()
+            return null
+        }
     }
 
     /*Функция по выполнению запроса без возвращзаения
@@ -134,6 +174,9 @@ object SQL1S : SQLSynchronizer() {
     */
     fun executeWithoutRead(TextQuery: String): Boolean {
         return executeQuery(queryParser(TextQuery), false)
+    }
+    fun executeWithoutReadForCoroutin(TextQuery: String): Boolean {
+        return executeQueryForCoroutin(queryParser(TextQuery), false)
     }
 
     //Возвращает пустой ID

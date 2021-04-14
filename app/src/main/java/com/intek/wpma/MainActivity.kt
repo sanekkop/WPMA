@@ -247,9 +247,14 @@ class MainActivity :  BarcodeDataReceiver() {
         ss.title = ss.fullVers + " " + ss.terminal.trim()
         title = ss.title
 
+
         GlobalScope.launch {
             updateInitialize(this@MainActivity)
        }
+
+
+
+
         return true
 
     }

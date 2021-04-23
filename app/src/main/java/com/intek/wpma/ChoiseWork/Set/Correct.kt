@@ -11,7 +11,6 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.view.isVisible
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.Model.Model
@@ -20,7 +19,6 @@ import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_correct.*
 import kotlinx.android.synthetic.main.activity_correct.FExcStr
 import kotlinx.android.synthetic.main.activity_set.*
-
 
 class Correct : BarcodeDataReceiver() {
 
@@ -108,10 +106,10 @@ class Correct : BarcodeDataReceiver() {
         getItemAndDocSet()
         val label: TextView = findViewById(R.id.label)
 
-        label.text = "Корректировка позиции ${ccItem!!.InvCode}"
+        label.text = ("Корректировка позиции ${ccItem!!.InvCode}")
         val enterCountCorrect: EditText = findViewById(R.id.enterCountCorrect)
         NoQRCode.setOnClickListener {
-            FExcStr.text = "Введите колво товара без QR-кода"
+            FExcStr.text = ("Введите колво товара без QR-кода")
             enterCountCorrect.setText("")
             enterCountCorrect.visibility = View.VISIBLE
             NoQRCode.isFocusable = false
@@ -163,7 +161,7 @@ class Correct : BarcodeDataReceiver() {
                             "and \$Спр.МаркировкаТовара.Товар = '${ccItem!!.ID}' "
                 val dt = ss.executeWithRead(textQuery) ?: return
                 if (dt.isEmpty()){
-                    FExcStr.text = "Маркировка не найдена, либо товар уже набран/скорректирован! Отсканируйте QR - код"
+                    FExcStr.text = ("Маркировка не найдена, либо товар уже набран/скорректирован! Отсканируйте QR - код")
                     return
                 }
                 if (dt[1][2].toInt() == 1 && dt[1][1] == ss.extendID(iddoc,"КонтрольНабора")) {
@@ -181,12 +179,14 @@ class Correct : BarcodeDataReceiver() {
                     return
                 }
                 countCorrect += 1
-                FExcStr.text = "Корректировка принята " + ccItem!!.InvCode.trim() + " - " + countCorrect.toString() + " шт. ( Осталось: " + (enterCount - countCorrect).toString() + ") Отсканируйте QR - код!"
+                FExcStr.text = ("Корректировка принята " + ccItem!!.InvCode.trim() + " - " +
+                        countCorrect.toString() + " шт. ( Осталось: " +
+                        (enterCount - countCorrect).toString() + ") Отсканируйте QR - код!")
                 if (countCorrect == enterCount) { // скорректировали задданное колво позиций
                     completeCorrect(choiseCorrect, countCorrect)
                 }
             } else {
-                FExcStr.text = "Неправильный тип QR - кода"
+                FExcStr.text = ("Неправильный тип QR - кода")
             }
         }
     }
@@ -353,7 +353,7 @@ class Correct : BarcodeDataReceiver() {
     private fun enterCountCorrect() {
         enterCountCorrect.visibility = View.VISIBLE
         FExcStr.text = "Укажите количество в штуках"
-        enterCountCorrect.setOnKeyListener { v: View, keyCode: Int, event ->
+        enterCountCorrect.setOnKeyListener { _: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                 if (ss.isMobile){  //спрячем клаву
                     val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -369,7 +369,7 @@ class Correct : BarcodeDataReceiver() {
                             FExcStr.text = "Нельзя скорректировать столько! "
                             if (enterCount > (ccItem!!.Count - countFact)) {
                                 FExcStr.text =
-                                    "Нельзя скорректировать столько! Возможно: " + (ccItem!!.Count - countFact).toString() + " шт"
+                                    ("Нельзя скорректировать столько! Возможно: " + (ccItem!!.Count - countFact).toString() + " шт")
                             }
                         } else {
                             //проверим есть ли маркировка
@@ -386,7 +386,7 @@ class Correct : BarcodeDataReceiver() {
                             //есть маркировка, пусть сканируют QR-code
                             if (dt!!.isNotEmpty()) {
                                 flagMark = 1
-                                FExcStr.text = "Отсканируйте QR - код! (Осталось: " + (enterCount - countCorrect).toString() + " шт)"
+                                FExcStr.text = ("Отсканируйте QR - код! (Осталось: " + (enterCount - countCorrect).toString() + " шт)")
                                 enterCountCorrect.visibility = View.INVISIBLE
                                 //без QR - кода можно корректировать только при недостачи
                                 if(btnShortage.isVisible) {
@@ -405,7 +405,7 @@ class Correct : BarcodeDataReceiver() {
                         enterCountWithoutQRCode = enterCountCorrect.text.toString().toInt()
                         if (enterCountWithoutQRCode > enterCount - countCorrect) {
                             FExcStr.text =
-                                "Нельзя скорректировать столько! Возможно: " + (enterCount - countCorrect).toString() + " шт"
+                                ("Нельзя скорректировать столько! Возможно: " + (enterCount - countCorrect).toString() + " шт")
 
                         } else {
                             flagBtn = 0
@@ -416,7 +416,9 @@ class Correct : BarcodeDataReceiver() {
                                 //все позиций скорректированы, завершим корректировку
                                 completeCorrect(choiseCorrect, countCorrect)
                             }
-                            FExcStr.text = "Корректировка принята " + ccItem!!.InvCode.trim() + " - " + countCorrect.toString() + " шт. ( Осталось: " + (enterCount - countCorrect).toString() + ") Отсканируйте QR - код!"
+                            FExcStr.text = ("Корректировка принята " + ccItem!!.InvCode.trim() + " - " +
+                                    countCorrect.toString() + " шт. ( Осталось: " +
+                                    (enterCount - countCorrect).toString() + ") Отсканируйте QR - код!")
                         }
                     }
 
@@ -514,7 +516,7 @@ class Correct : BarcodeDataReceiver() {
             return false
         }
         FExcStr.text =
-            "Корректировка принята " + ccItem!!.InvCode.trim() + " - " + CountCorrect.toString() + " шт. (" + what + ")"
+            ("Корректировка принята " + ccItem!!.InvCode.trim() + " - " + CountCorrect.toString() + " шт. (" + what + ")")
 
         // переходим обратно на форму отбора и завершаем корректировку
         val setInitialization = Intent(this, SetInitialization::class.java)

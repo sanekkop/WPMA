@@ -7,7 +7,6 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.TextView
 import com.intek.wpma.Helpers.Helper
-import com.intek.wpma.Model.Model
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefItem
 import kotlinx.android.synthetic.main.activity_cross_acc.*

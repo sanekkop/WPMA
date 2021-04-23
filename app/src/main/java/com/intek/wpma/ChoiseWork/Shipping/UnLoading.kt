@@ -162,7 +162,7 @@ class UnLoading : BarcodeDataReceiver() {
                 val doc = ss.getDoc(idd, false)
                 if (doc == null) {
                     FExcStr.text =
-                        "Неверно! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
+                        ("Неверно! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку.")
                     badVoise()
                     return false
                 }
@@ -180,13 +180,13 @@ class UnLoading : BarcodeDataReceiver() {
                     val dt = ss.executeWithReadNew(textQuery)
                     if (dt == null) {
                         FExcStr.text =
-                            "Ошибка запроса! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
+                            ("Ошибка запроса! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку.")
                         return false
                     }
 
                     if (dt.isEmpty()) {
                         FExcStr.text =
-                            "Не найдено место! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
+                            ("Не найдено место! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку.")
                         badVoise()
                         return false
                     }
@@ -195,7 +195,7 @@ class UnLoading : BarcodeDataReceiver() {
                     adressUnLoad = ""
                 } else {
                     FExcStr.text =
-                        "Неверно! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
+                        ("Неверно! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку.")
                     badVoise()
                     return false
                 }
@@ -222,7 +222,7 @@ class UnLoading : BarcodeDataReceiver() {
         }
         else {
             FExcStr.text =
-                "Нет действий с данным ШК! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."
+                ("Нет действий с данным ШК! " + if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку.")
             badVoise()
             return false
         }
@@ -296,19 +296,19 @@ class UnLoading : BarcodeDataReceiver() {
             FExcStr.text = "Не найдено место! Отсканируйте коробку."
         }
 
-        lblInfo1.text = dataTable[1][2].substring(
+        lblInfo1.text = (dataTable[1][2].substring(
             dataTable[1][2].trim().length - 5,
             dataTable[1][2].trim().length - 3
         ) + " " +
                 dataTable[1][2].substring(dataTable[1][2].trim().length - 3) +
                 " сектор: " + dataTable[1][0].trim() + "-" + dataTable[1][3].trim() +
-                " ворота: " + dataTable[1][7].trim() + " адрес: " + dataTable[1][4].trim()
-        lblInfo2.text = "место № " + dataTable[1][6].trim() + " из " + dataTable[1][5].trim()
+                " ворота: " + dataTable[1][7].trim() + " адрес: " + dataTable[1][4].trim())
+        lblInfo2.text = ("место № " + dataTable[1][6].trim() + " из " + dataTable[1][5].trim())
         if (adressUnLoad != "") {
 
             val adressScan = RefSection()
             adressScan.foundID(adressUnLoad)
-            lblDocInfo.text = "Новый адрес: " + adressScan.name
+            lblDocInfo.text = ("Новый адрес: " + adressScan.name)
         }
         FExcStr.text =
             if (currentAction == Global.ActionSet.ScanAdress) "Отсканируйте адрес." else "Отсканируйте коробку."

@@ -21,7 +21,6 @@ import kotlinx.android.synthetic.main.activity_free_complectation.btnScan
 import kotlinx.android.synthetic.main.activity_free_complectation.lblInfo1
 import kotlinx.android.synthetic.main.activity_free_complectation.lblState
 
-
 class FreeComplectation : BarcodeDataReceiver() {
 
     private var docDown:MutableMap<String, String> = mutableMapOf()
@@ -38,7 +37,7 @@ class FreeComplectation : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     }
                     catch (e: Exception) {
@@ -113,7 +112,7 @@ class FreeComplectation : BarcodeDataReceiver() {
             finish()
         }
         var oldx = 0F
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
                 return true
@@ -224,15 +223,15 @@ class FreeComplectation : BarcodeDataReceiver() {
         lblState.text = "Свободный спуск или комплектация"
         if (docDown["ID"] != null)
         {
-            lblInfo1.text = docDown["NumberBill"].toString().substring(
+            lblInfo1.text = (docDown["NumberBill"].toString().substring(
                 docDown["NumberBill"].toString().length - 5,
                 docDown["NumberBill"].toString().length - 3
             ) + " " +
                     docDown["NumberBill"].toString()
                         .substring(docDown["NumberBill"].toString().length - 3) +
                     " сектор: " + docDown["MainSectorName"].toString()
-                .trim() + "-" + docDown["NumberCC"].toString()
-            lblInfo2.text = " место № " + docDown["Boxes"].toString()
+                .trim() + "-" + docDown["NumberCC"].toString())
+            lblInfo2.text = (" место № " + docDown["Boxes"].toString())
         }
 
     }

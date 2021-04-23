@@ -1,5 +1,6 @@
 package com.intek.wpma.ChoiseWork.Accept
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -30,7 +31,7 @@ import kotlinx.android.synthetic.main.activity_yap_item.*
 open class Search : BarcodeDataReceiver() {
 
     var oldx = 0F
-    var oldMode:Global.Mode? = null
+    private var oldMode:Global.Mode? = null
     private var currentLine:Int = 1
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
@@ -44,7 +45,7 @@ open class Search : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
@@ -123,7 +124,7 @@ open class Search : BarcodeDataReceiver() {
         }
         setContentView(R.layout.activity_accept)
         title = ss.title
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
             } else if (event.action == MotionEvent.ACTION_MOVE) {
@@ -153,7 +154,7 @@ open class Search : BarcodeDataReceiver() {
 
     }
 
-    fun toModeAcceptance() {
+    private fun toModeAcceptance() {
         //если переход между экранами то просто обновим картинку
         if (oldMode == Global.Mode.Waiting){
             refreshActivity()
@@ -195,7 +196,7 @@ open class Search : BarcodeDataReceiver() {
 
     //подтягиваем данные для таблички
     private fun consign() {
-        var textQuery = "SELECT " +
+        val textQuery = "SELECT " +
                 "identity(int, 1, 1) as Number , " +
                 "AC.iddoc as ACID , " +
                 "journ.iddoc as ParentIDD , " +
@@ -368,8 +369,8 @@ open class Search : BarcodeDataReceiver() {
                         "GROUP BY " +
                         "Supply.\$АдресПоступление.Паллета " +
                         "ORDER BY " +
-                        "Supply.\$АдресПоступление.Паллета ";
-            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id);
+                        "Supply.\$АдресПоступление.Паллета "
+            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
             val dt = ss.executeWithReadNew(textQuery) ?: return
             var palletID = ""
             for (dr in dt) {
@@ -383,7 +384,7 @@ open class Search : BarcodeDataReceiver() {
         //Расчитываем строчечки
         for (dr in consignmen)
         {
-            var countRow = 0;
+            var countRow = 0
             for (drNotAcc in noneAccItem) {
                 if (drNotAcc["iddoc"].toString().trim() == dr["ACID"].toString().trim()) {
                     countRow ++
@@ -427,72 +428,80 @@ open class Search : BarcodeDataReceiver() {
     open fun reactionBarcode(Barcode: String):Boolean {
         val helper = Helper()
         val barcoderes = helper.disassembleBarcode(Barcode)
-        val typeBarcode = barcoderes["Type"].toString()
-        if (typeBarcode == "113") {
-            val idd = barcoderes["IDD"].toString()
+        when (barcoderes["Type"].toString()) {
+            "113" -> {
+                val idd = barcoderes["IDD"].toString()
 
-            if (ss.isSC(idd, "Принтеры")) {
-                if (!ss.FPrinter.foundIDD(idd)) {
-                    return false
+                if (ss.isSC(idd, "Принтеры")) {
+                    if (!ss.FPrinter.foundIDD(idd)) {
+                        return false
+                    }
+                    goodVoise()
+                    refreshActivity()
+                    return true
                 }
-                goodVoise()
-                refreshActivity()
-                return true
+                when {
+                    ss.isSC(idd, "Сотрудники") -> {
+                        ss.FEmployer = RefEmployer()
+                        quitModeAcceptance()
+                        val mainInit = Intent(this, MainActivity::class.java)
+                        startActivity(mainInit)
+                        finish()
+                    }
+                    ss.isSC(idd, "Секции") -> {
+                        if (!ss.FPallet.selected) {
+                            FExcStr.text = "Не выбрана паллета!"
+                            badVoise()
+                            return false
+                        }
+                        val sections = RefSection()
+                        sections.foundIDD(idd)
+
+                        var strPallets = ""
+                        for (dr in ss.FPallets) {
+                            strPallets += ", '" + dr["ID"].toString() + "'"
+                        }
+                        if (strPallets.length > 2) {
+                            strPallets = strPallets.substring(2)  //Убираем спедери запятые
+                        }
+
+                        var textQuery =
+                            "UPDATE \$Спр.ПеремещенияПаллет SET \$Спр.ПеремещенияПаллет.Адрес0 = :ID, " +
+                                    "\$Спр.ПеремещенияПаллет.ФлагОперации = 2 WHERE " +
+                                    "\$Спр.ПеремещенияПаллет .id in ($strPallets)"
+                        textQuery = ss.querySetParam(textQuery, "ID", sections.id)
+                        if (!ss.executeWithoutRead(textQuery)) {
+                            return false
+                        }
+                        //почистим табличку паллет от греха и почистим паллеты
+
+                        ss.FPallets = mutableListOf()
+                        ss.FPallet = RefPalleteMove()
+                        refreshActivity()
+                        return true
+                    }
+                    else -> {
+                        FExcStr.text = "Не верный тип справочника!"
+                        badVoise()
+                        return false
+                    }
+                }
             }
-            if (ss.isSC(idd, "Сотрудники")) {
-                ss.FEmployer = RefEmployer()
-                quitModeAcceptance()
-                val mainInit = Intent(this, MainActivity::class.java)
-                startActivity(mainInit)
-                finish()
-            } else if (ss.isSC(idd, "Секции")) {
-                if (!ss.FPallet.selected) {
-                    FExcStr.text = "Не выбрана паллета!"
+            "pallete" -> {
+                if (scanPalletBarcode(Barcode)) {
+                    refreshActivity()
+                    goodVoise()
+                } else {
                     badVoise()
                     return false
                 }
-                val sections = RefSection()
-                sections.foundIDD(idd)
-
-                var strPallets = ""
-                for (dr in ss.FPallets) {
-                    strPallets += ", '" + dr["ID"].toString() + "'"
-                }
-                if (strPallets.length > 2) {
-                    strPallets = strPallets.substring(2)  //Убираем спедери запятые
-                }
-
-                var textQuery =
-                    "UPDATE \$Спр.ПеремещенияПаллет SET \$Спр.ПеремещенияПаллет.Адрес0 = :ID, \$Спр.ПеремещенияПаллет.ФлагОперации = 2 WHERE \$Спр.ПеремещенияПаллет .id in ($strPallets)"
-                textQuery = ss.querySetParam(textQuery, "ID", sections.id);
-                if (!ss.executeWithoutRead(textQuery)) {
-                    return false
-                }
-                //почистим табличку паллет от греха и почистим паллеты
-
-                ss.FPallets = mutableListOf()
-                ss.FPallet = RefPalleteMove()
-                refreshActivity()
                 return true
-            } else {
+            }
+            else -> {
                 FExcStr.text = "Не верный тип справочника!"
                 badVoise()
                 return false
             }
-        } else if (typeBarcode == "pallete") {
-            if (scanPalletBarcode(Barcode)) {
-                refreshActivity()
-                goodVoise()
-            } else {
-                badVoise()
-                return false
-            }
-            return true
-        }
-        else {
-            FExcStr.text = "Не верный тип справочника!"
-            badVoise()
-            return false
         }
         return false
     }
@@ -539,12 +548,16 @@ open class Search : BarcodeDataReceiver() {
                 }
 
             }
-            if (currentLine < 10) {
-                scroll.fullScroll(View.FOCUS_UP)
-            } else if (currentLine > consignmen.count() - 10) {
-                scroll.fullScroll(View.FOCUS_DOWN)
-            } else if (currentLine % 10 == 0) {
-                scroll.scrollTo(0, 30 * currentLine - 1)
+            when {
+                currentLine < 10 -> {
+                    scroll.fullScroll(View.FOCUS_UP)
+                }
+                currentLine > consignmen.count() - 10 -> {
+                    scroll.fullScroll(View.FOCUS_DOWN)
+                }
+                currentLine % 10 == 0 -> {
+                    scroll.scrollTo(0, 30 * currentLine - 1)
+                }
             }
             //теперь подкрасим строку серым
             table.getChildAt(currentLine).setBackgroundColor(Color.LTGRAY)
@@ -572,7 +585,7 @@ open class Search : BarcodeDataReceiver() {
         return false
     }
 
-    fun scanPalletBarcode(strBarcode: String):Boolean {
+    private fun scanPalletBarcode(strBarcode: String):Boolean {
 
         var textQuery =
             "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, :Employer, @result out; select @result;"
@@ -607,7 +620,7 @@ open class Search : BarcodeDataReceiver() {
         if (!findPallet) {
             val tmpdr:MutableMap<String,String> = mutableMapOf()
             tmpdr["ID"] = ss.FPallet.id
-            tmpdr["Barcode"] = strBarcode;
+            tmpdr["Barcode"] = strBarcode
             tmpdr["Name"] = strBarcode.substring(8,12)
             tmpdr["AdressID"] = ss.getVoidID()
             ss.FPallets.add(tmpdr)
@@ -615,6 +628,7 @@ open class Search : BarcodeDataReceiver() {
         return true
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     open fun refreshActivity() {
 
         if (ss.FPrinter.selected) {
@@ -639,7 +653,7 @@ open class Search : BarcodeDataReceiver() {
             return
         }
 
-        var linearLayout = LinearLayout(this)
+        val linearLayout = LinearLayout(this)
         val rowTitle = TableRow(this)
 
         //добавим столбцы
@@ -709,11 +723,11 @@ open class Search : BarcodeDataReceiver() {
 
             for (DR in consignmen) {
 
-                var linearLayout1 = LinearLayout(this)
+                val linearLayout1 = LinearLayout(this)
                 lineNom ++
                 val rowTitle1 = TableRow(this)
                 rowTitle1.isClickable = true
-                rowTitle1.setOnTouchListener{ v, event ->  //выделение строки при таче
+                rowTitle1.setOnTouchListener{ _, _ ->  //выделение строки при таче
                     var i = 1
                     while (i < table.childCount) {
                         if (rowTitle1 != table.getChildAt(i)) {
@@ -802,9 +816,9 @@ open class Search : BarcodeDataReceiver() {
         }
     }
 
-    fun quitModeAcceptance() {
+    private fun quitModeAcceptance() {
         for (dr in iddoc.split(",")) {
-            lockoutDocAccept(dr.replace("'", "").toString())
+            lockoutDocAccept(dr.replace("'", ""))
         }
     }
 

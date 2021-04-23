@@ -1,6 +1,7 @@
 package com.intek.wpma
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.*
 import android.os.Bundle
 import android.provider.Settings
@@ -18,7 +19,6 @@ import com.intek.wpma.Ref.RefEmployer
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-
 
 class MainActivity :  BarcodeDataReceiver() {
 
@@ -78,6 +78,7 @@ class MainActivity :  BarcodeDataReceiver() {
     }
     //endregion
 
+    @SuppressLint("HardwareIds")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -88,7 +89,8 @@ class MainActivity :  BarcodeDataReceiver() {
             ||(ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE ) == -1))
            // ||(ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE) == -1))
         {
-            ActivityCompat.requestPermissions(this,arrayOf(Manifest.permission.CAMERA,Manifest.permission.INTERNET,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE),0)
+            ActivityCompat.requestPermissions(
+                this,arrayOf(Manifest.permission.CAMERA,Manifest.permission.INTERNET,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE),0)
         }
         ss.CurrentMode = Global.Mode.Main
         ss.isMobile = checkCameraHardware(this)

@@ -12,7 +12,6 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.intek.wpma.SQL.SQL1S
 import kotlinx.android.synthetic.main.activity_set.*
@@ -22,7 +21,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-
 
 abstract class BarcodeDataReceiver: AppCompatActivity() {
 
@@ -258,7 +256,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         return commandID
     }
 
-    fun ibsInicialization(EmployerID: String): Boolean {
+    private fun ibsInicialization(EmployerID: String): Boolean {
         var textQuery =
             "set nocount on; " +
                     "declare @id bigint; " +
@@ -292,7 +290,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         return ibsLock("int_doc_$IDDoc")
     }
 
-    fun ibsLock(BlockText: String): Boolean {
+    private fun ibsLock(BlockText: String): Boolean {
 
         var textQuery =
             "set nocount on; " +
@@ -332,7 +330,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         }
     }
 
-    fun ibsAbsoluteLock(BlockText: String):Boolean  {
+    private fun ibsAbsoluteLock(BlockText: String):Boolean  {
         var textQuery =
         "set nocount on; " +
                 "exec IBS_AbsoluteLock :BlockText;"
@@ -340,21 +338,21 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
         return ss.executeWithoutRead(textQuery)
     }
     fun lockDocAccept(IDDoc: String): Boolean {
-        val BlockText1 = "int_doc_$IDDoc"
-        val BlockText2 = BlockText1.toString() + "_accept"
-        val Lock1 = ibsLock(BlockText1)
-        val Lock2 = ibsAbsoluteLock(BlockText2)
-        return if (Lock1 && Lock2) {
+        val blockText1 = "int_doc_$IDDoc"
+        val blockText2 = blockText1 + "_accept"
+        val lock1 = ibsLock(blockText1)
+        val lock2 = ibsAbsoluteLock(blockText2)
+        return if (lock1 && lock2) {
             //Обе могут, ништяк! Снимем лишний и довольные выходим!
-            ibsLockuot(BlockText1)
+            ibsLockuot(blockText1)
             true
         } else {
             //Не могут обе, нужно снять свои блокировки
-            if (Lock1) {
-                ibsLockuot(BlockText1)
+            if (lock1) {
+                ibsLockuot(blockText1)
             }
-            if (Lock2) {
-                ibsLockuot(BlockText2)
+            if (lock2) {
+                ibsLockuot(blockText2)
             }
             false
         }
@@ -365,22 +363,22 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
     }
 
     fun lockItem(ItemID: String): Boolean {
-        val BlockText1 = "int_ref_Товары_$ItemID"
-        val BlockText2 = BlockText1.toString() + "_unit"
-        val Lock1 = ibsLock(BlockText1)
-        val Lock2 = ibsLock(BlockText2)
+        val blockText1 = "int_ref_Товары_$ItemID"
+        val blockText2 = blockText1 + "_unit"
+        val lock1 = ibsLock(blockText1)
+        val lock2 = ibsLock(blockText2)
         //Только при отсутствии любой из этих блокировок
-        return if (Lock1 && Lock2) {
+        return if (lock1 && lock2) {
             //Обе могут, ништяк! Снимем лишний и довольные выходим!
-            ibsLockuot(BlockText1)
+            ibsLockuot(blockText1)
             true
         } else {
             //Не могут обе, нужно снять свои блокировки
-            if (Lock1) {
-                ibsLockuot(BlockText1)
+            if (lock1) {
+                ibsLockuot(blockText1)
             }
-            if (Lock2) {
-                ibsLockuot(BlockText2)
+            if (lock2) {
+                ibsLockuot(blockText2)
             }
             false
         }

@@ -80,7 +80,7 @@ class Translation {
             result += if (d < 10) {
                 d.toString()
             } else {
-                (d as Char).toString()
+                (d.toChar()).toString()
             }
             num %= div  //остаток от деления
             div /= 2      //уменьшаем делитель

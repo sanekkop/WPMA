@@ -15,10 +15,7 @@ import com.intek.wpma.MainActivity
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.ScanActivity
-import kotlinx.android.synthetic.main.activity_set.*
 import kotlinx.android.synthetic.main.activity_set_complete.*
-import kotlinx.android.synthetic.main.activity_set_complete.FExcStr
-import kotlinx.android.synthetic.main.activity_watch_table_part.*
 
 class SetComplete : BarcodeDataReceiver() {
 
@@ -132,7 +129,7 @@ class SetComplete : BarcodeDataReceiver() {
                 dataTable[1][1] + ")"
         if (dataTable[1][5].toInt() == 1) DocView.text = "САМОВЫВОЗ" else DocView.text = "ДОСТАВКА"
         //тут этот код дублирую, чтобы поймать нажатие на enter после ввода колва с уже установленным принтером
-        enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
+        enterCountPlace.setOnKeyListener { _: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                 if (ss.isMobile){  //спрячем клаву
                     val inputManager: InputMethodManager =  applicationContext.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -259,7 +256,7 @@ class SetComplete : BarcodeDataReceiver() {
             return
         }
 
-        enterCountPlace.setOnKeyListener { v: View, keyCode: Int, event ->
+        enterCountPlace.setOnKeyListener { _: View, keyCode: Int, event ->
             if (!isOnline(this)) {                                      //проверим интернет-соединение
                 FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
             }
@@ -282,8 +279,5 @@ class SetComplete : BarcodeDataReceiver() {
             }
             false
         }
-
     }
-
-
 }

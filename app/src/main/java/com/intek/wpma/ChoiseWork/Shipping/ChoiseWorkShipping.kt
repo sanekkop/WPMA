@@ -1,6 +1,5 @@
 package com.intek.wpma.ChoiseWork.Shipping
 
-
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -12,7 +11,6 @@ import android.widget.Toast
 import com.intek.wpma.*
 import com.intek.wpma.ChoiseWork.Menu
 import kotlinx.android.synthetic.main.activity_menu_shipping.*
-
 
 class ChoiseWorkShipping: BarcodeDataReceiver() {
 
@@ -27,7 +25,7 @@ class ChoiseWorkShipping: BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     }
                     catch(e: Exception) {

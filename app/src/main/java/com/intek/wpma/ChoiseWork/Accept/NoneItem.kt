@@ -1,5 +1,6 @@
 package com.intek.wpma.ChoiseWork.Accept
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
@@ -19,15 +20,17 @@ import kotlinx.android.synthetic.main.activity_none_item.btnScan
 import kotlinx.android.synthetic.main.activity_none_item.scroll
 import kotlinx.android.synthetic.main.activity_none_item.table
 import kotlinx.android.synthetic.main.activity_yap_item.*
+//import kotlinx.coroutines.delay
+//import kotlinx.coroutines.launch
 
 class NoneItem : Search() {
 
     private var currentLine:Int = 1
-    var artSearch : String = ""   //а этот мы будем сравнивать
+    private var artSearch : String = ""   //а этот мы будем сравнивать
     private val itm = RefItem()
     private var idDocItm = ""
     private var noneAccItemLocal: MutableList<MutableMap<String, String>> = mutableListOf()
-    var flagBarcode = ""
+    private var flagBarcode = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         ss.CurrentMode = Global.Mode.AcceptanceNotAccepted
         super.onCreate(savedInstanceState)
@@ -43,7 +46,7 @@ class NoneItem : Search() {
         noneAccItemLocal.addAll(noneAccItem)
 
         //фигня чтобы скрол не скролился
-        table.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
+        table.setOnKeyListener { _, keyCode, event ->
             try {
                 if (event.action == MotionEvent.ACTION_DOWN && ss.helper.whatDirection(keyCode) in listOf("Down", "Up")) {
                     reactionKeyLocal(keyCode)
@@ -53,10 +56,9 @@ class NoneItem : Search() {
             } catch (e: Exception) {
                 true
             }
-        })
+        }
 
-
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
             } else if (event.action == MotionEvent.ACTION_MOVE) {
@@ -92,6 +94,7 @@ class NoneItem : Search() {
     }
 
     //а вот и сама табличка
+    @SuppressLint("ClickableViewAccessibility")
     override fun refreshActivity() {
 
         super.refreshActivity()
@@ -223,7 +226,7 @@ class NoneItem : Search() {
 
                 val linearLayout1 = LinearLayout(this)
                 linearLayout1.isClickable = true
-                linearLayout1.setOnTouchListener{ v, event ->  //выделение строки при таче
+                linearLayout1.setOnTouchListener{ _, _ ->  //выделение строки при таче
                     var i = 1
                     while (i < table.childCount) {
                         if (linearLayout1 != table.getChildAt(i)) {

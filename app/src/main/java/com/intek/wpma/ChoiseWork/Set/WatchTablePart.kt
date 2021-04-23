@@ -7,20 +7,14 @@ import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import android.widget.TableRow
-import android.widget.TextView
 import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
-import android.widget.Toast
+import android.widget.TableRow
+import android.widget.TextView
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.R
-import kotlinx.android.synthetic.main.activity_set.*
 import kotlinx.android.synthetic.main.activity_watch_table_part.*
-import kotlinx.android.synthetic.main.activity_watch_table_part.FExcStr
-import kotlinx.android.synthetic.main.activity_watch_table_part.PreviousAction
-import kotlinx.android.synthetic.main.activity_watch_table_part.table
-
 
 class WatchTablePart : BarcodeDataReceiver() {
 
@@ -40,8 +34,8 @@ class WatchTablePart : BarcodeDataReceiver() {
                 val version = intent.getIntExtra("version", 0)
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
-                    barcode = intent.getStringExtra("data")
-                    codeId = intent.getStringExtra("codeId")
+                    barcode = intent.getStringExtra("data")!!
+                    codeId = intent.getStringExtra("codeId")!!
                     reactionBarcode(barcode)
                 }
             }
@@ -86,7 +80,7 @@ class WatchTablePart : BarcodeDataReceiver() {
         title = ss.title
 
         var oldx = 0F                      //для свайпа, чтобы посмотреть накладную
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
                 true
@@ -241,7 +235,7 @@ class WatchTablePart : BarcodeDataReceiver() {
                 sum.textSize = 16F
                 sum.setTextColor(-0x1000000)
 
-                Price.text = "Сумма : " + dataTable[1][5]
+                Price.text = ("Сумма : " + dataTable[1][5])
 
                 linearLayout.addView(number)
                 linearLayout.addView(address)

@@ -111,7 +111,7 @@ class ShowInfoNewComp: BarcodeDataReceiver() {
         lastGoodAdress = NewComplectation.lastGoodAdress
         nameLastGoodAdress = NewComplectation.nameLastGoodAdress
 
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             var oldx = 0F
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x

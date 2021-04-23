@@ -1,6 +1,6 @@
 package com.intek.wpma.ChoiseWork.Shipping
 
-
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -9,7 +9,6 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
-import android.provider.Contacts
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -24,18 +23,12 @@ import com.intek.wpma.Ref.RefPrinter
 import com.intek.wpma.Ref.RefSection
 import com.intek.wpma.SQL.SQL1S.Const
 import kotlinx.android.synthetic.main.activity_choise_down.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-
 
 class ChoiseDown : BarcodeDataReceiver() {
 
     private var rreviousAction = ""
     private var downSituation: MutableList<MutableMap<String, String>> = mutableListOf()
     private var refresh = false
-
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -48,7 +41,7 @@ class ChoiseDown : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     }
                     catch (e: Exception) {
@@ -231,7 +224,8 @@ class ChoiseDown : BarcodeDataReceiver() {
         return
     }
 
-    private var handler: Handler = object : Handler() {
+    private var handler: Handler = @SuppressLint("HandlerLeak")
+    object : Handler() {
         override fun handleMessage(msg: Message) {
             refreshActivity()
         }
@@ -274,43 +268,43 @@ class ChoiseDown : BarcodeDataReceiver() {
             //айдем нужную кнопку
             when (i) {
                 0 -> {
-                    btn1.text = "$txt1 $txt2"
+                    btn1.text = ("$txt1 $txt2")
                     btn1.isEnabled = allowed
                     btn1.visibility = View.VISIBLE
                     btn1.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 1 -> {
-                    btn2.text = "$txt1 $txt2"
+                    btn2.text = ("$txt1 $txt2")
                     btn2.isEnabled = allowed
                     btn2.visibility = View.VISIBLE
                     btn2.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 2 -> {
-                    btn3.text = "$txt1 $txt2"
+                    btn3.text = ("$txt1 $txt2")
                     btn3.isEnabled = allowed
                     btn3.visibility = View.VISIBLE
                     btn3.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 3 -> {
-                    btn4.text = "$txt1 $txt2"
+                    btn4.text = ("$txt1 $txt2")
                     btn4.isEnabled = allowed
                     btn4.visibility = View.VISIBLE
                     btn4.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 4 -> {
-                    btn5.text = "$txt1 $txt2"
+                    btn5.text = ("$txt1 $txt2")
                     btn5.isEnabled = allowed
                     btn5.visibility = View.VISIBLE
                     btn5.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 5 -> {
-                    btn6.text = "$txt1 $txt2"
+                    btn6.text = ("$txt1 $txt2")
                     btn6.isEnabled = allowed
                     btn6.visibility = View.VISIBLE
                     btn6.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
                 }
                 6 -> {
-                    btn7.text = "$txt1 $txt2"
+                    btn7.text = ("$txt1 $txt2")
                     btn7.isEnabled = allowed
                     btn7.visibility = View.VISIBLE
                     btn7.setTextColor(if (allowed) Color.BLACK else Color.LTGRAY)
@@ -319,7 +313,7 @@ class ChoiseDown : BarcodeDataReceiver() {
 
         }
 
-        btn8.text = "8. КМ:$rreviousAction"
+        btn8.text = ("8. КМ:$rreviousAction")
         btn8.isEnabled = ss.FEmployer.canComplectation
         progressBar.visibility = View.INVISIBLE
 

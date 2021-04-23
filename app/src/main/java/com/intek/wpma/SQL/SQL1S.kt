@@ -13,7 +13,6 @@ import java.math.BigInteger
 import java.text.SimpleDateFormat
 import java.util.*
 
-
 /// <summary>
 /// Класс организующий доступ и синхронизацию с базой данных компании
 /// </summary>

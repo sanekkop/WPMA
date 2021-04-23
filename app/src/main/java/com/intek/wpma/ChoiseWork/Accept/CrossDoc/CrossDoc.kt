@@ -475,7 +475,7 @@ open class CrossDoc : BarcodeDataReceiver() {
             return false
         }
         val docForQuery = currentRowAcceptedItem["iddoc"].toString()
-        var textQuery = ""
+        var textQuery: String
         //Сколько в накладной изначально
         if (acceptedItem["AcceptCount"].toString().toInt() > currentRowAcceptedItem["Count"].toString().toInt()) {
             FExcStr.text =("Нельзя принять по данной накладной более " + currentRowAcceptedItem["Count"].toString() + " штук!")
@@ -510,8 +510,8 @@ open class CrossDoc : BarcodeDataReceiver() {
         //Скорректируем начальное количество
         val beginCount = dTCurrState[0]["Count"].toString().toInt()
 
-        var needNew: Int = 0
-        var coefPlace: Int = 0 //Коэффициент мест, по нему будет расчитывать количество этикеток
+        var needNew = 0
+        var coefPlace = 0 //Коэффициент мест, по нему будет расчитывать количество этикеток
         val tmpDT: MutableList<MutableMap<String, String>> = mutableListOf()
         for (dr in fUnits) {
             if (dr["Coef"].toString().toInt() == 1 && dr["OKEI"].toString() != model.okeiUnit) {
@@ -572,7 +572,7 @@ open class CrossDoc : BarcodeDataReceiver() {
 
         if (needNew > 0) {
             //Есть новые...
-            var currentRow: Int = 0
+            var currentRow = 0
             //Теперь также пишем новые
             for (dr in fUnits) {
                 if (dr["Coef"].toString().toInt() == 0) {
@@ -620,7 +620,7 @@ open class CrossDoc : BarcodeDataReceiver() {
         textQuery = "UPDATE \$Спр.Товары " +
                 "SET \$Спр.Товары.НормаУпаковки = :PackNorm , " +
                 "\$Спр.Товары.КоличествоДеталей = :Details " +
-                "WHERE \$Спр.Товары .id = :ItemID";
+                "WHERE \$Спр.Товары .id = :ItemID"
         textQuery = ss.querySetParam(textQuery, "ItemID", item.id)
         textQuery = ss.querySetParam(textQuery, "PackNorm", packNorm)
         textQuery = ss.querySetParam(textQuery, "Details", acceptedItem["NowDetails"].toString())
@@ -670,9 +670,8 @@ open class CrossDoc : BarcodeDataReceiver() {
 
         //ТЕПЕРЬ ПОЕХАЛА ЗАПИСЬ ДОКУМЕНТА
         //Расчитаем число этикеток
-        var labelCount = 0
+        var labelCount: Int
         labelCount = if (flagBarcode != "0")  0 else 1
-
 
         //Для начала подсосем есть ли уже принятые и не напечатанные строки в накладной
         textQuery =
@@ -769,7 +768,7 @@ open class CrossDoc : BarcodeDataReceiver() {
                     ":Adress, :EmptyDate, :NowTime, 1, :LabelCount, :UnitID, 0, 0, :PalletID); " +
                     "UPDATE DT\$АдресПоступление " +
                     "SET \$АдресПоступление.Количество = :RemainedCount" +
-                    "WHERE DT\$АдресПоступление .iddoc = :Doc and DT\$АдресПоступление .lineno_ = :RemainedLineNo_";
+                    "WHERE DT\$АдресПоступление .iddoc = :Doc and DT\$АдресПоступление .lineno_ = :RemainedLineNo_"
             textQuery = ss.querySetParam(textQuery, "Doc", docForQuery)
             textQuery = ss.querySetParam(textQuery, "LineNo_", newLineNo_)
             textQuery = ss.querySetParam(textQuery, "Number", currentRowAcceptedItem["Number"].toString())
@@ -872,7 +871,7 @@ open class CrossDoc : BarcodeDataReceiver() {
                     "WHERE \$Спр.ЕдиницыШК .id in (" +
                     "SELECT top 1 Units.id FROM \$Спр.ЕдиницыШК as Units (nolock) " +
                     "WHERE Units.parentext = :ItemForUnits " +
-                    "ORDER BY Units.ismark DESC)";
+                    "ORDER BY Units.ismark DESC)"
         textQuery = ss.querySetParam(textQuery, "Barcode", barcode)
         textQuery = ss.querySetParam(textQuery, "Coef", coef)
         textQuery = ss.querySetParam(textQuery, "ItemID", item.id)
@@ -885,11 +884,11 @@ open class CrossDoc : BarcodeDataReceiver() {
         var packNorm = pacNorm
         for (dr in fUnits) {
             if (dr["OKEI"].toString() == okei && dr["Coef"].toString().toInt() != 0) {
-                packNorm += "/" + dr["Coef"].toString();
+                packNorm += "/" + dr["Coef"].toString()
                 if (okei == model.okeiKit) {
-                    packNorm += "!";
+                    packNorm += "!"
                 } else if (okei == model.okeiPackage) {
-                    packNorm += "*";
+                    packNorm += "*"
                 }
                 break
             }
@@ -898,7 +897,7 @@ open class CrossDoc : BarcodeDataReceiver() {
     }
 
     private fun getCoefPackage(): Int {
-        var coef = 0;
+        var coef = 0
         var textQuery =
             "SELECT TOP 1 " +
                     "Units.\$Спр.ЕдиницыШК.Коэффициент as Coef " +

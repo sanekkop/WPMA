@@ -1,6 +1,5 @@
 package com.intek.wpma.ChoiseWork.Accept
 
-
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -13,7 +12,6 @@ import com.intek.wpma.Ref.RefItem
 import kotlinx.android.synthetic.main.activity_search_acc.*
 import kotlinx.android.synthetic.main.activity_search_acc.FExcStr
 import kotlinx.android.synthetic.main.activity_search_acc.details
-
 
 class ItemCard : Search() {
 

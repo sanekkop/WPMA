@@ -4,13 +4,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.Color
 import android.os.Bundle
-import android.widget.TableRow
-import android.widget.TextView
 import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
+import android.widget.TableRow
+import android.widget.TextView
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.Helpers.Helper
@@ -19,15 +18,11 @@ import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
 import kotlinx.android.synthetic.main.activity_show_box.*
-import kotlinx.android.synthetic.main.activity_show_box.FExcStr
-import kotlinx.android.synthetic.main.activity_show_box.table
-import kotlinx.android.synthetic.main.activity_show_info_new_comp.*
-
 
 class ShowBox : BarcodeDataReceiver() {
 
     var iddoc = ""
-    var adressCompl = ""
+    private var adressCompl = ""
     var dataTable: MutableList<MutableMap<String, String>> = mutableListOf()
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
@@ -41,7 +36,7 @@ class ShowBox : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
@@ -103,7 +98,7 @@ class ShowBox : BarcodeDataReceiver() {
         adressCompl = intent.extras!!.getString("AdressCompl")!!
         title = ss.FEmployer.name
         var oldx = 0F
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
            if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
             } else if (event.action == MotionEvent.ACTION_MOVE) {
@@ -238,7 +233,7 @@ class ShowBox : BarcodeDataReceiver() {
                 val sector = RefSection()
                 sector.foundID(dr["AdressCompl"].toString())
 
-                numCC.text = dr["Sector"].toString().trim() + "-" + dr["Number"].toString().trim()
+                numCC.text = (dr["Sector"].toString().trim() + "-" + dr["Number"].toString().trim())
                 numCC.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.2).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT

@@ -15,7 +15,6 @@ import com.intek.wpma.Ref.RefPrinter
 import com.intek.wpma.Ref.RefSection
 import kotlinx.android.synthetic.main.activity_downing.*
 
-
 class Downing : BarcodeDataReceiver() {
 
     private var docDown: MutableMap<String, String> = mutableMapOf()
@@ -35,7 +34,7 @@ class Downing : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
                         FExcStr.text = e.toString()
@@ -121,7 +120,7 @@ class Downing : BarcodeDataReceiver() {
                     docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
                 if (docDown["MaxStub"].toString().toInt() <= remain) {
                     //Можно завершить
-                    FExcStr.text = "Закрываю остальные $remain места..."
+                    FExcStr.text = ("Закрываю остальные $remain места...")
                     endCC()
                 }
             }
@@ -176,7 +175,7 @@ class Downing : BarcodeDataReceiver() {
         if (ss.FEmployer.getAttribute("ПосланныйСектор").toString() != ss.getVoidID()) {
             if (sectorPriory.foundID(ss.FEmployer.getAttribute("ПосланныйСектор").toString())) {
                 if (dt[0]["ParentSector"].toString().trim() != sectorPriory.name.trim()) {
-                    FExcStr.text = "Нельзя! Можно только " + sectorPriory.name.trim() + " сектор!"
+                    FExcStr.text = ("Нельзя! Можно только " + sectorPriory.name.trim() + " сектор!")
                     toModeDownComplete()
                     return
                 }
@@ -442,7 +441,7 @@ class Downing : BarcodeDataReceiver() {
                 if (downSituation[0]["NumberOfOrder"].toString() == "0") {
                     FExcStr.text = "Не присвоен номер задания! Напечатайте этикетку!"
                     badVoise()
-                    false
+                    return false
                 }
                 var textQuery =
                     "declare @res int; exec WPM_CompletePallete :employer, :adress, @res output; "
@@ -483,8 +482,8 @@ class Downing : BarcodeDataReceiver() {
                 oldKey = keyCode
                 btnCansel2.visibility = View.VISIBLE
                 if (keyCode == 4) {
-                    btnCansel2.text = "DEL-ВЫХОД"
-                    FExcStr.text = "Для отказа подтвердите выход кнопкой DEL"
+                    btnCansel2.text = ("DEL-ВЫХОД")
+                    FExcStr.text = ("Для отказа подтвердите выход кнопкой DEL")
                 }
                 else {
                     btnCansel2.text = "НАЗАД-ВЫХОД"
@@ -509,7 +508,7 @@ class Downing : BarcodeDataReceiver() {
                     docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
                 if (docDown["MaxStub"].toString().toInt() <= remain) {
                     //Можно завершить
-                    FExcStr.text = "Закрываю остальные $remain места..."
+                    FExcStr.text = ("Закрываю остальные $remain места...")
                     endCC()
                 }
             }
@@ -528,27 +527,27 @@ class Downing : BarcodeDataReceiver() {
             remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
             lblState.text = docDown["View"].toString()
             lblInfo1.text =
-                "Отобрано " + remain.toString() + " из " + docDown["AllBoxes"].toString()
-            lblNumber.text = docDown["NumberBill"].toString().substring(
+                ("Отобрано " + remain.toString() + " из " + docDown["AllBoxes"].toString())
+            lblNumber.text = (docDown["NumberBill"].toString().substring(
                 docDown["NumberBill"].toString().length - 5,
                 docDown["NumberBill"].toString().length - 3
             ) + " " +
                     docDown["NumberBill"].toString()
                         .substring(docDown["NumberBill"].toString().length - 3) +
                     " сектор: " + docDown["MainSectorName"].toString()
-                .trim() + "-" + docDown["NumberCC"].toString()
+                .trim() + "-" + docDown["NumberCC"].toString())
             lblAdress.text = docDown["AdressCollect"].toString()
-            lblSetter.text = "отборщик: " + ss.helper.getShortFIO(docDown["SetterName"].toString())
+            lblSetter.text = ("отборщик: " + ss.helper.getShortFIO(docDown["SetterName"].toString()))
             lblAdress.visibility = View.VISIBLE
             lblSetter.visibility = View.VISIBLE
             btnKey1.visibility = if (docDown["MaxStub"].toString()
                     .toInt() <= remain
             ) View.VISIBLE else View.INVISIBLE
-            btnKey1.text = "TAB-Все"
+            btnKey1.text = ("TAB-Все")
         }
         else if (ss.CurrentMode == Global.Mode.DownComplete) {
             btnKey1.visibility = if (flagPrintPallete) View.INVISIBLE else View.VISIBLE
-            btnKey1.text = "TAB-Печать"
+            btnKey1.text = ("TAB-Печать")
             if (downSituation[0]["NumberOfOrder"].toString() != "0") {
                 val number: String = downSituation[0]["NumberOfOrder"].toString()
                 lblNumber.text = number.substring(if (number.length > 4) number.length - 4 else 0)
@@ -556,7 +555,7 @@ class Downing : BarcodeDataReceiver() {
             else {
                 lblNumber.text = ""
             }
-            lblInfo1.text = "Всего " + downSituation[0]["AllBox"].toString() + " мест"
+            lblInfo1.text = ("Всего " + downSituation[0]["AllBox"].toString() + " мест")
             lblAdress.visibility = View.INVISIBLE
             lblSetter.visibility = View.INVISIBLE
 

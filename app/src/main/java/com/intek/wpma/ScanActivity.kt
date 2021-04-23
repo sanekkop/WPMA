@@ -3,9 +3,7 @@ package com.intek.wpma
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.Result
-import com.intek.wpma.ChoiseWork.Accept.NoneItem
 import com.intek.wpma.ChoiseWork.Accept.Search
-import com.intek.wpma.ChoiseWork.Accept.YapItem
 import com.intek.wpma.ChoiseWork.Revise.ReviseMark
 import com.intek.wpma.ChoiseWork.Set.Correct
 import com.intek.wpma.ChoiseWork.Set.SetComplete

@@ -1,5 +1,6 @@
 package com.intek.wpma.ChoiseWork.Set
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -14,7 +15,6 @@ import android.view.View.VISIBLE
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.view.isVisible
 import com.intek.wpma.*
 import com.intek.wpma.ChoiseWork.Menu
@@ -182,7 +182,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         }
         mainView.setOnTouchListener(this)           //для запроса задания с телефона,чтобы кликали по этому полю
         var oldx = 0F                      //для свайпа, чтобы посмотреть накладную
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
             } else if (event.action == MotionEvent.ACTION_MOVE) {
@@ -263,6 +263,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private fun toModeSet(AdressID: String?, iddoc: String?): Boolean {
         if (!isOnline(this)) {                                      //проверим интернет-соединение
             FExcStr.text = ("Ошибка доступа. Проблема интернет-соединения!")
@@ -500,7 +501,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         item.visibility = VISIBLE
 
         var oldx = 0F
-        item.setOnTouchListener { v, event ->
+        item.setOnTouchListener { _, event ->
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
             }
@@ -978,7 +979,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         val enterCount: EditText = findViewById(R.id.enterCount)
         enterCount.visibility = VISIBLE
         enterCount.setText("")
-        enterCount.setOnKeyListener { v: View, keyCode: Int, event ->
+        enterCount.setOnKeyListener { _: View, keyCode: Int, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_ENTER) {
                 // сохраняем текст, введенный до нажатия Enter в переменную
                 try {
@@ -1243,6 +1244,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
         return toModeSet(null, null)
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
 
         when(event!!.action){

@@ -13,11 +13,9 @@ import android.view.*
 import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
-import android.widget.Toast
 import com.intek.wpma.*
 import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.Helpers.Translation
-import com.intek.wpma.Ref.Doc
 import com.intek.wpma.Ref.RefEmployer
 import kotlinx.android.synthetic.main.activity_downing.*
 import kotlinx.android.synthetic.main.activity_loading.*
@@ -27,7 +25,6 @@ import kotlinx.android.synthetic.main.activity_loading.lblPlacer
 import kotlinx.android.synthetic.main.activity_loading.table
 import kotlinx.android.synthetic.main.activity_show_box.*
 import kotlinx.android.synthetic.main.activity_unloading.*
-
 
 class Loading : BarcodeDataReceiver() {
 
@@ -52,11 +49,11 @@ class Loading : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     }
                     catch(e: Exception) {
-                        FExcStr.text = "Не удалось отсканировать штрихкод!" + e.toString()
+                        FExcStr.text = ("Не удалось отсканировать штрихкод! $e")
                         badVoise()
                     }
 
@@ -121,7 +118,7 @@ class Loading : BarcodeDataReceiver() {
                 completeLodading()
             }
         }
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
             } else if (event.action == MotionEvent.ACTION_MOVE) {
@@ -802,15 +799,15 @@ class Loading : BarcodeDataReceiver() {
             return
         }
         //путевой есть, надо подтянуть его в название
-        lblPlacer.text = "Путевой: " + wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ") Укладчик: "
+        lblPlacer.text = ("Путевой: " + wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ") Укладчик: ")
         //теперь укладчик
         if (!placer.selected)
         {
-            lblPlacer.text = lblPlacer.text.toString() + "<не выбран>"
+            lblPlacer.text = (lblPlacer.text.toString() + "<не выбран>")
         }
         else
         {
-            lblPlacer.text = lblPlacer.text.toString() + ss.helper.getShortFIO(placer.name)
+            lblPlacer.text = (lblPlacer.text.toString() + ss.helper.getShortFIO(placer.name))
         }
         if (curentAction == Action.Inicialization)
         {
@@ -959,7 +956,7 @@ class Loading : BarcodeDataReceiver() {
             linenom++
         }
         lblPlacer.visibility = View.VISIBLE
-        lblPlacer.text = wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ") ВСЕГО МЕСТ " + countBoxAll.toString()
+        lblPlacer.text = (wayBill["НомерДок"] + " (" + wayBill["ДатаДок"] + ") ВСЕГО МЕСТ " + countBoxAll.toString())
 
     }
 

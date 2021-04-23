@@ -16,18 +16,11 @@ import android.widget.LinearLayout
 import android.widget.TableRow
 import android.widget.TextView
 import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.ChoiseWork.Accept.ItemCard
 import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefItem
 import com.intek.wpma.ScanActivity
-import kotlinx.android.synthetic.main.activity_acc_mark.*
 import kotlinx.android.synthetic.main.activity_cross_mark.*
-import kotlinx.android.synthetic.main.activity_cross_mark.FExcStr
-import kotlinx.android.synthetic.main.activity_cross_mark.btnFinishAccMarkMode
-import kotlinx.android.synthetic.main.activity_cross_mark.btnScan
-import kotlinx.android.synthetic.main.activity_cross_mark.lblPlacer
-import kotlinx.android.synthetic.main.activity_cross_mark.table
 
 class CrossMark : BarcodeDataReceiver() {
 

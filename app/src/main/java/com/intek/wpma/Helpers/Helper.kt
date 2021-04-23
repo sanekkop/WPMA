@@ -22,13 +22,11 @@ class Helper {
     }
 
     fun filterArt(needArt : String, foundArt : String) : String {
-        val resulTate : String = Regex(needArt.substring(0)).find(foundArt.substring(0..4)).toString()
-        return resulTate
+        return Regex(needArt.substring(0)).find(foundArt.substring(0..4)).toString()
     }
 
     fun byeTheNull(nule : String) : String {
-        val nuLev = nule
-        return nuLev.substring(0, nuLev.length -4)
+        return nule.substring(0, nule.length -4)
     }
 
     fun getShortFIO(FIO:String):String    {
@@ -65,13 +63,10 @@ class Helper {
     }
 
     private fun getIDD(Barcode:String):String    {
-        var idd = ""
-        idd = if (Barcode.length == 18)
+        return if (Barcode.length == 18)
             "9999" + Barcode.substring(5, 18)
         else //13 symbols
             "99990" + Barcode.substring(2, 4) + "00" + Barcode.substring(4, 12)
-
-        return idd
     }
 
     fun disassembleBarcode (Barcode: String): MutableMap<String,String>    {

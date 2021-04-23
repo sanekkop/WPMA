@@ -4,7 +4,6 @@ import com.intek.wpma.SQL.SQL1S
 import java.text.SimpleDateFormat
 import java.util.*
 
-
 object ConstantsDepot {
     private var SS: SQL1S = SQL1S
     private var UpdateInterval  = 600

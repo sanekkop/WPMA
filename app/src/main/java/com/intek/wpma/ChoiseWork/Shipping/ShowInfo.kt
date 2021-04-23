@@ -6,11 +6,11 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.os.Bundle
-import android.widget.TableRow
-import android.widget.TextView
 import android.util.Log
 import android.view.*
 import android.widget.LinearLayout
+import android.widget.TableRow
+import android.widget.TextView
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
 import com.intek.wpma.Helpers.Helper
@@ -18,12 +18,7 @@ import com.intek.wpma.MainActivity
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.Ref.RefSection
-import kotlinx.android.synthetic.main.activity_loading.*
-import kotlinx.android.synthetic.main.activity_show_box.*
 import kotlinx.android.synthetic.main.activity_show_info.*
-import kotlinx.android.synthetic.main.activity_show_info.FExcStr
-import kotlinx.android.synthetic.main.activity_show_info.table
-
 
 class ShowInfo : BarcodeDataReceiver() {
 
@@ -43,7 +38,7 @@ class ShowInfo : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
@@ -105,7 +100,7 @@ class ShowInfo : BarcodeDataReceiver() {
         number = intent.extras!!.getString("Number")!!
         title = ss.FEmployer.name
         var oldx = 0F
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
             } else if (event.action == MotionEvent.ACTION_MOVE) {
@@ -240,7 +235,7 @@ class ShowInfo : BarcodeDataReceiver() {
                 val address = TextView(this)
                 val employ = RefEmployer()
                 employ.foundID(DR["Наборщик"].toString())
-                address.text = " " + ss.helper.getShortFIO(employ.name)
+                address.text = (" " + ss.helper.getShortFIO(employ.name))
                 address.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.4).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -250,9 +245,9 @@ class ShowInfo : BarcodeDataReceiver() {
                 address.setTextColor(-0x1000000)
 
                 val count = TextView(this)
-                count.text = " " + ss.helper.shortDate(DR["Дата1"].toString()) + " " +
+                count.text = (" " + ss.helper.shortDate(DR["Дата1"].toString()) + " " +
                         ss.helper.timeToString(DR["Время1"].toString().toInt()) + " - " +
-                        ss.helper.timeToString(DR["Время2"].toString().toInt())
+                        ss.helper.timeToString(DR["Время2"].toString().toInt()))
                 count.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.45).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -274,7 +269,7 @@ class ShowInfo : BarcodeDataReceiver() {
                 val linearLayout2 = LinearLayout(this)
 
                 val mest = TextView(this)
-                mest.text = " -" + DR["НомерЛиста"]
+                mest.text = (" -" + DR["НомерЛиста"])
                 mest.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.1).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -296,7 +291,7 @@ class ShowInfo : BarcodeDataReceiver() {
 
                 val code = TextView(this)
                 employ.foundID(DR["Комплектовщик"].toString())
-                code.text = " " + ss.helper.getShortFIO(employ.name)
+                code.text = (" " + ss.helper.getShortFIO(employ.name))
                 code.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.4).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -307,9 +302,9 @@ class ShowInfo : BarcodeDataReceiver() {
 
                 val sum = TextView(this)
                 sum.text =
-                    " " + ss.helper.shortDate(DR["Дата2"].toString()) + " " + ss.helper.timeToString(
+                    (" " + ss.helper.shortDate(DR["Дата2"].toString()) + " " + ss.helper.timeToString(
                         DR["Время3"].toString().toInt()
-                    )
+                    ))
                 sum.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.25).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT
@@ -319,7 +314,7 @@ class ShowInfo : BarcodeDataReceiver() {
                 sum.setTextColor(-0x1000000)
 
                 val nstrok = TextView(this)
-                nstrok.text = DR["КолСтрок"] + " "
+                nstrok.text = (DR["КолСтрок"] + " ")
                 nstrok.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.2).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT

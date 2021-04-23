@@ -125,8 +125,7 @@ class ShowRoute: NewComplectation() {
                     docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
                 if (docDown["MaxStub"].toString().toInt() <= remain) {
                     //Можно завершить
-                    FExcStr.text =
-                        "Закрываю остальные $remain места..."
+                    FExcStr.text = ("Закрываю остальные $remain места...")
                     endCCNewComp()
                     refreshActivity()
                 }
@@ -146,7 +145,7 @@ class ShowRoute: NewComplectation() {
         }
 
         var oldx = 0F
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
                 return true
@@ -184,10 +183,10 @@ class ShowRoute: NewComplectation() {
             btnKey1.text = "Все"
         } else if (preMode == Global.Mode.NewComplectationComplete) {
             btnKey1.visibility = if (lastGoodAdress == "") View.INVISIBLE else View.VISIBLE
-            btnKey1.text = "TAB - Все"
+            btnKey1.text = ("TAB - Все")
             btnCansel.visibility = View.INVISIBLE
             btnCansel.isEnabled = false
-            btnCansel.text = "DEL - ПОЛОН"
+            btnCansel.text = ("DEL - ПОЛОН")
             if (needAdressComplete != ss.getVoidID()) {
                 btnCansel.visibility = View.VISIBLE
                 btnCansel.isEnabled = true
@@ -196,7 +195,7 @@ class ShowRoute: NewComplectation() {
 
         var cvet = Color.rgb(192, 192, 192)
         Shapka.text =
-            """Комплектация в ${if (preMode == Global.Mode.NewComplectation) "тележку" else "адрес"} (новая)"""
+            ("""Комплектация в ${if (preMode == Global.Mode.NewComplectation) "тележку" else "адрес"} (новая)""")
         var row = TableRow(this)
         var linearLayout = LinearLayout(this)
 

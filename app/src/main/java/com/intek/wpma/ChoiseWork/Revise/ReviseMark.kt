@@ -10,16 +10,11 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
 import com.intek.wpma.BarcodeDataReceiver
-import com.intek.wpma.ChoiseWork.Menu
-import com.intek.wpma.Helpers.Helper
 import com.intek.wpma.R
 import com.intek.wpma.Ref.Doc
 import com.intek.wpma.Ref.RefItem
 import com.intek.wpma.ScanActivity
 import kotlinx.android.synthetic.main.activity_revise_mark.*
-import kotlinx.android.synthetic.main.activity_revise_mark.FExcStr
-import kotlinx.android.synthetic.main.activity_revise_mark.header
-
 
 class ReviseMark : BarcodeDataReceiver() {
 
@@ -184,7 +179,7 @@ class ReviseMark : BarcodeDataReceiver() {
         }
         val item = RefItem()
         item.foundID(mark["Товар"].toString())
-        lblInfo2.text = item.invCode + " " + item.name
+        lblInfo2.text = (item.invCode + " " + item.name)
         lblInfo1.text = if (mark["Отгружен"] == "0") "не отгружен" else " отгружен"
         val docCC = Doc()
         docCC.foundID(mark["ДокОтгрузки"].toString())

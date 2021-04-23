@@ -31,7 +31,7 @@ open class NewComplectation : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(
@@ -143,8 +143,7 @@ open class NewComplectation : BarcodeDataReceiver() {
                 remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
                 if (docDown["MaxStub"].toString().toInt() <= remain) {
                     //Можно завершить
-                    FExcStr.text =
-                        "Закрываю остальные $remain места..."
+                    FExcStr.text = ("Закрываю остальные $remain места...")
                     endCCNewComp()
                     refreshActivity()
                 }
@@ -163,7 +162,7 @@ open class NewComplectation : BarcodeDataReceiver() {
             }
         }
 
-        FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
+        FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
                 return true
@@ -229,7 +228,7 @@ open class NewComplectation : BarcodeDataReceiver() {
 
     }
 
-    fun newComplectationGetFirstOrder() {
+    private fun newComplectationGetFirstOrder() {
         var textQuery =
             "declare @res int " +
                     "begin tran " +
@@ -260,7 +259,7 @@ open class NewComplectation : BarcodeDataReceiver() {
         toModeNewComplectation()
     }
 
-    fun toModeNewComplectation() {
+    private fun toModeNewComplectation() {
 
         if (ss.CurrentMode  == Global.Mode.ShowRoute) {
             preMode = Global.Mode.NewComplectation
@@ -342,7 +341,7 @@ open class NewComplectation : BarcodeDataReceiver() {
         refreshActivity()
     }
 
-    fun loadBadDoc(ID: String) {
+    private fun loadBadDoc(ID: String) {
         var textQuery =
             "Select " +
                     "isnull(Sections.descr, 'Пу') as Sector, " +
@@ -634,7 +633,7 @@ open class NewComplectation : BarcodeDataReceiver() {
                         if (!findAdres) {
                             //нет такого адреса в зоне
                             FExcStr.text =
-                                "Нужен адрес из зоны " + dt[0]["Gate"].toString().trim()
+                                ("Нужен адрес из зоны " + dt[0]["Gate"].toString().trim())
                             badVoise()
                             return false
                         }
@@ -676,7 +675,7 @@ open class NewComplectation : BarcodeDataReceiver() {
         return true
     }
 
-    fun checkFullNewComplete(box: String) {
+    private fun checkFullNewComplete(box: String) {
         var textQuery = "declare @docCB char(9) " +
                 "select @DocCB = DocCC.\$КонтрольНабора.ДокументОснование " +
                 "from \$Спр.МестаПогрузки as Ref " +
@@ -784,7 +783,7 @@ open class NewComplectation : BarcodeDataReceiver() {
                 if (docDown["MaxStub"].toString().toInt() <= remain) {
                     //Можно завершить
                     FExcStr.text =
-                        "Закрываю остальные $remain места..."
+                        ("Закрываю остальные $remain места...")
                     endCCNewComp()
                     refreshActivity()
                 }
@@ -827,7 +826,7 @@ open class NewComplectation : BarcodeDataReceiver() {
         return false
     }
 
-    fun loadCC(): Boolean {
+    private fun loadCC(): Boolean {
         if (badDoc["ID"] == null) {
             FExcStr.text = "Нет текущего сборочного!"
             return false
@@ -872,7 +871,7 @@ open class NewComplectation : BarcodeDataReceiver() {
         return toModeNewComplectation()
     }
 
-    fun refreshdocDown() {
+    private fun refreshdocDown() {
         var textQuery =
             "Select " +
                     "isnull(Sections.descr, 'Пу') as Sector, " +
@@ -962,23 +961,23 @@ open class NewComplectation : BarcodeDataReceiver() {
             remain = docDown["AllBoxes"].toString().toInt() - docDown["Boxes"].toString().toInt()
 
             lblInfo1.text =
-                "Отобрано " + remain.toString() + " из " + docDown["AllBoxes"].toString()
+                ("Отобрано " + remain.toString() + " из " + docDown["AllBoxes"].toString())
             /* if (Screan === 1) {
                 ShowInfoNewComp()
             }
 
            */
             lblState.text = "Комплектация в тележку (новая)"//docDown["View"].toString()
-            lblNumber.text = docDown["NumberBill"].toString().substring(
+            lblNumber.text = (docDown["NumberBill"].toString().substring(
                 docDown["NumberBill"].toString().length - 5,
                 docDown["NumberBill"].toString().length - 3
             ) + " " +
                     docDown["NumberBill"].toString()
                         .substring(docDown["NumberBill"].toString().length - 3) +
                     " сектор: " + docDown["MainSectorName"].toString()
-                .trim() + "-" + docDown["NumberCC"].toString()
+                .trim() + "-" + docDown["NumberCC"].toString())
             lblAdress.text = docDown["AdressCollect"].toString()
-            lblSetter.text = "отборщик: " + ss.helper.getShortFIO(docDown["SetterName"].toString())
+            lblSetter.text = ("отборщик: " + ss.helper.getShortFIO(docDown["SetterName"].toString()))
             lblAdress.visibility = View.VISIBLE
             lblSetter.visibility = View.VISIBLE
             btnKey1.visibility = if (docDown["MaxStub"].toString()
@@ -989,15 +988,15 @@ open class NewComplectation : BarcodeDataReceiver() {
 
             if (docDown.isNotEmpty()) {
                 lblAdress.text =
-                    "Ворота: " + docDown["Sector"].toString() + "  " + docDown["Boxes"].toString() + " м"
-                lblNumber.text = docDown["NumberBill"].toString().substring(
+                    ("Ворота: " + docDown["Sector"].toString() + "  " + docDown["Boxes"].toString() + " м")
+                lblNumber.text = (docDown["NumberBill"].toString().substring(
                     docDown["NumberBill"].toString().length - 5,
                     docDown["NumberBill"].toString().length - 3
                 ) +
                         " " + docDown["NumberBill"].toString()
                     .substring(docDown["NumberBill"].toString().length - 3) +
                         " сектор: " + docDown["MainSectorName"].toString()
-                    .trim() + "-" + docDown["NumberCC"].toString()
+                    .trim() + "-" + docDown["NumberCC"].toString())
                 lblSetter.text = docDown["AdressCollect"].toString().trim()
             } else {
                 lblAdress.text = ""
@@ -1011,25 +1010,25 @@ open class NewComplectation : BarcodeDataReceiver() {
                 lblSetter.text = ""
             }
 
-            btnKey1.text = "TAB - Все"
+            btnKey1.text = ("TAB - Все")
             if (downSituation[0]["NumberOfOrder"].toString() != "0") {
                 val number: String = downSituation[0]["NumberOfOrder"].toString()
                 //заглушка пока не понял как ее обойти
                 if (downSituation[0]["AllBox"].toString() == "1") {
                     lblNumber.text = ""
                 }
-                lblNumber.text = lblNumber.text.toString().trim() + " задание " + number.substring(if (number.length > 4) number.length - 4 else 0)
+                lblNumber.text = (lblNumber.text.toString().trim() + " задание " + number.substring(if (number.length > 4) number.length - 4 else 0))
             }
-            lblInfo1.text = "Всего " + downSituation[0]["AllBox"].toString() + " мест"
+            lblInfo1.text = ("Всего " + downSituation[0]["AllBox"].toString() + " мест")
             lblAdress.visibility = View.VISIBLE
             lblSetter.visibility = View.VISIBLE
             if (lastGoodAdress != "") {
                 //lblSetter.ForeColor = Color.DarkGray
-                lblSetter.text = "'все' -->$nameLastGoodAdress"
+                lblSetter.text = ("'все' -->$nameLastGoodAdress")
             }
             btnCansel.visibility = View.INVISIBLE
             btnCansel.isEnabled = false
-            btnCansel.text = "DEL - ПОЛОН"
+            btnCansel.text = ("DEL - ПОЛОН")
             if (needAdressComplete != ss.getVoidID()) {
                 btnCansel.visibility = View.VISIBLE
                 btnCansel.isEnabled = true

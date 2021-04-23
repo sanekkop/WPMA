@@ -13,8 +13,6 @@ import android.widget.TableRow
 import android.widget.TextView
 import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_cross_info.*
-import kotlinx.android.synthetic.main.activity_cross_info.scroll
-import kotlinx.android.synthetic.main.activity_none_item.*
 
 class CrossInfo : CrossDoc() {
     private var currentLine : Int = 1

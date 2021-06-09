@@ -383,7 +383,7 @@ object SQL1S : SQLSynchronizer() {
 
     }
 
-    fun sqlToDateTime(StrDateTime: String): String {
+    private fun sqlToDateTime(StrDateTime: String): String {
         //Пока что без времени
         return StrDateTime.substring(0, 10)
        /* return StrDateTime.substring(0, 4) + //"." +

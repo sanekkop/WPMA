@@ -11,33 +11,7 @@ import com.intek.wpma.R
 import com.intek.wpma.ref.RefItem
 import kotlinx.android.synthetic.main.activity_cross_acc.*
 import kotlinx.android.synthetic.main.activity_cross_acc.FExcStr
-import kotlinx.android.synthetic.main.activity_cross_acc.btnMark
-import kotlinx.android.synthetic.main.activity_cross_acc.btnPrinItem
-import kotlinx.android.synthetic.main.activity_cross_acc.details
-import kotlinx.android.synthetic.main.activity_cross_acc.itemName
-import kotlinx.android.synthetic.main.activity_cross_acc.pricePrih
-import kotlinx.android.synthetic.main.activity_cross_acc.shapka
-import kotlinx.android.synthetic.main.activity_cross_acc.storageSize
-import kotlinx.android.synthetic.main.activity_cross_acc.tbBarcode0
-import kotlinx.android.synthetic.main.activity_cross_acc.tbBarcode1
-import kotlinx.android.synthetic.main.activity_cross_acc.tbBarcode2
-import kotlinx.android.synthetic.main.activity_cross_acc.tbBarcode3
-import kotlinx.android.synthetic.main.activity_cross_acc.tbCoef0
-import kotlinx.android.synthetic.main.activity_cross_acc.tbCoef1
-import kotlinx.android.synthetic.main.activity_cross_acc.tbCoef2
-import kotlinx.android.synthetic.main.activity_cross_acc.tbCoef3
-import kotlinx.android.synthetic.main.activity_cross_acc.tbCount0
-import kotlinx.android.synthetic.main.activity_cross_acc.tbCount1
-import kotlinx.android.synthetic.main.activity_cross_acc.tbCount2
-import kotlinx.android.synthetic.main.activity_cross_acc.tbCount3
-import kotlinx.android.synthetic.main.activity_cross_acc.tbRes0
-import kotlinx.android.synthetic.main.activity_cross_acc.tbRes1
-import kotlinx.android.synthetic.main.activity_cross_acc.tbRes2
-import kotlinx.android.synthetic.main.activity_cross_acc.tbRes3
-import kotlinx.android.synthetic.main.activity_cross_acc.zonaHand
-import kotlinx.android.synthetic.main.activity_cross_acc.zonaTech
 import kotlinx.android.synthetic.main.activity_crossdoc.*
-import kotlinx.android.synthetic.main.activity_search_acc.*
 
 class CrossCard : CrossDoc() {
 
@@ -45,12 +19,14 @@ class CrossCard : CrossDoc() {
     private var fUnits: MutableList<MutableMap<String, String>> = mutableListOf()
     private val newBarcodes: MutableList<String> = mutableListOf()
     private var idDoc = ""
+    private var orderId = ""
     private var allCount = 0
     private var bufferWarehouse = "" //переменка для товара на главном
     private var flagBarcode = ""
     private var isMoveButton = true
     private var xCoor = 2
     private var yCoor = 4
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +37,7 @@ class CrossCard : CrossDoc() {
         title = ss.title
         item.foundID(intent.extras!!.getString("itemID")!!)
         idDoc = intent.extras!!.getString("iddoc")!!
+        orderId = intent.extras!!.getString("orderId")!!
         countMarkPac = if (intent.extras!!.getString("countMarkPac").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkPac").toString().toInt()
         countMarkUnit = if (intent.extras!!.getString("countMarkUnit").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkUnit").toString().toInt()
         countItemAcc = if (intent.extras!!.getString("countItemAcc").isNullOrEmpty()) 0 else intent.extras!!.getString("countItemAcc").toString().toInt()
@@ -102,8 +79,10 @@ class CrossCard : CrossDoc() {
             val backH = Intent(this, CrossMark::class.java)
             backH.putExtra("ParentForm", "CrossCard")
             backH.putExtra("flagBarcode", flagBarcode)
+            backH.putExtra("parentIDD", parentIDD)
             backH.putExtra("itemID", item.id)
             backH.putExtra("iddoc", idDoc)
+            backH.putExtra("orderId", orderId)
             backH.putExtra("countItemAcc", acceptedItem["AcceptCount"].toString())
             startActivity(backH)
             finish()
@@ -291,7 +270,7 @@ class CrossCard : CrossDoc() {
     }
 
     //у нас давно все отрисованно, поэтому просто подтягиваем данные по товару дальше
-    override fun refreshActivity()  {
+    override fun refreshActivity() {
         //все подсчеты в reactionKey
         tbCoef1.text = "0"
         tbCoef2.text = "0"
@@ -406,6 +385,8 @@ class CrossCard : CrossDoc() {
             .toInt() / tbCoef2.text.toString().toInt()).toString() else "0"
         tbRes3.text = if (tbCoef3.text.toString().toInt() > 0) (acceptedItem["Count"].toString()
             .toInt() / tbCoef3.text.toString().toInt()).toString() else "0"
+
+        markCount.text = checkMark(idDoc).toString()
 
         //определяем, как был найден товар, перед тем, как зайти в карточку
         when (flagBarcode) {
@@ -587,10 +568,12 @@ class CrossCard : CrossDoc() {
             }
             // -  переход в режим маркирвоки
             val backH = Intent(this, CrossMark::class.java)
-            backH.putExtra("ParentForm", "ItemCard")
+            backH.putExtra("ParentForm", "CrossCard")
             backH.putExtra("flagBarcode", flagBarcode)
+            backH.putExtra("parentIDD", parentIDD)
             backH.putExtra("itemID", item.id)
             backH.putExtra("iddoc", idDoc)
+            backH.putExtra("orderId", orderId)
             backH.putExtra("countItemAcc", acceptedItem["AcceptCount"].toString())
             startActivity(backH)
             finish()

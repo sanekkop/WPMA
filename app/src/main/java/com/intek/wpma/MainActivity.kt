@@ -25,11 +25,10 @@ import java.text.SimpleDateFormat
 class MainActivity :  BarcodeDataReceiver() {
 
     var barcode: String = ""
+    var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
     private val sdf = SimpleDateFormat("yyyyMMdd HH:mm:ss", Locale.US)
     val currentDate = sdf.format(Date()).substring(0, 8) + " 00:00:00.000"
     val currentTime = ss.timeStrToSeconds(sdf.format(Date()).substring(9, 17))
-    //var currentTime = Date().time
-    var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     val barcodeDataReceiver = object : BroadcastReceiver() {
@@ -133,11 +132,13 @@ class MainActivity :  BarcodeDataReceiver() {
     }
 
     private fun reactionBarcode(Barcode: String) {
+        //проверка корректности времени при сканировании ШК
         if (!syncDateTime()) {
-            badVoice()
+            badVoiсe()
             resLbl.text = ("Системное время сбито! \n Обратитесь к администратору!")
             return
         }
+
         if (!initTSD()) {
             return
         }
@@ -261,6 +262,7 @@ class MainActivity :  BarcodeDataReceiver() {
             updateInitialize(this@MainActivity)
        }
         return true
+
     }
 
     private fun syncDateTime() : Boolean {
@@ -279,13 +281,13 @@ class MainActivity :  BarcodeDataReceiver() {
 
             if (dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"].toString().toInt() == 3) {
 
-                //первый параметр пока, в принципе, не нужен, пусть висит, потом придумаю, если че вылезет
+                //первые два параметра пока, в принципе, не нужны, пусть висят, потом придумаю, если че вылезет
                 //val deviceName = dataMapRead["Спр.СинхронизацияДанных.ДатаВход2"].toString()
                 val strDate = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString().trim()
                 val sec = dataMapRead["Спр.СинхронизацияДанных.ДатаРез2"].toString().trim().toInt()
 
-                //если системное время не ушло вперед или назад, то все хорошо, пускаем дальше
                 return !(currentTime - sec > inaccuracyTime || sec - currentTime > inaccuracyTime || strDate != needDate)
+
             }
             else if (dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"].toString().toInt() == -3) {
                 //в тексте исключения будет ответ 1С - например о том, что версия не подходит
@@ -295,4 +297,5 @@ class MainActivity :  BarcodeDataReceiver() {
         }
         return false
     }
+
 }

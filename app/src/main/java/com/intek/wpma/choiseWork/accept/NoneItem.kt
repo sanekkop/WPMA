@@ -269,16 +269,16 @@ class NoneItem : Search() {
                 )
                 dcNum.textSize = 18F
                 dcNum.setTextColor(-0x1000000)
-                val addRess = TextView(this)
-                addRess.text = DR["Article"].toString().trim()
-                addRess.typeface = Typeface.SERIF
-                addRess.layoutParams = LinearLayout.LayoutParams(
+                val address = TextView(this)
+                address.text = DR["Article"].toString().trim()
+                address.typeface = Typeface.SERIF
+                address.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.24).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 )
-                addRess.gravity = Gravity.START
-                addRess.textSize = 18F
-                addRess.setTextColor(-0x1000000)
+                address.gravity = Gravity.START
+                address.textSize = 18F
+                address.setTextColor(-0x1000000)
                 val boxES = TextView(this)
                 boxES.text = DR["ArticleOnPack"].toString().trim()
                 boxES.typeface = Typeface.SERIF
@@ -312,7 +312,7 @@ class NoneItem : Search() {
 
                 linearLayout1.addView(numBer)
                 linearLayout1.addView(dcNum)
-                linearLayout1.addView(addRess)
+                linearLayout1.addView(address)
                 linearLayout1.addView(boxES)
                 linearLayout1.addView(boxesFact)
                 linearLayout1.addView(koEf)

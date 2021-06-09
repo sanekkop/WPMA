@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="ChoiseWork.Accept.CrossDoc.CrossCard">
+    tools:context="choiseWork.accept.crossDoc.CrossCard">
 
     <TextView
         android:id="@+id/shapka"
@@ -417,7 +417,7 @@
                 android:layout_height="fill_parent"
                 android:layout_weight="1"
                 android:gravity="end"
-                android:text="макрк-вок"
+                android:text="марк-вок"
                 android:textColor="#ff0000"
                 android:textStyle="bold" />
 

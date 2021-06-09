@@ -3,13 +3,13 @@ package com.intek.wpma
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.Result
-import com.intek.wpma.ChoiseWork.Accept.Search
-import com.intek.wpma.ChoiseWork.Revise.ReviseMark
-import com.intek.wpma.ChoiseWork.Set.Correct
-import com.intek.wpma.ChoiseWork.Set.SetComplete
-import com.intek.wpma.ChoiseWork.Set.SetInitialization
-import com.intek.wpma.ChoiseWork.Shipping.*
-import com.intek.wpma.SQL.SQL1S
+import com.intek.wpma.choiseWork.accept.Search
+import com.intek.wpma.choiseWork.revise.ReviseMark
+import com.intek.wpma.choiseWork.set.Correct
+import com.intek.wpma.choiseWork.set.SetComplete
+import com.intek.wpma.choiseWork.set.SetInitialization
+import com.intek.wpma.choiseWork.shipping.*
+import com.intek.wpma.sql.SQL1S
 import me.dm7.barcodescanner.zxing.ZXingScannerView
 
 var ParentForm: String = ""

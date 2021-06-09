@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF"
     android:scrollbarFadeDuration="10"
-    tools:context="ChoiseWork.Accept.CrossDoc.CrossNonItem">
+    tools:context="choiseWork.accept.crossDoc.CrossNonItem">
 
     <TextView
         android:id="@+id/head"

@@ -28,37 +28,51 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".ScanActivity" />
-        <activity android:name=".ChoiseWork.Set.WatchTablePart" />
-        <activity android:name=".ChoiseWork.Set.SetComplete" />
-        <activity android:name=".ChoiseWork.Set.Correct" />
-        <activity android:name=".ChoiseWork.Set.SetInitialization" />
-        <activity android:name=".ChoiseWork.Shipping.ChoiseWorkShipping" />
-        <activity android:name=".ChoiseWork.Shipping.Downing" />
-        <activity android:name=".ChoiseWork.Shipping.UnLoading" />
-        <activity android:name=".ChoiseWork.Shipping.Loading" />
-        <activity android:name=".ChoiseWork.Shipping.FreeComplectation" />
-        <activity android:name=".ChoiseWork.Shipping.ShowInfo" />
-        <activity android:name=".ChoiseWork.Shipping.ChoiseDown" />
-        <activity android:name=".ChoiseWork.Shipping.NewComplectation" />
-        <activity android:name=".ChoiseWork.Accept.Search" />
-        <activity android:name=".ChoiseWork.Menu" />
-        <activity android:name=".ChoiseWork.Shipping.ShowInfoNewComp" />
-        <activity android:name=".ChoiseWork.Accept.AccMenu" />
-        <activity android:name=".ChoiseWork.Accept.YapItem" />
-        <activity android:name=".ChoiseWork.Accept.NoneItem"/>
-        <activity android:name=".ChoiseWork.Accept.ItemCard"/>
-        <activity android:name=".ChoiseWork.Shipping.ShowRoute" />
-        <activity android:name=".ChoiseWork.Revise.ReviseMark" />
-        <activity android:name=".ChoiseWork.Shipping.ShowBox" />
-        <activity android:name=".ChoiseWork.Revise.MarkMenu" />
-        <activity android:name=".ChoiseWork.Revise.ReMark" />
-        <activity android:name=".ChoiseWork.Accept.AccMark" />
-        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossCard"/>
-        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossYepItem"/>
-        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossMark"/>
-        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossDoc"/>
-        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossNonItem"/>
-        <activity android:name=".ChoiseWork.Accept.CrossDoc.CrossInfo"/>
+        <activity android:name=".choiseWork.Menu" />
+        <!-- Набор -->
+        <activity android:name=".choiseWork.set.WatchTablePart" />
+        <activity android:name=".choiseWork.set.SetComplete" />
+        <activity android:name=".choiseWork.set.Correct" />
+        <activity android:name=".choiseWork.set.SetInitialization" />
+        <!-- Спуск, погрузка, отгрузка -->
+        <activity android:name=".choiseWork.shipping.ChoiseWorkShipping" />
+        <activity android:name=".choiseWork.shipping.Downing" />
+        <activity android:name=".choiseWork.shipping.UnLoading" />
+        <activity android:name=".choiseWork.shipping.Loading" />
+        <!-- Комплектация -->
+        <activity android:name=".choiseWork.shipping.FreeComplectation" />
+        <activity android:name=".choiseWork.shipping.ShowInfo" />
+        <activity android:name=".choiseWork.shipping.ChoiseDown" />
+        <activity android:name=".choiseWork.shipping.NewComplectation" />
+        <activity android:name=".choiseWork.shipping.ShowInfoNewComp" />
+        <activity android:name=".choiseWork.shipping.ShowRoute" />
+        <activity android:name=".choiseWork.shipping.ShowBox" />
+        <!-- Приемка -->
+        <activity android:name=".choiseWork.accept.Search" />
+        <activity android:name=".choiseWork.accept.AccMenu" />
+        <activity android:name=".choiseWork.accept.YapItem" />
+        <activity android:name=".choiseWork.accept.NoneItem"/>
+        <activity android:name=".choiseWork.accept.ItemCard"/>
+        <!-- Маркировка -->
+        <activity android:name=".choiseWork.revise.ReviseMark" />
+        <activity android:name=".choiseWork.revise.MarkMenu" />
+        <activity android:name=".choiseWork.revise.ReMark" />
+        <activity android:name=".choiseWork.accept.AccMark" />
+        <!-- Кросс-докинг -->
+        <activity android:name=".choiseWork.accept.crossDoc.CrossCard"/>
+        <activity android:name=".choiseWork.accept.crossDoc.CrossYepItem"/>
+        <activity android:name=".choiseWork.accept.crossDoc.CrossMark"/>
+        <activity android:name=".choiseWork.accept.crossDoc.CrossDoc"/>
+        <activity android:name=".choiseWork.accept.crossDoc.CrossNonItem"/>
+        <activity android:name=".choiseWork.accept.crossDoc.CrossInfo"/>
+        <!-- Разнос -->
+        <activity android:name=".choiseWork.accept.transfer.TransferInitialize"/>
+        <activity android:name=".choiseWork.accept.transfer.TransferMode"/>
+        <activity android:name=".choiseWork.accept.transfer.TransferYepItem"/>
+        <activity android:name=".choiseWork.accept.transfer.TransferCard"/>
+        <activity android:name=".choiseWork.accept.transfer.TransferCardRec"/>
+        <activity android:name=".choiseWork.accept.transfer.TransferCardState"/>
+
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
     <androidx.constraintlayout.widget.ConstraintLayout
-    tools:context=".ChoiseWork.Shipping.ShowInfo"
+    tools:context=".choiseWork.shipping.ShowInfo"
     android:layout_height="match_parent"
     android:layout_width="match_parent"
     xmlns:tools="http://schemas.android.com/tools"

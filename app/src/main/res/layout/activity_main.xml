@@ -36,7 +36,7 @@
     <TextView
         android:id="@+id/resLbl"
         android:layout_width="306dp"
-        android:layout_height="81dp"
+        android:layout_height="wrap_content"
         android:gravity="center"
         android:text="@string/resText"
         android:textColor="#D12114"
@@ -44,7 +44,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.57" />
+        app:layout_constraintTop_toBottomOf="@id/actionLbl"
+        app:layout_constraintVertical_bias="0.1" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

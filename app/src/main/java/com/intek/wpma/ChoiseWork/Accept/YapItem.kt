@@ -410,7 +410,7 @@ class YapItem : Search() {
         }
     }
 
-    fun deleteRowAcceptedItems(currRow:MutableMap<String,String>):Boolean {
+    private fun deleteRowAcceptedItems(currRow:MutableMap<String,String>):Boolean {
 
         var textQuery =
             "BEGIN TRAN; " +
@@ -480,7 +480,7 @@ class YapItem : Search() {
     }
 
 
-    fun printLabels(condition: Boolean):Boolean {
+    private fun printLabels(condition: Boolean):Boolean {
         if (consignmen.isEmpty())
         {
             FExcStr.text = "Не выбраны накладные для приемки!"

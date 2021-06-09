@@ -531,6 +531,7 @@ class SetInitialization : BarcodeDataReceiver(), View.OnTouchListener {
 
         correct.visibility = VISIBLE
         correct.isFocusable = false
+        correct.text = if (docSet!!.Special) "ОСОБЕННАЯ" else "9 - коррект."
         mainView.text = docSet!!.View
 
         ss.CurrentMode = Global.Mode.Set

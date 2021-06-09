@@ -917,7 +917,7 @@ open class CrossDoc : BarcodeDataReceiver() {
         return coef
     }
 
-    private fun checkMark(idDocItm:String): Int {
+    fun checkMark(idDocItm:String): Int {
 
         ss.excStr = ""
         var textQuery = "SELECT " +

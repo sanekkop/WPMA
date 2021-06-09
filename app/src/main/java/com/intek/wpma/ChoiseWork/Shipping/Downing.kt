@@ -35,7 +35,7 @@ class Downing : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
                         FExcStr.text = e.toString()
@@ -255,7 +255,7 @@ class Downing : BarcodeDataReceiver() {
             FExcStr.text = "Принтер не выбран!"
             return false
         }
-        if (downSituation[0]["NumberOfOrder"].toString() == "0") {
+        if (downSituation[0]["NumberOfOrder"].toString() == "0" || downSituation[0]["NumberOfOrder"].toString() == "null") {
             var textQuery =
                 "declare @res int; exec WPM_GetNumberOfOrder :employer, @res output; " +
                         "select @res as result" +
@@ -266,7 +266,7 @@ class Downing : BarcodeDataReceiver() {
             }
             toModeDownComplete()
             //Повторно проверим, должно было присвоится!
-            if (downSituation[0]["NumberOfOrder"].toString() == "0") {
+            if (downSituation[0]["NumberOfOrder"].toString() == "0" || downSituation[0]["NumberOfOrder"].toString() == "null") {
                 FExcStr.text = "Не удается присвоить номер задания!"
                 return false
             }
@@ -352,8 +352,14 @@ class Downing : BarcodeDataReceiver() {
                 var textQuery =
                     "Select " +
                             "\$Спр.МестаПогрузки.Дата4 as Date, " +
+                            "DocCB.\$КонтрольРасходной.Ворота as Gate, " +
                             "\$Спр.МестаПогрузки.КонтрольНабора as Doc " +
-                            "from \$Спр.МестаПогрузки (nolock) where id = :id"
+                            "from \$Спр.МестаПогрузки (nolock) " +
+                            "inner join DH\$КонтрольНабора as DocCC (nolock) " +
+                            "   on DocCC.iddoc = \$Спр.МестаПогрузки.КонтрольНабора " +
+                            "inner join DH\$КонтрольРасходной as DocCB (nolock) " +
+                            "   on DocCB.iddoc = DocCC.\$КонтрольНабора.ДокументОснование " +
+                            "where id = :id "
                 textQuery = ss.querySetParam(textQuery, "id", id)
                 val dt = ss.executeWithReadNew(textQuery) ?: return false
                 if (dt.isEmpty()) {
@@ -368,6 +374,11 @@ class Downing : BarcodeDataReceiver() {
                 }
                 if (!ss.isVoidDate(dt[0]["Date"].toString())) {
                     FExcStr.text = "Место уже отобрано!"
+                    badVoise()
+                    return false
+                }
+                if (dt[0]["Gate"].toString() == ss.getVoidID()) {
+                    FExcStr.text = "Место рано спускать! Нет Ворот!"
                     badVoise()
                     return false
                 }
@@ -428,9 +439,24 @@ class Downing : BarcodeDataReceiver() {
             } else if (ss.isSC(idd, "Принтеры")) {
                 if (ss.FPrinter.selected) {
                     ss.FPrinter = RefPrinter()
-                } else ss.FPrinter.foundIDD(idd)
+                }
+                else if (!ss.FPrinter.foundIDD(idd)) {
+                    FExcStr.text = "Не найден принтер!"
+                    badVoise()
+                    return false
+                }
+                else {
+                    FExcStr.text = "Принтер выбран!"
+                    flagPrintPallete = false
+                }
                 refreshActivity()
             } else if (ss.CurrentMode == Global.Mode.DownComplete && ss.isSC(idd, "Секции")) {
+                //проверим выбран ли принтер
+                if (!ss.FPrinter.selected) {
+                    FExcStr.text = "Не выбран принтер!"
+                    badVoise()
+                    return false
+                }
                 val section = RefSection()
                 section.foundIDD(barcoderes["IDD"].toString())
                 if (!section.selected) {
@@ -439,10 +465,10 @@ class Downing : BarcodeDataReceiver() {
                     return false
                 }
                 val id = section.id
-                if (downSituation[0]["NumberOfOrder"].toString() == "0") {
+                if (downSituation[0]["NumberOfOrder"].toString() == "0" || downSituation[0]["NumberOfOrder"].toString() == "null") {
                     FExcStr.text = "Не присвоен номер задания! Напечатайте этикетку!"
                     badVoise()
-                    false
+                    return false
                 }
                 var textQuery =
                     "declare @res int; exec WPM_CompletePallete :employer, :adress, @res output; "

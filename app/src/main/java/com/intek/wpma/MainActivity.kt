@@ -18,12 +18,17 @@ import com.intek.wpma.Ref.RefEmployer
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class MainActivity :  BarcodeDataReceiver() {
 
     var barcode: String = ""
     var codeId:String = ""  //показатель по которому можно различать типы штрих-кодов
+    private val sdf = SimpleDateFormat("yyyyMMdd HH:mm:ss", Locale.US)
+    val currentDate = sdf.format(Date()).substring(0, 8) + " 00:00:00.000"
+    val currentTime = ss.timeStrToSeconds(sdf.format(Date()).substring(9, 17))
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     val barcodeDataReceiver = object : BroadcastReceiver() {
@@ -124,6 +129,13 @@ class MainActivity :  BarcodeDataReceiver() {
         return super.onKeyDown(keyCode, event)
     }
     private fun reactionBarcode(Barcode: String) {
+        //проверка корректности времени при сканировании ШК
+        if (!syncDateTime()) {
+            badVoise()
+            resLbl.text = ("Системное время сбито! \n Обратитесь к администратору!")
+            return
+        }
+
         if (!initTSD()) {
             return
         }
@@ -258,4 +270,38 @@ class MainActivity :  BarcodeDataReceiver() {
         return true
 
     }
+
+    private fun syncDateTime() : Boolean {
+
+        val inaccuracyTime = 3600   //погрешность времени между сервером и системным
+        val needDate = currentDate.substring(6,8) + "." + currentDate.substring(4,6) + "." + currentDate.substring(2,4)
+
+        val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = ss.vers
+        val dataMapRead: MutableMap<String, Any> = mutableMapOf()
+        val fieldList : MutableList<String> = mutableListOf()
+        fieldList.add("Спр.СинхронизацияДанных.ДатаВход2")
+        fieldList.add("Спр.СинхронизацияДанных.ДатаРез1")
+        fieldList.add("Спр.СинхронизацияДанных.ДатаРез2")
+        if (execCommand("GetDateTime", dataMapWrite, fieldList, dataMapRead).isNotEmpty()) {
+
+            if (dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"].toString().toInt() == 3) {
+
+                //первые два параметра пока, в принципе, не нужны, пусть висят, потом придумаю, если че вылезет
+                //val deviceName = dataMapRead["Спр.СинхронизацияДанных.ДатаВход2"].toString()
+                val strDate = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString().trim()
+                val sec = dataMapRead["Спр.СинхронизацияДанных.ДатаРез2"].toString().trim().toInt()
+
+                return !(currentTime - sec > inaccuracyTime || sec - currentTime > inaccuracyTime || strDate != needDate)
+
+            }
+            else if (dataMapRead["Спр.СинхронизацияДанных.ФлагРезультата"].toString().toInt() == -3) {
+                //в тексте исключения будет ответ 1С - например о том, что версия не подходит
+                actionLbl.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
+                return false
+            }
+        }
+        return false
+    }
+
 }

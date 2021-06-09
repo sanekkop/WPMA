@@ -328,15 +328,24 @@ class CrossYepItem: CrossDoc() {
     }
 
     private fun printLabels(condition: Boolean):Boolean {
+
+        //FExcStr = null;
+       // PalletAcceptedItem = null;
         if (consignmen.isEmpty()) {
             FExcStr.text = "Не выбраны накладные для приемки!"
             return false
         }
-
         if (acceptedItems.isEmpty()) {
             FExcStr.text= "Нет принятых товаров в текущей сессии!"
             return false
         }
+
+        if (!ss.FPrinter.selected)
+        {
+            FExcStr.text= "Принтер не выбран!";
+            return false;
+        }
+
         //Формируем строку с ид-шниками АдресовПоступления
         var strACID = ""
         for (dr in consignmen) {
@@ -346,12 +355,13 @@ class CrossYepItem: CrossDoc() {
 
         val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"]       = strACID
+        dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"]       = condition.toString()
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход2"]    = ss.extendID(ss.FPrinter.id, "Спр.Принтеры")
         dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"]    = ss.extendID(ss.FEmployer.id, "Спр.Сотрудники")
         var dataMapRead: MutableMap<String, Any> = mutableMapOf()
         val fieldList: MutableList<String> = mutableListOf("Спр.СинхронизацияДанных.ДатаРез1")
         try {
-            dataMapRead = execCommand("AdressAcceptance" + if (condition) "Condition" else "", dataMapWrite, fieldList, dataMapRead)
+            dataMapRead = execCommand("CompleteAcceptanceCross", dataMapWrite, fieldList, dataMapRead)
         } catch (e: Exception) {
             badVoise()
             FExcStr.text= "Не удалось напечатать этикетки"
@@ -364,5 +374,6 @@ class CrossYepItem: CrossDoc() {
         }
         FExcStr.text = dataMapRead["Спр.СинхронизацияДанных.ДатаРез1"].toString()
         return true
+
     }
 }

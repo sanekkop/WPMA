@@ -23,11 +23,11 @@ import kotlinx.android.synthetic.main.activity_yap_item.*
 class NoneItem : Search() {
 
     private var currentLine:Int = 1
-    var artSearch : String = ""   //а этот мы будем сравнивать
+    private var artSearch : String = ""   //а этот мы будем сравнивать
     private val itm = RefItem()
     private var idDocItm = ""
     private var noneAccItemLocal: MutableList<MutableMap<String, String>> = mutableListOf()
-    var flagBarcode = ""
+    private var flagBarcode = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         ss.CurrentMode = Global.Mode.AcceptanceNotAccepted
         super.onCreate(savedInstanceState)
@@ -43,7 +43,7 @@ class NoneItem : Search() {
         noneAccItemLocal.addAll(noneAccItem)
 
         //фигня чтобы скрол не скролился
-        table.setOnKeyListener(View.OnKeyListener { v, keyCode, event ->
+        table.setOnKeyListener { v, keyCode, event ->
             try {
                 if (event.action == MotionEvent.ACTION_DOWN && ss.helper.whatDirection(keyCode) in listOf("Down", "Up")) {
                     reactionKeyLocal(keyCode)
@@ -53,7 +53,7 @@ class NoneItem : Search() {
             } catch (e: Exception) {
                 true
             }
-        })
+        }
 
 
         FExcStr.setOnTouchListener(fun(v: View, event: MotionEvent): Boolean {
@@ -267,16 +267,16 @@ class NoneItem : Search() {
                 )
                 dcNum.textSize = 18F
                 dcNum.setTextColor(-0x1000000)
-                val addRess = TextView(this)
-                addRess.text = DR["Article"].toString().trim()
-                addRess.typeface = Typeface.SERIF
-                addRess.layoutParams = LinearLayout.LayoutParams(
+                val address = TextView(this)
+                address.text = DR["Article"].toString().trim()
+                address.typeface = Typeface.SERIF
+                address.layoutParams = LinearLayout.LayoutParams(
                     (ss.widthDisplay * 0.24).toInt(),
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 )
-                addRess.gravity = Gravity.START
-                addRess.textSize = 18F
-                addRess.setTextColor(-0x1000000)
+                address.gravity = Gravity.START
+                address.textSize = 18F
+                address.setTextColor(-0x1000000)
                 val boxES = TextView(this)
                 boxES.text = DR["ArticleOnPack"].toString().trim()
                 boxES.typeface = Typeface.SERIF
@@ -310,7 +310,7 @@ class NoneItem : Search() {
 
                 linearLayout1.addView(numBer)
                 linearLayout1.addView(dcNum)
-                linearLayout1.addView(addRess)
+                linearLayout1.addView(address)
                 linearLayout1.addView(boxES)
                 linearLayout1.addView(boxesFact)
                 linearLayout1.addView(koEf)

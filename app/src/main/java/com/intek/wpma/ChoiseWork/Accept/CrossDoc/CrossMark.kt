@@ -34,6 +34,7 @@ class CrossMark : BarcodeDataReceiver() {
     private var idDoc = ""
     private var flagBarcode = ""
     private var itemID = ""
+    private var orderId = ""
     private var markItemDT : MutableList<MutableMap<String, String>> = mutableListOf()
     private var naklAcc: MutableMap<String,String> = mutableMapOf()
     private var item = RefItem()
@@ -43,6 +44,7 @@ class CrossMark : BarcodeDataReceiver() {
     private var countMarkPacOld = 0
     private var countMarkUnitOld = 0
     private var countItemAcc = 0
+    private var parentIDD : String = ""
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
     var barcode: String = ""
@@ -108,8 +110,10 @@ class CrossMark : BarcodeDataReceiver() {
         setContentView(R.layout.activity_acc_mark)
         flagBarcode = intent.extras!!.getString("flagBarcode")!!
         title = ss.title
+        parentIDD = intent.extras!!.getString("parentIDD")!!
         itemID = intent.extras!!.getString("itemID")!!
         idDoc = intent.extras!!.getString("iddoc")!!
+        orderId = intent.extras!!.getString("orderId")!!
         countMarkPacOld = if (intent.extras!!.getString("countMarkPac").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkPac").toString().toInt()
         countMarkUnitOld = if (intent.extras!!.getString("countMarkUnit").isNullOrEmpty()) 0 else intent.extras!!.getString("countMarkUnit").toString().toInt()
         countItemAcc = if (intent.extras!!.getString("countItemAcc").isNullOrEmpty()) 0 else intent.extras!!.getString("countItemAcc").toString().toInt()
@@ -143,7 +147,7 @@ class CrossMark : BarcodeDataReceiver() {
             if (rowDT["id"].toString() == "null" || rowDT["id"].toString() == "") {
                 val dataMapWrite: MutableMap<String, Any> = mutableMapOf()
                 dataMapWrite["Спр.СинхронизацияДанных.ДатаСпрВход1"] = ss.extendID(itemID, "Спр.Товары")
-                dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(idDoc, "АдресПоступление")
+                dataMapWrite["Спр.СинхронизацияДанных.ДокументВход"] = ss.extendID(orderId, "ЗаказНаКлиента")
                 dataMapWrite["Спр.СинхронизацияДанных.ДатаВход1"] = rowDT["Mark"].toString().replace("'","''")
                 dataMapWrite["Спр.СинхронизацияДанных.ДатаВход2"] = rowDT["Box"].toString()
                 if (!execCommandNoFeedback("MarkInsert", dataMapWrite)) {
@@ -158,9 +162,12 @@ class CrossMark : BarcodeDataReceiver() {
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
             itemCardInit.putExtra("iddoc", idDoc)
+            itemCardInit.putExtra("orderId", orderId)
             itemCardInit.putExtra("countMarkUnit", countMarkUnit.toString())
             itemCardInit.putExtra("countMarkPac", countMarkPac.toString())
             itemCardInit.putExtra("countItemAcc", countItemAcc.toString())
+            itemCardInit.putExtra("parentIDD", parentIDD)
+
             startActivity(itemCardInit)
             finish()
             return
@@ -185,7 +192,7 @@ class CrossMark : BarcodeDataReceiver() {
                 "CAST(LEFT(ISNULL(journ.date_time_iddoc, journAC.date_time_iddoc ), 8) as datetime) as DateDoc , " +
                 "CONVERT(char(8), CAST(LEFT(ISNULL(journ.date_time_iddoc, journAC.date_time_iddoc ),8) as datetime), 4) as DateDocText " +
                 "FROM " +
-                " DH\$АдресПоступление as AC (nolock) " +
+                " DH\$ЗаказНаКлиента as AC (nolock) " +
                 "INNER JOIN _1sjourn as journAC (nolock) " +
                 "     ON journAC.iddoc = AC.iddoc " +
                 "LEFT JOIN _1sjourn as journ (nolock) " +
@@ -193,7 +200,7 @@ class CrossMark : BarcodeDataReceiver() {
                 "LEFT JOIN DH\$ПриходнаяКредит as PK (nolock) " +
                 "     ON journ.iddoc = PK.iddoc " +
                 "WHERE" +
-                " AC.iddoc = '${idDoc}' "
+                " AC.iddoc = '${orderId}' "
 
         val naklAccTemp = ss.executeWithReadNew(textQuery)
         if (naklAccTemp == null || naklAccTemp.isEmpty())
@@ -205,9 +212,11 @@ class CrossMark : BarcodeDataReceiver() {
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
             itemCardInit.putExtra("iddoc", idDoc)
+            itemCardInit.putExtra("orderId", orderId)
             itemCardInit.putExtra("countMarkUnit", countMarkUnitOld.toString())
             itemCardInit.putExtra("countMarkPac", countMarkPacOld.toString())
             itemCardInit.putExtra("countItemAcc", countItemAcc.toString())
+            itemCardInit.putExtra("parentIDD", parentIDD)
             startActivity(itemCardInit)
             finish()
             return
@@ -324,9 +333,11 @@ class CrossMark : BarcodeDataReceiver() {
             itemCardInit.putExtra("flagBarcode", flagBarcode)
             itemCardInit.putExtra("itemID", itemID)
             itemCardInit.putExtra("iddoc", idDoc)
+            itemCardInit.putExtra("orderId", orderId)
             itemCardInit.putExtra("countMarkUnit", countMarkUnitOld.toString())
             itemCardInit.putExtra("countMarkPac", countMarkPacOld.toString())
             itemCardInit.putExtra("countItemAcc", countItemAcc.toString())
+            itemCardInit.putExtra("parentIDD", parentIDD)
 
 
             startActivity(itemCardInit)

@@ -13,7 +13,7 @@ open class SQLSynchronizer
     //private val fDBName: String = "int9999001ad4" //База
     private val fDBName: String = "int9999001rab"
     private val fVers: String = "5.03"    //Номер версии
-    val fullVers = "$fVers.11"
+    val fullVers = "$fVers.12"
     private var myConnection: Connection? = null
     private var myComand: Statement? = null
     protected var myReader: ResultSet? = null

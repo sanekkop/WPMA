@@ -206,7 +206,7 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
                     continue
                 }
                 var i = 1
-                while (i < dataTable.size) {
+                while (i < dataTable[0].size) {
                     DataMapRead[FieldList[i - 1]] = dataTable[1][i]
                     i++
                 }

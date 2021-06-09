@@ -33,6 +33,7 @@ open class CrossNonItem : CrossDoc() {
     private var flagBarcode = ""
     private var print = ""
     private var clientCheck = ""
+    private var orderId = ""
     override fun onCreate(savedInstanceState: Bundle?) {
         ss.CurrentMode = Global.Mode.AcceptanceNotAccepted
         super.onCreate(savedInstanceState)
@@ -79,6 +80,8 @@ open class CrossNonItem : CrossDoc() {
             else ItemName.text = noneAccItemLocal[0]["ItemName"].toString()
             idDocItm = noneAccItemLocal[0]["iddoc"].toString()
             clientCheck = noneAccItemLocal[0]["ClientName"].toString().trim()
+            orderId = noneAccItemLocal[0]["OrderID"].toString()
+
         }
         refreshActivity()
     }
@@ -164,6 +167,8 @@ open class CrossNonItem : CrossDoc() {
                             else ItemName.text = DR["ItemName"]
                             clientCheck = DR["ClientName"].toString().trim()
                             idDocItm = DR["iddoc"].toString().trim()
+                            orderId = DR["OrderID"].toString()
+
                         }
                         i++
                     }
@@ -223,6 +228,7 @@ open class CrossNonItem : CrossDoc() {
                 gotoItem.putExtra("itemID", itm.id)
                 gotoItem.putExtra("flagBarcode", flagBarcode)
                 gotoItem.putExtra("iddoc", idDocItm)
+                gotoItem.putExtra("orderId", orderId)
                 startActivity(gotoItem)
                 finish()
                 return true
@@ -235,6 +241,7 @@ open class CrossNonItem : CrossDoc() {
                 gotoItem.putExtra("itemID", itm.id)
                 gotoItem.putExtra("flagBarcode", flagBarcode)
                 gotoItem.putExtra("iddoc", "")
+                gotoItem.putExtra("orderId", orderId)
                 startActivity(gotoItem)
                 finish()
                 return true
@@ -273,6 +280,7 @@ open class CrossNonItem : CrossDoc() {
                 gotoItem.putExtra("itemID", itm.id)
                 gotoItem.putExtra("flagBarcode", flagBarcode)
                 gotoItem.putExtra("iddoc", idDocItm)
+                gotoItem.putExtra("orderId", orderId)
                 startActivity(gotoItem)
                 finish()
             }
@@ -323,6 +331,7 @@ open class CrossNonItem : CrossDoc() {
 
         idDocItm = noneAccItemLocal[currentLine - 1]["iddoc"].toString()
         clientCheck = noneAccItemLocal[currentLine - 1]["ClientName"].toString().trim()
+        orderId = noneAccItemLocal[currentLine - 1]["OrderID"].toString()
         //теперь подкрасим строку серым
         table.getChildAt(currentLine).setBackgroundColor(Color.LTGRAY)
         return res

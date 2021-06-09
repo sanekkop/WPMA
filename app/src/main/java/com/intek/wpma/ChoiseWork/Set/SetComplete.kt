@@ -15,10 +15,8 @@ import com.intek.wpma.MainActivity
 import com.intek.wpma.R
 import com.intek.wpma.Ref.RefEmployer
 import com.intek.wpma.ScanActivity
-import kotlinx.android.synthetic.main.activity_set.*
 import kotlinx.android.synthetic.main.activity_set_complete.*
 import kotlinx.android.synthetic.main.activity_set_complete.FExcStr
-import kotlinx.android.synthetic.main.activity_watch_table_part.*
 
 class SetComplete : BarcodeDataReceiver() {
 

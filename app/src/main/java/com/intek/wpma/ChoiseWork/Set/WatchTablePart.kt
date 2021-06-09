@@ -40,8 +40,8 @@ class WatchTablePart : BarcodeDataReceiver() {
                 val version = intent.getIntExtra("version", 0)
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
-                    barcode = intent.getStringExtra("data")
-                    codeId = intent.getStringExtra("codeId")
+                    barcode = intent.getStringExtra("data")!!
+                    codeId = intent.getStringExtra("codeId")!!
                     reactionBarcode(barcode)
                 }
             }

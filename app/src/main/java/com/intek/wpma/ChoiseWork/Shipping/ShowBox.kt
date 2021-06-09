@@ -27,7 +27,7 @@ import kotlinx.android.synthetic.main.activity_show_info_new_comp.*
 class ShowBox : BarcodeDataReceiver() {
 
     var iddoc = ""
-    var adressCompl = ""
+    private var adressCompl = ""
     var dataTable: MutableList<MutableMap<String, String>> = mutableListOf()
 
     //region шапка с необходимыми функциями для работы сканеров перехватчиков кнопок и т.д.
@@ -41,7 +41,7 @@ class ShowBox : BarcodeDataReceiver() {
                 if (version >= 1) {
                     // ту прописываем что делать при событии сканирования
                     try {
-                        barcode = intent.getStringExtra("data")
+                        barcode = intent.getStringExtra("data")!!
                         reactionBarcode(barcode)
                     } catch (e: Exception) {
                         val toast = Toast.makeText(

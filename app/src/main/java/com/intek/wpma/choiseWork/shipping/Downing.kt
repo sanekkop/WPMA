@@ -379,7 +379,7 @@ class Downing : BarcodeDataReceiver() {
                 }
                 if (dt[0]["Gate"].toString() == ss.getVoidID()) {
                     FExcStr.text = "Место рано спускать! Нет Ворот!"
-                    badVoiсe()
+                    badVoice()
                     return false
                 }
 
@@ -442,7 +442,7 @@ class Downing : BarcodeDataReceiver() {
                 }
                 else if (!ss.FPrinter.foundIDD(idd)) {
                     FExcStr.text = "Не найден принтер!"
-                    badVoiсe()
+                    badVoice()
                     return false
                 }
                 else {
@@ -454,7 +454,7 @@ class Downing : BarcodeDataReceiver() {
                 //проверим выбран ли принтер
                 if (!ss.FPrinter.selected) {
                     FExcStr.text = "Не выбран принтер!"
-                    badVoiсe()
+                    badVoice()
                     return false
                 }
                 val section = RefSection()

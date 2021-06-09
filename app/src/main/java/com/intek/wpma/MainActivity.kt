@@ -134,7 +134,7 @@ class MainActivity :  BarcodeDataReceiver() {
     private fun reactionBarcode(Barcode: String) {
         //проверка корректности времени при сканировании ШК
         if (!syncDateTime()) {
-            badVoiсe()
+            badVoice()
             resLbl.text = ("Системное время сбито! \n Обратитесь к администратору!")
             return
         }

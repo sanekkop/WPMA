@@ -109,19 +109,19 @@ class SetComplete : BarcodeDataReceiver() {
                     "CONVERT(char(8), CAST(LEFT(journForBill.date_time_iddoc, 8) as datetime), 4) as DateDoc, " +
                     "journForBill.iddoc as Bill, " +
                     "Sector.descr as Sector, " +
-                    "DocCCHead.SP3595 as Number, " +
-                    "DocCCHead.SP2841 as SelfRemovel " +
-                    "FROM " +
-                    "DH2776 as DocCCHead (nolock) " +
-                    "LEFT JOIN SC1141 as Sector (nolock) " +
-                    "ON Sector.id = DocCCHead.SP2764 " +
-                    "LEFT JOIN DH2763 as DocCB (nolock) " +
-                    "ON DocCB.iddoc = DocCCHead.SP2771 " +
-                    "LEFT JOIN DH196 as Bill (nolock) " +
-                    "ON Bill.iddoc = DocCB.SP2759 " +
-                    "LEFT JOIN _1sjourn as journForBill (nolock) " +
+                    "DocCCHead.\$КонтрольНабора.НомерЛиста as Number , " +
+                    "DocCCHead.\$КонтрольНабора.ФлагСамовывоза as SelfRemovel " +
+            "FROM " +
+                "DH\$КонтрольНабора as DocCCHead (nolock) " +
+                "LEFT JOIN \$Спр.Секции as Sector (nolock) " +
+                    "ON Sector.id = DocCCHead.\$КонтрольНабора.Сектор " +
+                "LEFT JOIN DH\$КонтрольРасходной as DocCB (nolock) " +
+                    "ON DocCB.iddoc = DocCCHead.\$КонтрольНабора.ДокументОснование " +
+                "LEFT JOIN DH\$Счет as Bill (nolock) " +
+                    "ON Bill.iddoc = DocCB.\$КонтрольРасходной.ДокументОснование " +
+                "LEFT JOIN _1sjourn as journForBill (nolock) " +
                     "ON journForBill.iddoc = Bill.iddoc " +
-                    "WHERE DocCCHead.iddoc = '$docSet'"
+            "WHERE DocCCHead.iddoc = '$docSet'"
         val dataTable = ss.executeWithRead(textQuery)
         previousAction.text = if (dataTable!![1][5].toInt() == 1) "(C) " else  "" +
                 dataTable[1][3].trim() + "-" +
@@ -200,7 +200,7 @@ class SetComplete : BarcodeDataReceiver() {
         }
         //подтянем адрес комплектации
         val textQuery =
-            "SELECT ID, SP3964, descr FROM SC1141 (nolock) WHERE SP1935= '$idd'"
+            "SELECT ID, \$Спр.Секции.ТипСекции , descr FROM \$Спр.Секции (nolock) WHERE \$Спр.Секции.IDD = '$idd'"
         val dataTable = ss.executeWithRead(textQuery) ?: return false
         val addressType = dataTable[1][1]
         val addressID = dataTable[1][0]

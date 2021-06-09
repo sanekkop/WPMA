@@ -36,7 +36,7 @@ class WatchTablePart : BarcodeDataReceiver() {
                     // ту прописываем что делать при событии сканирования
                     barcode = intent.getStringExtra("data")!!
                     codeId = intent.getStringExtra("codeId")!!
-                    reactionBarcode(barcode)
+                    reactionBarcode()
                 }
             }
         }
@@ -63,7 +63,7 @@ class WatchTablePart : BarcodeDataReceiver() {
     }
     //endregion
 
-    private fun reactionBarcode(Barcode: String) {
+    private fun reactionBarcode() {
         FExcStr.text = "ШК не работают на данном экране!"
         badVoice()
      }
@@ -83,7 +83,7 @@ class WatchTablePart : BarcodeDataReceiver() {
         FExcStr.setOnTouchListener(fun(_: View, event: MotionEvent): Boolean {
             if (event.action == MotionEvent.ACTION_DOWN) {
                 oldx = event.x
-                true
+
             } else if (event.action == MotionEvent.ACTION_MOVE) {
                 if (event.x > oldx) {
                     FExcStr.text = "Подгружаю список..."
@@ -179,22 +179,22 @@ class WatchTablePart : BarcodeDataReceiver() {
             "select " +
                     "DocCC.lineno_ as Number, " +
                     "Sections.descr as Adress, " +
-                    "Goods.SP1036 as InvCode, " +
-                    "DocCC.SP3110 as Count, " +
-                    "DocCC.SP3114 as Sum, " +
-                    "DocCCHead.SP3114 as totalSum " +
+                    "Goods.\$Спр.Товары.ИнвКод as InvCode , " +
+                    "DocCC.\$КонтрольНабора.Количество as Count , " +
+                    "DocCC.\$КонтрольНабора.Сумма as Sum , " +
+                    "DocCCHead.\$КонтрольНабора.Сумма as totalSum " +
             "from " +
-                    "DT2776 as DocCC (nolock) " +
-                    "LEFT JOIN DH2776 as DocCCHead (nolock) ON DocCCHead.iddoc = DocCC.iddoc " +
-                    "LEFT JOIN SC33 as Goods (nolock) ON Goods.id = DocCC.SP3109 " +
-                    "LEFT JOIN SC1141 as Sections (nolock) ON Sections.id = DocCC.SP5508 " +
+                    "DT\$КонтрольНабора as DocCC (nolock) " +
+                    "LEFT JOIN DH\$КонтрольНабора as DocCCHead (nolock) ON DocCCHead.iddoc = DocCC.iddoc " +
+                    "LEFT JOIN \$Спр.Товары as Goods (nolock) ON Goods.id = DocCC.\$КонтрольНабора.Товар " +
+                    "LEFT JOIN \$Спр.Секции as Sections (nolock) ON Sections.id = DocCC.\$КонтрольНабора.Адрес0 " +
             "where " +
                     "DocCC.iddoc = :iddoc " +
-                    "and DocCC.SP5986 = :EmptyDate " +
-                    "and DocCC.SP3116 = 0 " +
-                    "and DocCC.SP3110 > 0 "+
+                    "and DocCC.\$КонтрольНабора.Дата5 = :EmptyDate " +
+                    "and DocCC.\$КонтрольНабора.Корректировка = 0 " +
+                    "and DocCC.\$КонтрольНабора.Количество > 0 "+
             "order by " +
-                    "DocCCHead.SP2764 , Sections.SP5103 , Number"
+                    "DocCCHead.\$КонтрольНабора.Сектор , Sections.\$Спр.Секции.Маршрут , Number"
         textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         textQuery = ss.querySetParam(textQuery, "iddoc", iddoc)
         textQuery = ss.querySetParam(textQuery, "addressID", addressID)

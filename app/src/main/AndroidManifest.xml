@@ -3,7 +3,7 @@
     xmlns:dist="http://schemas.android.com/apk/distribution"
     package="com.intek.wpma"
     android:versionCode="1"
-    android:versionName="5.03">
+    android:versionName="5.04">
     <dist:module dist:instant="true" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

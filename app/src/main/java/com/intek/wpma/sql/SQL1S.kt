@@ -545,25 +545,25 @@ object SQL1S : SQLSynchronizer() {
     fun isSC(IDD: String, SCType: String): Boolean {
         if (SCType == "Сотрудники") {
             val textQuery =
-                "SELECT ID FROM SC838 (nolock) WHERE SP1933='$IDD'"
+                "SELECT ID FROM \$Спр.Сотрудники (nolock) WHERE \$Спр.Сотрудники.IDD = '$IDD' "
             val dataTable = executeWithRead(textQuery)
             return dataTable!!.isNotEmpty()
         }
         if (SCType == "Секции") {
             val textQuery =
-                "SELECT ID FROM SC1141 (nolock) WHERE SP1935='$IDD'"
+                "SELECT ID FROM \$Спр.Секции (nolock) WHERE \$Спр.Секции.IDD = '$IDD' "
             val dataTable = executeWithRead(textQuery)
             return dataTable!!.isNotEmpty()
         }
         if (SCType == "Принтеры") {
             val textQuery =
-                "SELECT ID FROM SC2459 (nolock) WHERE SP2465='$IDD'"
+                "SELECT ID FROM \$Спр.Принтеры (nolock) WHERE \$Спр.Принтеры.IDD = '$IDD' "
             val dataTable = executeWithRead(textQuery)
             return dataTable!!.isNotEmpty()
         }
         if (SCType == "МестаПогрузки") {
             val textQuery =
-                "SELECT ID FROM SC5794 (nolock) WHERE ID='$IDD'"
+                "SELECT ID FROM \$Спр.МестаПогрузки (nolock) WHERE ID = '$IDD' "
             val dataTable = executeWithRead(textQuery)
             return dataTable!!.isNotEmpty()
         }

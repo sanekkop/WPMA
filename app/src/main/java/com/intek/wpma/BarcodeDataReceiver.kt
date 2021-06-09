@@ -549,14 +549,14 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
 
         if (type == "id") {
             val textQuery =
-                "SELECT ID FROM SC1141 (nolock) WHERE SP1935='$id'"
+                "SELECT ID FROM \$Спр.Секции (nolock) WHERE \$Спр.Секции.IDD = '$id' "
             val dataTable = ss.executeWithReadNew(textQuery)
 
             return dataTable!![0]["ID"].toString()
         }
         if (type == "idByName") {
             val textQuery =
-                "SELECT Warehouse.id as ID FROM SC1141 as WareHouse (nolock) WHERE Warehouse.descr='$id'"
+                "SELECT Warehouse.id as ID FROM \$Спр.Секции (nolock) as WareHouse (nolock) WHERE Warehouse.descr = '$id' "
             val dataTable = ss.executeWithReadNew(textQuery)
 
             return dataTable!![0]["ID"].toString()

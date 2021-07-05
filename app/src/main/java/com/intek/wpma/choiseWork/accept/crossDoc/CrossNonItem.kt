@@ -22,6 +22,8 @@ import kotlinx.android.synthetic.main.activity_none_item.printPal
 import kotlinx.android.synthetic.main.activity_none_item.scroll
 import kotlinx.android.synthetic.main.activity_none_item.searchArt
 import kotlinx.android.synthetic.main.activity_none_item.table
+import kotlin.math.max
+import kotlin.math.min
 
 open class CrossNonItem : CrossDoc() {
 
@@ -177,7 +179,7 @@ open class CrossNonItem : CrossDoc() {
                 var s = 0
                 val strArr : Array<String> = arrayOf(
                     DR["Number"].toString(),
-                    DR["ClientName"].toString().substring(0,7),
+                    DR["ClientName"].toString().substring(0, min(DR["ClientName"].toString().length,7)),
                     DR["OrderName"].toString().trim(),
                     DR["Article"].toString().trim(),
                     DR["ArticleOnPack"].toString().trim(),

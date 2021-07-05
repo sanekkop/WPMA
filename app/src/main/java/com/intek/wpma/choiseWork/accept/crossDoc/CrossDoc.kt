@@ -1104,6 +1104,14 @@ open class CrossDoc : BarcodeDataReceiver() {
         if (keyCode == 4) {
             clickVoice()
             quitModeAcceptance()
+            //занулим переменки а то они живучие
+            ss.CurrentMode = Global.Mode.Waiting
+            iddoc = ""
+            parentIDD = ""
+            consignmen = mutableListOf()
+            noneAccItem = mutableListOf()
+            acceptedItems = mutableListOf()
+
             ss.excStr = "Выберите режим работы"
             val accMen = Intent(this, AccMenu::class.java)
             startActivity(accMen)
@@ -1309,7 +1317,7 @@ open class CrossDoc : BarcodeDataReceiver() {
     }
 
     private fun quitModeAcceptance() {
-        for (dr in iddoc.split(",")) {
+       for (dr in iddoc.split(",")) {
             lockoutDocAccept(dr.replace("'", ""))
         }
     }

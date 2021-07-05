@@ -7,8 +7,8 @@ import java.sql.*
 open class SQLSynchronizer {
 
     private val fServerName: Array<String> = arrayOf("192.168.8.4:57068","192.168.8.5:57068") //Наши серваки
-    private val fDBName: String = "int9999001ad4" //База
-    //private val fDBName: String = "int9999001rab"
+    //private val fDBName: String = "int9999001ad4" //База
+    private val fDBName: String = "int9999001rab"
     private val fVers: String = "5.04"    //Номер версии
     val fullVers = "$fVers.01"
     private var myConnection: Connection? = null

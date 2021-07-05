@@ -435,15 +435,35 @@ abstract class BarcodeDataReceiver: AppCompatActivity() {
     fun getTableMark(id: String): MutableList<MutableMap<String, String>>? {
         val textQuery =
             "SELECT " +
-                    "Product.\$Спр.Товары.ИнвКод as ИнвКод , Product.descr as Name , " +
-                    "Product.\$Спр.Товары.Категория as Категория ," +
-                    "Categories.\$Спр.КатегорииТоваров.Маркировка as Маркировка  " +
+                    "min(Product.\$Спр.Товары.ИнвКод ) as ИнвКод , " +
+                    "min(Product.descr ) as Name , " +
+                    "isNull(max(TNVED.\$Спр.ТНВЭД.Маркировка ),isNull(max(Categories.\$Спр.КатегорииТоваров.Маркировка ),0)) as Маркировка  " +
                     "FROM " +
                     "\$Спр.Товары  as Product (nolock)" +
-                    "INNER JOIN \$Спр.КатегорииТоваров  as Categories (nolock) " +
+                    "LEFT JOIN \$Спр.КатегорииТоваров  as Categories (nolock) " +
                     "ON Categories.id = Product.\$Спр.Товары.Категория " +
-                    "WHERE " +
-                    "Product.id = '${id}' and Categories.\$Спр.КатегорииТоваров.Маркировка > 0 "
+                    "LEFT JOIN \$Спр.Сертификаты  as Certificate (nolock) " +
+                    "ON ( select top 1" +
+                            "left(Const.value, 9) " +
+                        "from" +
+                            "_1sconst as Const (nolock) " +
+                        "where" +
+                            "Const.id = 1336 " +
+                            "and Const.objid = Product.ID " +
+                            "and (Const.date <= :NowDate )" +
+                        "order by Const.date desc, Const.time desc, Const.docid desc, Const.row_id desc " +
+                    ") = Certificate.id " +
+                    "LEFT JOIN \$Спр.ТНВЭД  as TNVED (nolock) " +
+                    "ON Certificate.\$Спр.Сертификаты.ТНВЭДСпр = TNVED.id " +
+                    "LEFT JOIN \$Спр.МаркировкаТовара  as Mark (nolock) " +
+                    "ON Product.id = Mark.\$Спр.МаркировкаТовара.Товар " +
+
+                "WHERE " +
+                    "Product.id = '${id}' " +
+                    "and (isNull(Categories.\$Спр.КатегорииТоваров.Маркировка , 0 ) > 0 " +
+                    "OR isNull(TNVED.\$Спр.ТНВЭД.Маркировка , 0 ) > 0 " +
+                    "OR not (Mark.id is null)) " +
+                "GROUP BY Product.id "
 
         return ss.executeWithReadNew(textQuery)
     }

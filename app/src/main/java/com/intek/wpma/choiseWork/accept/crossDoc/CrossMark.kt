@@ -100,7 +100,7 @@ class CrossMark : BarcodeDataReceiver() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_acc_mark)
+        setContentView(R.layout.activity_cross_mark)
         flagBarcode = intent.extras!!.getString("flagBarcode")!!
         title = ss.title
         parentIDD = intent.extras!!.getString("parentIDD")!!

@@ -189,7 +189,7 @@ class CrossMark : BarcodeDataReceiver() {
                 "INNER JOIN _1sjourn as journAC (nolock) " +
                 "     ON journAC.iddoc = AC.iddoc " +
                 "LEFT JOIN _1sjourn as journ (nolock) " +
-                "     ON journ.iddoc = right(AC.\$АдресПоступление.ДокументОснование , 9) " +
+                "     ON journ.iddoc = right(AC.\$ЗаказНаКлиента.ДокументОснование , 9) " +
                 "LEFT JOIN DH\$ПриходнаяКредит as PK (nolock) " +
                 "     ON journ.iddoc = PK.iddoc " +
                 "WHERE" +

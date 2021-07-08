@@ -14,6 +14,7 @@ import android.widget.TextView
 import com.intek.wpma.Global
 import com.intek.wpma.R
 import kotlinx.android.synthetic.main.activity_yap_item.*
+import kotlin.math.min
 
 class CrossYepItem: CrossDoc() {
 
@@ -144,13 +145,13 @@ class CrossYepItem: CrossDoc() {
             //теперь подкрасим строку серым
             table.getChildAt(currentLine).setBackgroundColor(Color.LTGRAY)
             table.getChildAt(currentLine).isActivated = false
-            kolEtik.text = acceptedItems[currentLine - 1]["LabelCount"].toString()
+            kolEtik.text = acceptedItems[currentLine - 1]["BoxCount"].toString()
             return true
         }
 
         if (ss.helper.whatInt(keyCode) >= 0) {
             var thisInt = ss.helper.whatInt(keyCode).toString()
-            thisInt = if (isMoveButton) thisInt else acceptedItems[currentLine - 1]["LabelCount"].toString() + thisInt
+            thisInt = if (isMoveButton) thisInt else acceptedItems[currentLine - 1]["BoxCount"].toString() + thisInt
             if (changeLabelCount(thisInt)) refreshActivity()
             isMoveButton = false
             return true
@@ -165,7 +166,7 @@ class CrossYepItem: CrossDoc() {
                 refreshActivity()
                 true
             } else {
-                var textForEdit = acceptedItems[currentLine - 1]["LabelCount"].toString()
+                var textForEdit = acceptedItems[currentLine - 1]["BoxCount"].toString()
                 textForEdit = if (textForEdit.count() == 1) "1" else textForEdit.substring(0, textForEdit.count() - 1)
                 if (changeLabelCount(textForEdit)) refreshActivity()
                 true
@@ -184,8 +185,8 @@ class CrossYepItem: CrossDoc() {
 
         var k = 0
         //добавим столбцы
-        val widArr : Array<Double> = arrayOf(0.05, 0.17, 0.17, 0.18, 0.2, 0.12, 0.1)
-        val striArr : Array<String> = arrayOf("№", "Клиент", "Заказ", "Паллета", "Принято", "Всего", "ЗКР")
+        val widArr : Array<Double> = arrayOf(0.05, 0.33, 0.17, 0.15, 0.1, 0.1, 0.1)
+        val striArr : Array<String> = arrayOf("№", "Клиент", "Заказ", "Пал", "Прин", "Всего", "ЗКР")
         val hatVal : MutableMap<String, TextView> = HashMap()
         for (i in 0..6) hatVal["hatVal$i"] = TextView(this)
 
@@ -223,7 +224,7 @@ class CrossYepItem: CrossDoc() {
                         } else {
                             currentLine = i
                             rowTitle2.setBackgroundColor(Color.LTGRAY)
-                            kolEtik.text = acceptedItems[currentLine - 1]["LabelCount"].toString()
+                            kolEtik.text = acceptedItems[currentLine - 1]["BoxCount"].toString()
                         }
                         i++
                     }
@@ -232,12 +233,11 @@ class CrossYepItem: CrossDoc() {
 
                 var s = 0
                 //добавим столбцы
-                val widtArr : Array<Double> = arrayOf(0.05, 0.17, 0.17, 0.18, 0.2, 0.12, 0.1)
+                val widtArr : Array<Double> = arrayOf(0.05, 0.33, 0.17, 0.15, 0.1, 0.1, 0.1)
                 val strinArr : Array<String> = arrayOf(
-                    DR["Number"].toString(), DR["DOCNO"].toString(), DR["InvCode"].toString(),
-                    DR["ItemName"].toString().substring(0, 7), DR["Count"].toString(),
-                    ss.helper.byeTheNull(DR["Coef"].toString()),               //обрежем нули и точку
-                    DR["LabelCount"].toString())
+                    DR["Number"].toString(), DR["ClientName"].toString().substring(0, min(DR["ClientName"].toString().length,10)), DR["OrderName"].toString(),
+                    DR["PalletName"].toString(), DR["Count"].toString(), DR["CountAll"].toString(),
+                    DR["CloseOrder"].toString())
                 val bodVal : MutableMap<String, TextView> = HashMap()
                 for (i in 0..6) bodVal["bodVal$i"] = TextView(this)
 
@@ -258,7 +258,7 @@ class CrossYepItem: CrossDoc() {
                 var colorline =  Color.WHITE
                 if (lineNom == currentLine) {
                     colorline = Color.LTGRAY
-                    kolEtik.text = acceptedItems[currentLine - 1]["LabelCount"].toString()
+                    kolEtik.text = acceptedItems[currentLine - 1]["BoxCount"].toString()
                 }
                 rowTitle2.setBackgroundColor(colorline)
                 table.addView(rowTitle2)
@@ -268,42 +268,87 @@ class CrossYepItem: CrossDoc() {
     }
 
     private fun deleteRowAcceptedItems(currRow:MutableMap<String,String>):Boolean {
+        //Нуно создать новую строку
         var textQuery =
+        "SELECT max(DT\$АдресПоступление .lineno_) + 1 as NewLineNo_ " +
+                "FROM DT\$АдресПоступление WHERE  DT\$АдресПоступление .iddoc = :Doc";
+        textQuery = ss.querySetParam(textQuery, "Doc", currRow["iddoc"].toString())
+        var dt = ss.executeWithReadNew(textQuery) ?: return false
+        if (dt.isEmpty()) {
+            return false
+        }
+        val newLineNo_ = dt[0]["NewLineNo_"].toString()
+
+        textQuery =
             "BEGIN TRAN; " +
                     "IF EXISTS(SELECT LineNo_ FROM DT\$АдресПоступление as ACDT " +
                     "WHERE ACDT.IDDOC = :ACID " +
                     "and ACDT.\$АдресПоступление.Товар = :ItemID " +
                     "and ACDT.\$АдресПоступление.Состояние0 = 0) " +
                     "BEGIN " +
+                    //увеличиваем количество не принятого
                     "UPDATE DT\$АдресПоступление " +
                     "SET \$АдресПоступление.Количество = \$АдресПоступление.Количество + :Count " +
                     "WHERE DT\$АдресПоступление .iddoc = :ACID " +
                     "and DT\$АдресПоступление .\$АдресПоступление.Товар = :ItemID " +
                     "and DT\$АдресПоступление .\$АдресПоступление.Состояние0 = 0; " +
-                    "DELETE FROM DT\$АдресПоступление " +
+                    //уменьшаем количество принятого
+                    "UPDATE DT\$АдресПоступление " +
+                    "SET \$АдресПоступление.Количество = \$АдресПоступление.Количество - :Count " +
                     "WHERE DT\$АдресПоступление .iddoc = :ACID " +
                     "and DT\$АдресПоступление .lineno_ = :lineno_ " +
+                    //Удаляем пустые строки
+                    "DELETE FROM DT\$АдресПоступление " +
+                    "WHERE DT\$АдресПоступление .iddoc = :ACID " +
+                    "and \$АдресПоступление.Количество = 0 " +
                     "END ELSE BEGIN " +
+                    //сначала делаем строку принятого товара внизу
+                    "INSERT INTO DT\$АдресПоступление " +
+                    "SELECT DocAP.IDDOC, :NewLineNo_, :Number, " +
+                    ":ItemID, DocAP.\$АдресПоступление.Количество - :Count, " +
+                    ":EmptyID, DocAP.\$АдресПоступление.Коэффициент , 1, " +
+                    "DocAP.\$АдресПоступление.Сотрудник0 , DocAP.\$АдресПоступление.Адрес0 , DocAP.\$АдресПоступление.Дата0 , " +
+                    "DocAP.\$АдресПоступление.Время0 , DocAP.\$АдресПоступление.ФлагПечати , DocAP.\$АдресПоступление.КоличествоЭтикеток , " +
+                    "DocAP.\$АдресПоступление.ЕдиницаШК , 0, 0, DocAP.\$АдресПоступление.Паллета " +
+                    "FROM DT\$АдресПоступление as DocAP " +
+                    "WHERE DocAP.IDDOC = :ACID " +
+                    "and DocAP.lineno_ = :lineno_ " +
+                    //Делаем строку не принятого товара
                     "UPDATE DT\$АдресПоступление " +
-                    "SET " +
-                    "\$АдресПоступление.Сотрудник0 = :EmptyID," +
-                    "\$АдресПоступление.Дата0 = :VoidDate," +
-                    "\$АдресПоступление.Время0 = 0," +
-                    "\$АдресПоступление.Состояние0 = 0," +
-                    "\$АдресПоступление.КоличествоЭтикеток = 0," +
+                    "SET \$АдресПоступление.Количество = :Count, " +
+                    "\$АдресПоступление.Сотрудник0 = :EmptyID, "+
+                    "\$АдресПоступление.Состояние0 = 0, " +
+                    "\$АдресПоступление.Адрес0 = :EmptyID, " +
+                    "\$АдресПоступление.Дата0 = :EmptyDate, " +
+                    "\$АдресПоступление.Время0 = 0, " +
                     "\$АдресПоступление.ФлагПечати = 0, " +
+                    "\$АдресПоступление.КоличествоЭтикеток = 0, " +
                     "\$АдресПоступление.Паллета = :EmptyID " +
-                    "WHERE " +
-                    "DT\$АдресПоступление .iddoc = :ACID " +
-                    "and DT\$АдресПоступление .lineno_ = :lineno_ ; " +
+                    "WHERE DT\$АдресПоступление .iddoc = :ACID " +
+                    "and DT\$АдресПоступление .lineno_ = :lineno_ " +
+                    //Удаляем пустые строки
+                    "DELETE FROM DT\$АдресПоступление " +
+                    "WHERE DT\$АдресПоступление .iddoc = :ACID " +
+                    "and \$АдресПоступление.Количество = 0 " +
+
                     "END; " +
-                    "COMMIT TRAN;"
+                    //обновляем заказ
+                    "UPDATE DT\$ЗаказНаКлиента " +
+                    "SET " +
+                    "\$ЗаказНаКлиента.Принято = \$ЗаказНаКлиента.Принято - :Count " +
+                    "WHERE " +
+                    "DT\$ЗаказНаКлиента .iddoc = :OrderID " +
+                    "and \$ЗаказНаКлиента.Товар = :ItemID " +
+                    "COMMIT TRAN;";
+         textQuery = ss.querySetParam(textQuery, "OrderID", currRow["OrderID"].toString())
+        textQuery = ss.querySetParam(textQuery, "NewLineNo_", newLineNo_)
+        textQuery = ss.querySetParam(textQuery, "Number", currRow["Number"].toString())
         textQuery = ss.querySetParam(textQuery, "ACID", currRow["iddoc"].toString())
         textQuery = ss.querySetParam(textQuery, "Count", currRow["Count"].toString())
         textQuery = ss.querySetParam(textQuery, "ItemID", currRow["id"].toString())
         textQuery = ss.querySetParam(textQuery, "lineno_", currRow["LineNO_"].toString())
         textQuery = ss.querySetParam(textQuery, "EmptyID", ss.getVoidID())
-        textQuery = ss.querySetParam(textQuery, "VoidDate", ss.getVoidDate())
+        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
         if (!ss.executeWithoutRead(textQuery)) {
             return false
         }
@@ -314,16 +359,19 @@ class CrossYepItem: CrossDoc() {
     } // DeleteRowAcceptedItems()
 
     private fun changeLabelCount(labelCount:String):Boolean {
+
         var textQuery =
-            "UPDATE DT\$АдресПоступление " +
-                    "SET \$АдресПоступление.КоличествоЭтикеток = :LabelCount " +
-                    "WHERE DT\$АдресПоступление .iddoc = :Doc and DT\$АдресПоступление .lineno_ = :LineNo_"
+            "UPDATE DH\$ЗаказНаКлиента " +
+                    "SET \$ЗаказНаКлиента.КолМест = :LabelCount " +
+                    "WHERE DH\$ЗаказНаКлиента .iddoc = :Doc"
         textQuery = ss.querySetParam(textQuery, "LabelCount", labelCount)
-        textQuery = ss.querySetParam(textQuery, "Doc", acceptedItems[currentLine - 1]["iddoc"].toString())
-        textQuery = ss.querySetParam(textQuery, "LineNo_", acceptedItems[currentLine - 1]["LineNO_"].toString())
-        textQuery = ss.querySetParam(textQuery, "ItemID", acceptedItems[currentLine - 1]["id"].toString())
+        textQuery = ss.querySetParam(textQuery, "Doc", acceptedItems[currentLine - 1]["OrderID"].toString())
         if (!ss.executeWithoutRead(textQuery))  return false
-        acceptedItems[currentLine - 1]["LabelCount"] = labelCount
+        for (DR in acceptedItems) {
+           if (DR["OrderID"] == acceptedItems[currentLine - 1]["OrderID"]) {
+               DR["BoxCount"] = labelCount
+           }
+        }
         return true
     }
 

@@ -41,6 +41,7 @@ open class CrossDoc : BarcodeDataReceiver() {
     var acceptedItem: MutableMap<String, String> = mutableMapOf()
     var model = Model()
     var item = RefItem()
+    var palletAcceptedItem = RefPalleteMove()
     var countMarkUnit = 0
     var countMarkPac = 0
     var countItemAcc = 0
@@ -191,6 +192,8 @@ open class CrossDoc : BarcodeDataReceiver() {
             noneItem()
             //теперь принятые
             yapItem()
+            //теперь обновим данные по местам
+            updateTableInfo()
         }
     }
 
@@ -373,7 +376,8 @@ open class CrossDoc : BarcodeDataReceiver() {
                 "OrderOnClients.PalletID as PalletID , " +
                 "OrderOnClients.PalletName as PalletName , " +
                 "isNull(OrderOnClients.BoxCount,0) as BoxCount , " +
-                "Supply.\$АдресПоступление.Количество as CountAll " +
+                "Supply.\$АдресПоступление.Количество as CountAll , " +
+                "'X' as CloseOrder " +
                 "FROM DT\$АдресПоступление as Supply (nolock) " +
                 "LEFT JOIN \$Спр.Товары as Goods (nolock) " +
                 "ON Goods.ID = Supply.\$АдресПоступление.Товар " +
@@ -452,12 +456,20 @@ open class CrossDoc : BarcodeDataReceiver() {
         textQuery = ss.querySetParam(textQuery, "Warehouse", ss.Const.mainWarehouse)
         textQuery = ss.querySetParam(textQuery, "Docs", parentIDD.substring(4,10))
         acceptedItems = ss.executeWithReadNew(textQuery) ?: return
+        for (DR in acceptedItems) {
+            for (DRN in noneAccItem) {
+                if (DRN["OrderID"] == DR["OrderID"]) {
+                    DR["CloseOrder"] = ""
+                    break
+                }
+            }
+        }
     }
 
     //тотальная ебань
     //класс для обработки события при нажатии на кнопку о принятии товара
-    fun completeAccept(idDoc:String): Boolean {
-
+    fun completeAccept(idDoc:String): Boolean
+    {
         if (checkMark(idDoc) == 0) {
             //не указана маркировка
             if (ss.excStr == "") {
@@ -468,8 +480,32 @@ open class CrossDoc : BarcodeDataReceiver() {
             }
             return false
         }
+
         val docForQuery = currentRowAcceptedItem["iddoc"].toString()
         var textQuery: String
+
+       // palletAcceptedItem.foundID(ss.FPallet.id)
+
+        if ((currentRowAcceptedItem["PalletID"].toString() == "" || currentRowAcceptedItem["PalletID"].toString() == "null") && !palletAcceptedItem.selected)
+        {
+            //проверка на пустое значение адреса
+            FExcStr.text = "Не заполнена паллета заказа!"
+            return false
+        }
+        if (!palletAcceptedItem.selected)
+        {
+            //проверка на пустое значение адреса
+            FExcStr.text = "Отсканируйте паллету!"
+            return false
+        }
+        if (palletAcceptedItem.id.toString() != currentRowAcceptedItem["PalletID"].toString() && currentRowAcceptedItem["PalletID"].toString() != "" &&currentRowAcceptedItem["PalletID"].toString() != "null")
+        {
+            //косяк, не тот адрес
+            palletAcceptedItem = RefPalleteMove()
+            FExcStr.text = "не та паллета! Надо " + currentRowAcceptedItem["PalletName"].toString()
+            return false
+        }
+
         //Сколько в накладной изначально
         if (acceptedItem["AcceptCount"].toString().toInt() > currentRowAcceptedItem["Count"].toString().toInt()) {
             FExcStr.text =("Нельзя принять по данной накладной более " + currentRowAcceptedItem["Count"].toString() + " штук!")
@@ -478,7 +514,6 @@ open class CrossDoc : BarcodeDataReceiver() {
             FExcStr.text = "Нельзя принять нулевое количество!"
             return false
         }
-
         //Теперь проверим не поменялась ли ситуация в самой накладной, пока мы курили бамбук!
         textQuery = "SELECT " +
                 "ACDT.\$АдресПоступление.Количество as Count " +
@@ -501,7 +536,7 @@ open class CrossDoc : BarcodeDataReceiver() {
             FExcStr.text = "Недопустимое количество! Повторите приемку позиции!"
             return false
         }
-        //Скорректируем начальное количество
+       //Скорректируем начальное количество
         val beginCount = dTCurrState[0]["Count"].toString().toInt()
 
         var needNew = 0
@@ -696,7 +731,7 @@ open class CrossDoc : BarcodeDataReceiver() {
 
             textQuery = "INSERT INTO DT\$АдресПоступление VALUES " +
                     "(:Doc, :LineNo_, :Number, :Item, :Count, :EmptyID, :Coef, 1, :Employer, " +
-                    ":Adress, :EmptyDate, :NowTime, 1, :LabelCount, :UnitID, 0, 0, :PalletID); " +
+                    ":Adress, :NowDate, :NowTime, 1, :LabelCount, :UnitID, 0, 0, :PalletID); " +
                     "UPDATE DT\$АдресПоступление " +
                     "SET \$АдресПоступление.Количество = :RemainedCount" +
                     "WHERE DT\$АдресПоступление .iddoc = :Doc and " +
@@ -726,7 +761,7 @@ open class CrossDoc : BarcodeDataReceiver() {
                     "SET " +
                     "\$АдресПоступление.Количество = :Count," +
                     "\$АдресПоступление.Сотрудник0 = :Employer," +
-                    "\$АдресПоступление.Дата0 = :EmptyDate," +
+                    "\$АдресПоступление.Дата0 = :NowDate," +
                     "\$АдресПоступление.Время0 = :NowTime," +
                     "\$АдресПоступление.Состояние0 = 1," +
                     "\$АдресПоступление.КоличествоЭтикеток = :LabelCount," +
@@ -758,7 +793,7 @@ open class CrossDoc : BarcodeDataReceiver() {
 
             textQuery = "INSERT INTO DT\$АдресПоступление VALUES " +
                     "(:Doc, :LineNo_, :Number, :Item, :Count, :EmptyID, :Coef, 1, :Employer, " +
-                    ":Adress, :EmptyDate, :NowTime, 1, :LabelCount, :UnitID, 0, 0, :PalletID); " +
+                    ":Adress, :NowDate, :NowTime, 1, :LabelCount, :UnitID, 0, 0, :PalletID); " +
                     "UPDATE DT\$АдресПоступление " +
                     "SET \$АдресПоступление.Количество = :RemainedCount" +
                     "WHERE DT\$АдресПоступление .iddoc = :Doc and DT\$АдресПоступление .lineno_ = :RemainedLineNo_"
@@ -805,7 +840,7 @@ open class CrossDoc : BarcodeDataReceiver() {
                     "SET " +
                     "\$АдресПоступление.Количество = :Count," +
                     "\$АдресПоступление.Сотрудник0 = :Employer," +
-                    "\$АдресПоступление.Дата0 = :EmptyDate," +
+                    "\$АдресПоступление.Дата0 = :NowDate," +
                     "\$АдресПоступление.Время0 = :NowTime," +
                     "\$АдресПоступление.Состояние0 = 1," +
                     "\$АдресПоступление.КоличествоЭтикеток = :LabelCount," +
@@ -825,6 +860,48 @@ open class CrossDoc : BarcodeDataReceiver() {
                 return false
             }
         }
+
+        //теперь запишем адрес в заказ на клиента если его там нет
+        if (currentRowAcceptedItem["OrderID"].toString() == "На склад")
+        {
+
+        }
+        else
+        {
+            if (currentRowAcceptedItem["PalletID"].toString() == "" || currentRowAcceptedItem["PalletID"].toString() == "null")
+            {
+                //не указан, значить надо записать его туда
+                textQuery =
+                    "UPDATE DH\$ЗаказНаКлиента " +
+                            "SET " +
+                            "\$ЗаказНаКлиента.Паллета = :Pallet " +
+                            "WHERE " +
+                            "DH\$ЗаказНаКлиента .iddoc = :Doc "
+                textQuery = ss.querySetParam(textQuery, "Pallet", palletAcceptedItem.id)
+                textQuery = ss.querySetParam(textQuery, "Doc", currentRowAcceptedItem["OrderID"].toString())
+                if (!ss.executeWithoutRead(textQuery)) {
+                    return false
+                }
+                //почистим паллетки от греха
+                ss.FPallet = RefPalleteMove()
+             }
+            //теперь обновим данные по принятому количеству по заказу
+            textQuery =
+                "UPDATE DT\$ЗаказНаКлиента " +
+                        "SET " +
+                        "\$ЗаказНаКлиента.Принято = \$ЗаказНаКлиента.Принято + :Count " +
+                        "WHERE " +
+                        "DT\$ЗаказНаКлиента .iddoc = :Doc " +
+                        "and \$ЗаказНаКлиента.Товар = :Item";
+            textQuery = ss.querySetParam(textQuery, "Item", currentRowAcceptedItem["id"].toString())
+            textQuery = ss.querySetParam(textQuery, "Count", acceptedItem["AcceptCount"].toString())
+            textQuery = ss.querySetParam(textQuery, "Doc", currentRowAcceptedItem["OrderID"].toString())
+            if (!ss.executeWithoutRead(textQuery)) {
+                return false
+            }
+        }
+
+        palletAcceptedItem = RefPalleteMove()
 
         //Выведем в строку состояния сколько мы приняли за этот раз
         var tmpCoef: Int = getCoefPackage()
@@ -1046,29 +1123,35 @@ open class CrossDoc : BarcodeDataReceiver() {
                 startActivity(mainInit)
                 finish()
             } else if (ss.isSC(idd, "Секции")) {
-                val sections = RefSection()
-                sections.foundIDD(idd)
-                var strPallets = ""
-                for (dr in ss.FPallets) {
-                    strPallets += ", '" + dr["ID"].toString() + "'"
-                }
-                if (strPallets.length > 2) {
-                    strPallets = strPallets.substring(2)  //Убираем спедери запятые
-                }
-
-                var textQuery =
-                    "UPDATE \$Спр.ПеремещенияПаллет " +
-                            "SET \$Спр.ПеремещенияПаллет.Адрес0 = :ID, \$Спр.ПеремещенияПаллет.ФлагОперации = 2 " +
-                            "WHERE \$Спр.ПеремещенияПаллет .id in ($strPallets)"
-                textQuery = ss.querySetParam(textQuery, "ID", sections.id)
-                if (!ss.executeWithoutRead(textQuery)) {
+                if (!ss.FPallet.selected)
+                {
+                    FExcStr.text = "Не выбрана паллета!"
                     return false
                 }
-                //почистим табличку паллет от греха и почистим паллеты
-
-                ss.FPallets = mutableListOf()
-                ss.FPallet = RefPalleteMove()
+                val sections = RefSection()
+                sections.foundIDD(idd)
+                var textQuery = "BEGIN TRAN; " +
+                "UPDATE \$Спр.ПеремещенияПаллет WITH (rowlock)" +
+                        "SET " +
+                        "\$Спр.ПеремещенияПаллет.Адрес0 = :ID, " +
+                        "\$Спр.ПеремещенияПаллет.ФлагОперации = 2 " +
+                        "WHERE " +
+                        "\$Спр.ПеремещенияПаллет .id  = :Pallet; " +
+                        "UPDATE DH\$ЗаказНаКлиента WITH (rowlock) " +
+                        "SET " +
+                        "\$ЗаказНаКлиента.Адрес = :ID " +
+                        "WHERE " +
+                        "\$ЗаказНаКлиента.Паллета = :Pallet; " +
+                        "COMMIT TRAN; ";
+                textQuery = ss.querySetParam(textQuery, "Pallet", ss.FPallet.id);
+                textQuery = ss.querySetParam(textQuery, "ID", sections.id);
+                if (!ss.executeWithoutRead(textQuery)) {
+                    badVoice()
+                    return false
+                }
+                FExcStr.text = "Укажите количество мест!"
                 refreshActivity()
+                goodVoice()
                 return true
             }
             if (ss.isSC(idd, "")) {      //если это ни один из типов справочников, значит скорее всего нужный нам документ
@@ -1087,7 +1170,62 @@ open class CrossDoc : BarcodeDataReceiver() {
                 badVoice()
                 return false
             }
-        } else if (typeBarcode == "pallete") {
+        } else if (typeBarcode == "pallete"&& ss.CurrentMode == Global.Mode.AcceptanceAccepted) {
+            //запишем данные в нее
+            var textQuery =
+
+                "SELECT " +
+                    "Pallets.ID as ID " +
+                    "FROM " +
+                    "\$Спр.ПеремещенияПаллет as Pallets (nolock) " +
+                    "WHERE " +
+                    "Pallets.\$Спр.ПеремещенияПаллет.ШКПаллеты = :Pallet ";
+            //            "AND Pallets.$Спр.ПеремещенияПаллет.ФлагОперации = 1 " +
+            //            "AND Pallets.$Спр.ПеремещенияПаллет.Адрес0 = :EmptyID ";
+            textQuery = ss.querySetParam(textQuery, "Pallet", Barcode)
+            val dt = ss.executeWithReadNew(textQuery)
+            if (dt == null) {
+               badVoice()
+                FExcStr.text = "Паллета не найдена!"
+                return false
+            }
+            if (dt.isEmpty()) {
+                badVoice()
+                FExcStr.text = "Паллета не найдена!"
+                return false
+            }
+            var findePallet = false
+            for (dtdr in dt) {
+
+                ss.FPallet = RefPalleteMove()
+                ss.FPallet.foundID(dtdr["ID"].toString())
+                palletAcceptedItem = RefPalleteMove()
+                palletAcceptedItem.foundID(ss.FPallet.id)
+                var num = 0
+                for (dr in acceptedItems) {
+                    if (dr["PalletID"].toString() == ss.FPallet.id) {
+                        currentLine = num
+                        findePallet = true
+                        break
+                    }
+                    num++
+                }
+                if (findePallet) {
+                    break
+                }
+            }
+            if (!findePallet) {
+                FExcStr.text = "Нет такой паллеты в принятых товарах!"
+                palletAcceptedItem = RefPalleteMove()
+                badVoice()
+                return false
+            }
+            refreshActivity()
+            FExcStr.text = "Отсканируйте адресс паллеты!"
+            goodVoice()
+            return true
+        }
+        else if (typeBarcode == "pallete") {
             badVoice()
             FExcStr.text = "Паллета только в карточке товара!"
             return false
@@ -1181,49 +1319,92 @@ open class CrossDoc : BarcodeDataReceiver() {
         return false
     }
 
-    fun scanPalletBarcode(strBarcode: String):Boolean {
+    fun enterPalletAcceptanceCross(strBarcode : String) : Boolean {
+        //сначала проверим может паллета уже есть в заказе и тогда просто проверим ШК
+        var textQuery : String
+        var ID : String = currentRowAcceptedItem["PalletID"].toString()
+        if (ID != "" && ID != ss.getVoidID()&& ID != "null") {
+            textQuery =
+                "SELECT " +
+                        "Pallets.ID " +
+                        "FROM " +
+                        "\$Спр.ПеремещенияПаллет as Pallets (nolock) " +
+                        "WHERE " +
+                        "Pallets.\$Спр.ПеремещенияПаллет.ШКПаллеты = :Barcode " +
+                        "and Pallets.ID = :Pallet"
+            textQuery = ss.querySetParam(textQuery, "Pallet", ID)
+            textQuery = ss.querySetParam(textQuery, "Barcode", strBarcode)
+            val dt = ss.executeWithReadNew(textQuery) ?: return false
+            if (dt.isEmpty()) {
+                FExcStr.text = ("Не та паллета! Надо " + currentRowAcceptedItem["PalletName"].toString())
+                return false
+            }
+            //val fPalletID = ID
+        }
+        else {
+            //нет еще паллеты, надо создавать
+            textQuery = "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, :Employer, @result out; select @result;"
+            textQuery = ss.querySetParam(textQuery, "Barcode", strBarcode)
+            textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
+            ID = ss.executeScalar(textQuery).toString()
 
-        var textQuery =
-            "declare @result char(9); exec WPM_GetIDNewPallet :Barcode, :Employer, @result out; select @result;"
-        textQuery = ss.querySetParam(textQuery, "Barcode", strBarcode)
-        textQuery = ss.querySetParam(textQuery, "Employer", ss.FEmployer.id)
-        val palletID =  ss.executeScalar(textQuery) ?: return false
-        ss.FPallet = RefPalleteMove()
-        if (!ss.FPallet.foundID(palletID)) {
-            return false
-        }
-        textQuery = "UPDATE \$Спр.ПеремещенияПаллет " +
-                "SET " +
-                "\$Спр.ПеремещенияПаллет.Сотрудник1 = :EmployerID, " +
-                "\$Спр.ПеремещенияПаллет.ФлагОперации = 1, " +
-                "\$Спр.ПеремещенияПаллет.Дата10 = :NowDate, " +
-                "\$Спр.ПеремещенияПаллет.Время10 = :NowTime, " +
-                "\$Спр.ПеремещенияПаллет.ТипДвижения = 4 " +
-                "WHERE \$Спр.ПеремещенияПаллет .id = :Pallet "
-        textQuery = ss.querySetParam(textQuery, "EmptyDate", ss.getVoidDate())
-        textQuery = ss.querySetParam(textQuery, "EmployerID", ss.FEmployer.id)
-        textQuery = ss.querySetParam(textQuery, "Pallet", ss.FPallet.id)
-        if (!ss.executeWithoutRead(textQuery)) {
-            return false
-        }
-        var findPallet = false
-        for (dr in ss.FPallets) {
-            if (dr["ID"].toString() == ss.FPallet.id) {
-                findPallet = true
-                break
+            if (ID == ss.getVoidID()) {
+                FExcStr.text = "Не удалось найти паллету!"
+                return false
             }
         }
-        if (!findPallet) {
-            val tmpdr:MutableMap<String, String> = mutableMapOf()
-            tmpdr["ID"] = ss.FPallet.id
-            tmpdr["Barcode"] = strBarcode
-            tmpdr["Name"] = strBarcode.substring(8, 12)
-            tmpdr["AdressID"] = ss.getVoidID()
-            ss.FPallets.add(tmpdr)
+        if (!palletAcceptedItem.foundID(ID)) {
+            //palletAcceptedItem = null
+            FExcStr.text = "Не найдена паллета!"
+            return false;
         }
+        //проверим а нет ли заказов на ней, может это паллета другого клиента
+        textQuery =
+            "SELECT " +
+                    "Orders.IDDOC as OrderID, " +
+                    "right(Journ.docno,5) as OrderName " +
+                    "FROM " +
+                    "DH\$ЗаказНаКлиента as Orders (nolock) " +
+                    "JOIN _1sjourn as Journ (nolock) " +
+                    "on Journ.IDDOC = Orders.IDDOC " +
+                    "WHERE " +
+                    "Orders.\$ЗаказНаКлиента.Паллета = :Pallet " +
+                    "and NOT Orders.IDDOC = :OrderID "
+        textQuery = ss.querySetParam(textQuery, "OrderID", currentRowAcceptedItem["OrderID"].toString())
+        textQuery = ss.querySetParam(textQuery, "Pallet", ID)
+        val dt = ss.executeWithReadNew(textQuery)
+        if (dt == null) {
+            palletAcceptedItem = RefPalleteMove()
+            return false
+        }
+        if (dt.isNotEmpty()) {
+            //PalletAcceptedItem = null
+            FExcStr.text = ("Паллета уже с другим заказом " + dt[0]["OrderName"])
+            return false
+        }
+        if (currentRowAcceptedItem["PalletID"].toString() != "" && currentRowAcceptedItem["PalletID"].toString() != "null") {
+            //сравниваем ее тогда с паллетой отсканированной
+            if (palletAcceptedItem.id != currentRowAcceptedItem["PalletID"].toString()) { //PalletAcceptedItem = null
+                FExcStr.text = ("Не та паллета! Надо " + currentRowAcceptedItem["PalletName"].toString()) //косяк, не та паллета
+                return false
+            }
+        }
+        //запишим данные в паллету тепреь
+        textQuery =
+            "UPDATE \$Спр.ПеремещенияПаллет " +
+                    "SET " +
+                    "\$Спр.ПеремещенияПаллет.Сотрудник1 = :EmployerID, " +
+                    "\$Спр.ПеремещенияПаллет.ФлагОперации = 1, " +
+                    "\$Спр.ПеремещенияПаллет.Дата10 = :NowDate, " +
+                    "\$Спр.ПеремещенияПаллет.Время10 = :NowTime, " +
+                    "\$Спр.ПеремещенияПаллет.ТипДвижения = 4 " +
+                    "WHERE \$Спр.ПеремещенияПаллет .id = :Pallet "
+        textQuery = ss.querySetParam(textQuery, "EmployerID", ss.FEmployer.id)
+        textQuery = ss.querySetParam(textQuery, "Pallet", ID)
+        if (!ss.executeWithoutRead(textQuery)) return false //PalletAcceptedItem = null
+        FExcStr.text = ("Паллета " + palletAcceptedItem.pallete)
         return true
     }
-
     @SuppressLint("ClickableViewAccessibility")
     open fun refreshActivity() {
 

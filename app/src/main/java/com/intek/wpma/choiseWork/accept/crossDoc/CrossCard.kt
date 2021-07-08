@@ -311,10 +311,20 @@ class CrossCard : CrossDoc() {
             ("Цена: " + acceptedItem["Price"].toString())                           //цена товара
         tbCount0.text = acceptedItem["AcceptCount"].toString()
         tbCoef0.text = "1"
-        zonaHand.text = (acceptedItem["AdressMain"].toString()
-            .trim() + ": " + acceptedItem["BalanceMain"].toString() + " шт")
-        zonaTech.text = (acceptedItem["AdressBuffer"].toString()
-            .trim() + ": " + acceptedItem["BalanceBuffer"].toString() + " шт")
+
+        if (palletAcceptedItem.selected)
+        {
+            zonaHand.text = "Паллета: " + palletAcceptedItem.pallete;
+        }
+        else if (currentRowAcceptedItem["PalletName"].toString() != "null" && currentRowAcceptedItem["PalletName"].toString() != "")
+        {
+            zonaHand.text = "Паллета: " + currentRowAcceptedItem["PalletName"].toString()
+        }
+        else
+        {
+            zonaHand.text = "нет паллеты"
+        }
+
         if (units.isNotEmpty()) {
             for (dr in units) {
                 var findUnits = false
@@ -515,8 +525,8 @@ class CrossCard : CrossDoc() {
                 return super.reactionBarcode(Barcode)
             }
         } else if (typeBarcode == "pallete") {
-            return if(scanPalletBarcode(Barcode)) {
-                FExcStr.text = ("Паллета " + ss.FPallet.pallete)
+            return if(enterPalletAcceptanceCross(Barcode)) {
+                //FExcStr.text = ("Паллета " + ss.FPallet.pallete)
                 goodVoice()
                 true
             } else {

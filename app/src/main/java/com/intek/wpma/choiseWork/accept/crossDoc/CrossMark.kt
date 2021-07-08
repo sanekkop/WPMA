@@ -221,7 +221,7 @@ class CrossMark : BarcodeDataReceiver() {
                 "-1*(isFolder-2) as Box ," +
                 "\$Спр.МаркировкаТовара.Товар as item " +
                 "from \$Спр.МаркировкаТовара (nolock) " +
-                "where (\$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAcc["ACiddoc"].toString(), "АдресПоступление")}' " +
+                "where (\$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAcc["ACiddoc"].toString(), "ЗаказНаКлиента")}' " +
                 "or \$Спр.МаркировкаТовара.ДокПоступления = '${ss.extendID(naklAcc["iddoc"].toString(), "ПриходнаяКредит")}' )" +
                 "and \$Спр.МаркировкаТовара.Товар = '${itemID}' "
         markItemDT = ss.executeWithReadNew(textQuery) ?: return

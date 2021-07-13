@@ -35,6 +35,7 @@ class CrossYepItem: CrossDoc() {
                 yapItem()
                 updateTableInfo()
                 val backH = Intent(this, CrossNonItem::class.java)
+                backH.putExtra("parentIDD", parentIDD)
                 startActivity(backH)
                 finish()
             }
@@ -46,6 +47,7 @@ class CrossYepItem: CrossDoc() {
                 yapItem()
                 updateTableInfo()
                 val backH = Intent(this, CrossNonItem::class.java)
+                backH.putExtra("parentIDD", parentIDD)
                 startActivity(backH)
                 finish()
             }
@@ -108,6 +110,7 @@ class CrossYepItem: CrossDoc() {
                 yapItem()
                 updateTableInfo()
                 val backH = Intent(this, CrossNonItem::class.java)
+                backH.putExtra("parentIDD", parentIDD)
                 startActivity(backH)
                 finish()
             }
@@ -120,6 +123,7 @@ class CrossYepItem: CrossDoc() {
                 yapItem()
                 updateTableInfo()
                 val backH = Intent(this, CrossNonItem::class.java)
+                backH.putExtra("parentIDD", parentIDD)
                 startActivity(backH)
                 finish()
             }

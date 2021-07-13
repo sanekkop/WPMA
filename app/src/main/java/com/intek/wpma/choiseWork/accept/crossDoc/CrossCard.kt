@@ -43,24 +43,15 @@ class CrossCard : CrossDoc() {
         countItemAcc = if (intent.extras!!.getString("countItemAcc").isNullOrEmpty()) 0 else intent.extras!!.getString("countItemAcc").toString().toInt()
 
         btnPrinItem.setOnClickListener {            //обработчик события при нажатии на кнопку принятия товара
-            if (!ss.FPallet.selected) {
-                badVoice()
-                "Сначала отсканируйте паллету!!!".also { FExcStr.text = it }
-                return@setOnClickListener
-            } else {
-                if (completeAccept(idDoc)) {
-                    val backH = Intent(this, CrossNonItem::class.java)
-                    backH.putExtra("ParentForm", "ItemCard")
-                    backH.putExtra("parentIDD", parentIDD)
-                    backH.putExtra("flagBarcode", flagBarcode)
-                    backH.putExtra("itemID", item.id)
-                    backH.putExtra("iddoc", idDoc)
-                    startActivity(backH)
-                    noneItem()
-                    yapItem()
-                    updateTableInfo()
-                    finish()
-                }
+            if (completeAccept(idDoc)) {
+                val backH = Intent(this, CrossNonItem::class.java)
+                backH.putExtra("parentIDD", parentIDD)
+                backH.putExtra("ParentForm", "ItemCard")
+                startActivity(backH)
+                noneItem()
+                yapItem()
+                updateTableInfo()
+                finish()
             }
         }
 
@@ -187,6 +178,7 @@ class CrossCard : CrossDoc() {
     private fun getCurrentRowAcceptedItem() {
         for (dr in noneAccItem) {
             if (dr["id"] != item.id) continue
+            if (dr["OrderID"] != orderId) continue
             if (dr["iddoc"].toString() == idDoc && currentRowAcceptedItem.isEmpty()) currentRowAcceptedItem = dr
 
             allCount += dr["Count"].toString().toInt()
